@@ -44,3 +44,11 @@ export async function issueTokens(user, meta = {}) {
   });
   return { accessToken, refreshToken };
 }
+
+export const cookieOpts = () => ({
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  maxAge: REFRESH_DAYS * 86400_000,
+  path: "/",
+});
