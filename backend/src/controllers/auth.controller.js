@@ -1,7 +1,7 @@
 import * as svc from "../services/auth.service.js";
 import { ok } from "../utils/response.js";
 
-const meta = (req) => ({ userAget: req.headers["user-agent"], ip: req.ip });
+const meta = (req) => ({ userAgent: req.headers["user-agent"], ip: req.ip });
 
 export async function register(req, res) {
   const user = await svc.register(req.body);
