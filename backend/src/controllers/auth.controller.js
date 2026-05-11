@@ -9,3 +9,10 @@ export async function register(req, res) {
   res.cookie("rt", tokens.refreshToken, svc.cookieOpts());
   return ok(res, { user, accessToken: tokens.accessToken }, "registered", 201);
 }
+
+export async function login(req, res) {
+  const user = await svc.login(req.body);
+  const tokens = await svc.issueTokens(user, meta(req));
+  res.cookie("rt", tokens.refreshToken, svc.cookieOpts());
+  return ok(res, { user, accessToken: tokens.accessToken }, "logged in");
+}
