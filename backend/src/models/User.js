@@ -15,7 +15,7 @@ const UserSchema = new Schema(
     password: { type: String, required: true },
     avatar: { type: String },
     resetToken: { type: String },
-    resetTokenExpres: { type: Date },
+    resetTokenExpires: { type: Date },
   },
   { timestamps: true },
 );
@@ -24,7 +24,7 @@ UserSchema.set("toJSON", {
   transform: (_doc, ret) => {
     delete ret.password;
     delete ret.resetToken;
-    delete ret.resetTokenExpres;
+    delete ret.resetTokenExpires;
     ret.id = ret._id;
     delete ret._id;
     delete ret.__v;
