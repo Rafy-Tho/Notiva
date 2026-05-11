@@ -16,6 +16,7 @@ const UserSchema = new Schema(
     avatar: { type: String },
     resetToken: { type: String },
     resetTokenExpires: { type: Date },
+    deletedAt: { type: Date, default: null },
   },
   { timestamps: true },
 );
