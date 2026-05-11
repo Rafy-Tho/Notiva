@@ -10,4 +10,5 @@ const r = Router();
 r.use(authLimiter);
 r.post("/register", validate(registerV), asyncHandler(c.register));
 r.post("/login", validate(loginV), asyncHandler(c.login));
+r.post("/refresh", asyncHandler(c.refresh));
 export default r;

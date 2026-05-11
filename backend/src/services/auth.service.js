@@ -1,6 +1,11 @@
 import { User } from "../models/User.js";
 import bcrypt from "bcrypt";
-import { hashToken, signAccess, signRefresh } from "../utils/tokens.js";
+import {
+  hashToken,
+  signAccess,
+  signRefresh,
+  verifyRefresh,
+} from "../utils/tokens.js";
 import { RefreshToken } from "../models/RefreshToken.js";
 const REFRESH_DAYS = 7;
 
@@ -43,6 +48,37 @@ export async function issueTokens(user, meta = {}) {
     ip: meta.ip,
   });
   return { accessToken, refreshToken };
+}
+
+export async function rotateRefresh(oldToken, meta = {}) {
+  let payload;
+
+  try {
+    payload = verifyRefresh(oldToken);
+  } catch {
+    const e = new Error("Invalid refresh token");
+    e.status = 401;
+    throw e;
+  }
+
+  const stored = await RefreshToken.findOne({ token: hashToken(oldToken) });
+
+  if (!stored) {
+    const e = new Error("Invalid refresh token");
+    e.status = 401;
+    throw e;
+  }
+
+  await stored.deleteOne();
+
+  const user = await User.findById(payload.sub);
+
+  if (!user) {
+    const e = new Error("User not found");
+    e.status = 404;
+    throw e;
+  }
+  return issueTokens(user, meta);
 }
 
 export const cookieOpts = () => ({

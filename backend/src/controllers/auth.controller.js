@@ -16,3 +16,10 @@ export async function login(req, res) {
   res.cookie("rt", tokens.refreshToken, svc.cookieOpts());
   return ok(res, { user, accessToken: tokens.accessToken }, "logged in");
 }
+
+export async function refresh(req, res) {
+  const token = req.cookies?.rt;
+  const tokens = await svc.rotateRefresh(token, meta(req));
+  res.cookie("rt", tokens.refreshToken, svc.cookieOpts());
+  return ok(res, { accessToken: tokens.accessToken });
+}
