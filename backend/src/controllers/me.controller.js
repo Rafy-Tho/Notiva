@@ -1,4 +1,5 @@
 import * as svc from "../services/me.service.js";
+import { uploadImage } from "../services/upload.service.js";
 import { ok } from "../utils/response.js";
 
 export const me = async (req, res) => {
@@ -20,4 +21,10 @@ export const deleteAccount = async (req, res) => {
   await svc.deleteAccount(req.userId);
   res.clearCookie("rt", svc.cookieOpts());
   return ok(res, null, "Delete account");
+};
+
+export const updateAvatar = async (req, res) => {
+  const result = await uploadImage(req.file);
+  const user = await svc.updateAvatar(req.userId, result.secure_url);
+  return ok(res, user, "Update avatar");
 };

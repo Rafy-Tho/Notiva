@@ -61,3 +61,13 @@ export async function deleteAccount(id) {
     session.endSession();
   }
 }
+
+export async function updateAvatar(id, url) {
+  const user = await User.findByIdAndUpdate(id, { avatar: url }, { new: true });
+  if (!user) {
+    const e = new Error("User not found");
+    e.status = 404;
+    throw e;
+  }
+  return user;
+}
