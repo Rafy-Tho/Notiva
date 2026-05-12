@@ -4,6 +4,7 @@ import express from "express";
 import helmet from "helmet";
 import { errorHandler, notFoundHandler } from "./middleware/arror.js";
 import authRoutes from "./routes/auth.routes.js";
+import meRoutes from "./routes/me.routes.js";
 import { generalLimiter } from "./middleware/rateLimit.js";
 export const app = express();
 
@@ -18,10 +19,13 @@ if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
 }
 app.use(generalLimiter);
-app.get("/api/v1/health", (req, res) => {
+
+app.get("/", (req, res) => {
   res.send("<h1>API is healthy</h1>");
 });
+
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/me", meRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
