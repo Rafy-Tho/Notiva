@@ -99,3 +99,64 @@ export const loginV = [
     .matches(/^[A-Za-z0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]+$/)
     .withMessage("Password contains invalid characters"),
 ];
+
+export const forgotV = [
+  body("email")
+    .trim()
+    .notEmpty()
+    .withMessage("Email is required")
+    .bail()
+    // Valid email format
+    .isEmail()
+    .withMessage("Invalid email format")
+    .bail()
+    // Normalize email (lowercase, remove dots for Gmail, etc.)
+    .normalizeEmail(),
+];
+
+export const resetV = [
+  body("token")
+    .trim()
+    .notEmpty()
+    .withMessage("Token is required")
+    .bail()
+    // Must be a string
+    .isString()
+    .withMessage("Token must be a string")
+    .bail()
+    // Only letters and spaces allowed
+    .matches(/^[a-f0-9]{64}$/i)
+    .withMessage("Invalid token")
+    .bail()
+    //  Minimum length
+    .isLength({ min: 32 })
+    .withMessage("Token must be at least 32 charaters"),
+
+  body("password")
+    .notEmpty()
+    .withMessage("Password is required")
+    .bail()
+    // Minimum length
+    .isLength({ min: 8 })
+    .withMessage("Password must be at least 8 characters")
+    .bail()
+    // At least one uppercase letter
+    .matches(/[A-Z]/)
+    .withMessage("Password must contain an uppercase letter")
+    .bail()
+    // At least one lowercase letter
+    .matches(/[a-z]/)
+    .withMessage("Password must contain a lowercase letter")
+    .bail()
+    // At least one number
+    .matches(/[0-9]/)
+    .withMessage("Password must contain a number")
+    .bail()
+    // At least one special character
+    .matches(/[!@#$%^&*]/)
+    .withMessage("Password must contain a special character")
+    .bail()
+    // Password cannot contain emojis or non-ASCII characters
+    .matches(/^[A-Za-z0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]+$/)
+    .withMessage("Password contains invalid characters"),
+];
