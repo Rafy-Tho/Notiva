@@ -8,7 +8,7 @@ export async function send({ to, subject, text, html }) {
       },
       body: JSON.stringify({
         sender: {
-          name: "Learning Platform",
+          name: process.env.BREVO_FROM_NAME,
           email: process.env.BREVO_FROM_EMAIL,
         },
         to: [{ email: to }],
