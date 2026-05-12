@@ -15,9 +15,10 @@ export function getMailer() {
       pass: process.env.BREVO_SMTP_PASS,
     },
     secure: false,
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 10000,
+    requireTLS: true,
+    connectionTimeout: 20000, // 20 seconds
+    greetingTimeout: 20000,
+    socketTimeout: 20000,
   });
 
   return transporter;
