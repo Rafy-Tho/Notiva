@@ -1,25 +1,33 @@
-import nodemailer from "nodemailer";
+export async function send({ to, subject, text, html }) {
+  try {
+    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "api-key": process.env.BREVO_API_KEY,
+      },
+      body: JSON.stringify({
+        sender: {
+          name: "Learning Platform",
+          email: process.env.BREVO_FROM_EMAIL,
+        },
+        to: [{ email: to }],
+        subject: subject,
+        textContent: text,
+        htmlContent: html || `<p>${text}</p>`,
+      }),
+    });
 
-let transporter = null;
+    const data = await res.json();
 
-export function getMailer() {
-  if (transporter) return transporter;
+    if (!res.ok) {
+      throw new Error("Something went wrong");
+    }
 
-  if (!process.env.BREVO_SMTP_HOST) return null;
-
-  transporter = nodemailer.createTransport({
-    host: process.env.BREVO_SMTP_HOST,
-    port: Number(process.env.BREVO_SMTP_PORT) || 587,
-    auth: {
-      user: process.env.BREVO_SMTP_USER,
-      pass: process.env.BREVO_SMTP_PASS,
-    },
-    secure: false,
-    requireTLS: true,
-    connectionTimeout: 20000, // 20 seconds
-    greetingTimeout: 20000,
-    socketTimeout: 20000,
-  });
-
-  return transporter;
+    console.log("✅ Email sent:", data.messageId);
+    return data;
+  } catch (err) {
+    console.error("❌ Email error:", err.message);
+    throw err;
+  }
 }
