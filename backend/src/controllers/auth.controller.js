@@ -127,3 +127,9 @@ export async function resetPassword(req, res) {
   // Send success response
   return ok(res, null, "Password updated");
 }
+
+export async function logout(req, res) {
+  await svc.revokeRefresh(req.cookies.rt);
+  res.clearCookie("rt", svc.cookieOpts());
+  return ok(res, null, "logged out");
+}
