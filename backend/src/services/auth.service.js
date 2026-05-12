@@ -230,3 +230,8 @@ export const cookieOpts = () => ({
   // Cookie available on all routes
   path: "/",
 });
+
+export async function revokeRefresh(token) {
+  if (!token) return;
+  await RefreshToken.deleteOne({ token: hashToken(token) });
+}
