@@ -23,7 +23,6 @@ export const update = async (req, res) => {
     req.params.id,
     req.body.name,
     req.body.color,
-    req.userId,
   );
   return ok(res, notebook, "Update notebook");
 };
