@@ -24,28 +24,28 @@ export const create = async (name, color, userId) => {
   return notebook;
 };
 
-export const update = async (id, name, color, userId) => {
-  const existing = await Notebook.findOne({ name, userId });
-
-  if (!existing) {
-    const e = new Error("Notebook not found");
-    e.status = 404; // Conflict
-    throw e;
-  }
-
+export const update = async (id, name, color) => {
   const notebook = await Notebook.findByIdAndUpdate(
     id,
     { name, color },
     { new: true },
   );
-
+  if (!notebook) {
+    const e = new Error("Notebook not found");
+    e.status = 404; // Conflict
+    throw e;
+  }
   return notebook;
 };
 
 export const remove = async (id) => {
-  const notebook = await Notebook.findOneAndUpdate(id, {
-    deletedAt: Date.now(),
-  });
+  const notebook = await Notebook.findByIdAndUpdate(
+    id,
+    {
+      deletedAt: Date.now(),
+    },
+    { new: true },
+  );
 
   if (!notebook) {
     const e = new Error("Notebook not found");
