@@ -5,6 +5,7 @@ import helmet from "helmet";
 import { errorHandler, notFoundHandler } from "./middleware/arror.js";
 import authRoutes from "./routes/auth.routes.js";
 import meRoutes from "./routes/me.routes.js";
+import notebooksRoutes from "./routes/notebooks.routes.js";
 import { generalLimiter } from "./middleware/rateLimit.js";
 export const app = express();
 
@@ -26,6 +27,7 @@ app.get("/", (req, res) => {
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/me", meRoutes);
+app.use("/api/v1/notebooks", notebooksRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
