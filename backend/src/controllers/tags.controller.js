@@ -1,4 +1,4 @@
-import * as svc from "../services/tag.service.js";
+import * as svc from "../services/tags.service.js";
 import { ok } from "../utils/response.js";
 
 // @desc List tag
