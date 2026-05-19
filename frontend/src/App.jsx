@@ -1,8 +1,9 @@
 import { Toaster as Sonner } from "./components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { useAuthStore } from "./store/authStore";
 import { useLayoutEffect } from "react";
+import { LoginPage } from "./pages/auth/LoginPage";
 const queryClient = new QueryClient();
 
 function Bootstrap({ children }) {
@@ -19,7 +20,11 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Sonner position="top-right" />
       <BrowserRouter>
-        <Bootstrap></Bootstrap>
+        <Bootstrap>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+          </Routes>
+        </Bootstrap>
       </BrowserRouter>
     </QueryClientProvider>
   );
