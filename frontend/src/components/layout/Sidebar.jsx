@@ -1,4 +1,4 @@
-import { Plus, Search } from "lucide-react";
+import { Archive, FileText, Plus, Search, Star, Trash2 } from "lucide-react";
 import { Button } from "../ui/button";
 import { Logo } from "../Logo";
 import { useNavigate } from "react-router-dom";
@@ -6,6 +6,8 @@ import { cn } from "../../lib/utils";
 import { useIsMobile } from "../../hooks/use-mobile";
 import { Sheet, SheetContent } from "../ui/sheet";
 import { useUIStore } from "../../store/useUIStore";
+import { Section } from "../sidebar-com/Section";
+import { NavItem } from "../sidebar-com/NavItem";
 
 export function Sidebar() {
   const navigate = useNavigate();
@@ -41,37 +43,15 @@ export function Sidebar() {
         </Button>
       </div>
 
-      {/* <nav className="flex-1 overflow-y-auto px-2 py-3 text-sm">
+      <nav className="flex-1 overflow-y-auto px-2 py-3 text-sm">
         <Section>
-          <NavItem
-            to="/notes"
-            icon={FileText}
-            label="All notes"
-            count={countIn((n) => !n.isArchived && !n.isDeleted)}
-          />
-          <NavItem
-            to="/favorites"
-            icon={Star}
-            label="Favorites"
-            count={countIn(
-              (n) => n.isFavorite && !n.isArchived && !n.isDeleted,
-            )}
-          />
-          <NavItem
-            to="/archive"
-            icon={Archive}
-            label="Archive"
-            count={countIn((n) => n.isArchived && !n.isDeleted)}
-          />
-          <NavItem
-            to="/trash"
-            icon={Trash2}
-            label="Trash"
-            count={countIn((n) => n.isDeleted)}
-          />
+          <NavItem to="/notes" icon={FileText} label="All notes" count={3} />
+          <NavItem to="/favorites" icon={Star} label="Favorites" count={4} />
+          <NavItem to="/archive" icon={Archive} label="Archive" count={5} />
+          <NavItem to="/trash" icon={Trash2} label="Trash" count={10} />
         </Section>
 
-        <SectionHeader
+        {/* <SectionHeader
           label="Notebooks"
           action={
             <button
@@ -85,8 +65,8 @@ export function Sidebar() {
               <Plus className="h-3.5 w-3.5" />
             </button>
           }
-        />
-        <Section>
+        /> */}
+        {/* <Section>
           {notebooks.map((nb) => (
             <NotebookRow
               key={nb.id}
@@ -103,9 +83,9 @@ export function Sidebar() {
               No notebooks yet
             </div>
           )}
-        </Section>
+        </Section> */}
 
-        <SectionHeader
+        {/* <SectionHeader
           label="Tags"
           action={
             <button
@@ -119,8 +99,8 @@ export function Sidebar() {
               <Plus className="h-3.5 w-3.5" />
             </button>
           }
-        />
-        <Section>
+        /> */}
+        {/* <Section>
           {tags.slice(0, 12).map((t) => (
             <TagRow
               key={t.id}
@@ -137,8 +117,8 @@ export function Sidebar() {
               No tags yet
             </div>
           )}
-        </Section>
-      </nav> */}
+        </Section> */}
+      </nav>
 
       {/* <div className="border-t border-border p-2">
         <NavLink
