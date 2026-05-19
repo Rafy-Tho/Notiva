@@ -29,6 +29,13 @@ async function parseError(response) {
 export async function fetchWithAuth(url, option = {}) {
   const accessToken = useAuthStore.getState().accessToken;
   const refreshAccessToken = useAuthStore.getState().refreshAccessToken;
+  const sessionRestored = useAuthStore.getState().sessionRestored;
+  const sessionRestorePromise = useAuthStore.getState().sessionRestorePromise;
+
+  // Wait for session restore before making any request
+  if (!sessionRestored && sessionRestorePromise) {
+    await sessionRestorePromise;
+  }
 
   const makeRequest = (token) =>
     fetch(url, {

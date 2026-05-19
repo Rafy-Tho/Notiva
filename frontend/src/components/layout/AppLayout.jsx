@@ -1,0 +1,15 @@
+import { Outlet } from "react-router-dom";
+
+function AppLayout() {
+  return (
+    <div className="flex h-dvh w-full overflow-hidden bg-background text-foreground">
+      <main className="flex-1 min-w-0 flex flex-col">
+        <div className="flex-1 min-h-0 flex flex-col">
+          <Outlet />
+        </div>
+      </main>
+    </div>
+  );
+}
+
+export default AppLayout;

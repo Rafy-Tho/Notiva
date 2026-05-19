@@ -5,16 +5,17 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Logo } from "../../components/Logo";
-import { toast } from "sonner";
+
 import { Loader2 } from "lucide-react";
 import { useAuthStore } from "../../store/authStore";
+import { toast } from "../../components/ui/sonner";
 
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const login = useAuthStore((s) => s.login);
-  const [email, setEmail] = useState("you@example.com");
-  const [password, setPassword] = useState("password");
+  const [email, setEmail] = useState("rafynomari@gmail.com");
+  const [password, setPassword] = useState("Password123!");
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
 
@@ -22,11 +23,11 @@ export function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      await login({ email, password });
-      const to = location.state?.from?.pathname || "/notes";
+      await login(email, password);
+      const to = location.state?.from?.pathname || "/";
       navigate(to, { replace: true });
     } catch (err) {
-      toast.error(err.message);
+      toast.error(err.message || "Something went wrong");
     } finally {
       setLoading(false);
     }

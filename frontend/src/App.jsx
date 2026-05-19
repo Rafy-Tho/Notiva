@@ -1,18 +1,32 @@
 import { Toaster as Sonner } from "./components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { useAuthStore } from "./store/authStore";
-import { useLayoutEffect } from "react";
+import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
+import { registerSessionExpiredHandler, useAuthStore } from "./store/authStore";
+import { useEffect } from "react";
 import { LoginPage } from "./pages/auth/LoginPage";
+import { PrivateRoute } from "./components/PrivateRoute";
+import AppLayout from "./components/layout/AppLayout";
+import { PublicRoute } from "./components/PublicRroute";
 const queryClient = new QueryClient();
 
 function Bootstrap({ children }) {
+  const navigate = useNavigate();
   const restoreSession = useAuthStore((state) => state.restoreSession);
+  const sessionRestored = useAuthStore((state) => state.sessionRestored);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
+    // Tell the store where to send the user when refresh fails
+    registerSessionExpiredHandler(() => navigate("/login", { replace: true }));
     restoreSession();
   }, []);
 
+  if (!sessionRestored) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <span>Loading...</span>
+      </div>
+    );
+  }
   return <>{children}</>;
 }
 function App() {
@@ -22,7 +36,18 @@ function App() {
       <BrowserRouter>
         <Bootstrap>
           <Routes>
-            <Route path="/login" element={<LoginPage />} />
+            <Route element={<PublicRoute />}>
+              <Route path="/login" element={<LoginPage />} />
+            </Route>
+            <Route
+              element={
+                <PrivateRoute>
+                  <AppLayout></AppLayout>
+                </PrivateRoute>
+              }
+            >
+              <Route path="/" element={<h1>Home</h1>} />
+            </Route>
           </Routes>
         </Bootstrap>
       </BrowserRouter>

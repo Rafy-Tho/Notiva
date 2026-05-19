@@ -1,5 +1,6 @@
 // Import all authentication service functions
 // Example: register, login, issueTokens, rotateRefresh, etc.
+import { User } from "../models/User.js";
 import * as svc from "../services/auth.service.js";
 
 // Import email sending service
@@ -89,13 +90,13 @@ export async function refresh(req, res, next) {
   // Rotate refresh token
   // Old token becomes invalid
   const tokens = await svc.rotateRefresh(token, meta(req));
-
   // Save new refresh token
   res.cookie("rt", tokens.refreshToken, svc.cookieOpts());
 
   // Return new access token
   return ok(res, {
     accessToken: tokens.accessToken,
+    user: tokens.user,
   });
 }
 

@@ -101,7 +101,7 @@ export async function issueTokens(user, meta = {}) {
   });
 
   // Return raw tokens to client
-  return { accessToken, refreshToken };
+  return { accessToken, refreshToken, user };
 }
 
 /**
