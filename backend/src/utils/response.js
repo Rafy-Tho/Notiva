@@ -1,8 +1,8 @@
 export const ok = (res, data, message = "ok", status = 200) =>
-  res.status(status).json({ success: true, data, error: null, message });
+  res.status(status).json({ success: true, data, code: null, message });
 
-export const fail = (res, error, status = 400, message = "fail") =>
-  res.status(status).json({ success: false, data: null, error, message });
+export const fail = (res, message = "fail", status = 400, code = null) =>
+  res.status(status).json({ success: false, data: null, message, code });
 
 export const asyncHandler = (fn) => (req, res, next) =>
   Promise.resolve(fn(req, res, next)).catch(next);
