@@ -1,15 +1,19 @@
-import { fail } from "../utils/response.js";
 import { verifyAccess } from "../utils/tokens.js";
 
 export function authRequired(req, res, next) {
   const h = req.headers.authorization || "";
   const token = h?.startsWith("Bearer ") ? h.slice(7) : null;
-  if (!token) return fail(res, "Unauthorized", 401);
+  if (!token) {
+    const err = new Error("No token provided");
+    err.status = 401;
+    err.code = "NO_TOKEN";
+    return next(err);
+  }
   try {
     const payload = verifyAccess(token);
     req.userId = payload.sub;
     next();
-  } catch {
-    return fail(res, "Invalid token", 401);
+  } catch (err) {
+    next(err);
   }
 }

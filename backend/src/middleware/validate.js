@@ -7,7 +7,7 @@ export const validate = (chains) => async (req, res, next) => {
   return res.status(400).json({
     success: false,
     data: null,
-    error: "ValidationError",
+    code: "ValidationError",
     message: errs
       .array()
       .map((e) => e.msg)
