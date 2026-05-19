@@ -55,7 +55,7 @@ export const useAuthStore = create((set, get) => ({
   restoreSession: async () => {
     set({ isLoading: true });
     try {
-      const res = await fetch("/api/auth/refresh", {
+      const res = await fetch(`${BASE_URL}/auth/refresh`, {
         method: "POST",
         credentials: "include",
       });

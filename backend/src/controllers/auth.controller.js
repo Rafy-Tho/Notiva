@@ -76,10 +76,16 @@ export async function login(req, res) {
 /**
  * Refresh expired access token
  */
-export async function refresh(req, res) {
+export async function refresh(req, res, next) {
   // Get refresh token from cookies
   const token = req.cookies?.rt;
-
+  // No cookie at all — user is not logged in
+  if (!token) {
+    const err = new Error("No refresh token");
+    err.status = 401;
+    err.code = "NO_TOKEN";
+    return next(err);
+  }
   // Rotate refresh token
   // Old token becomes invalid
   const tokens = await svc.rotateRefresh(token, meta(req));
