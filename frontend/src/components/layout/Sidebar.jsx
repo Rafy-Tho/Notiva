@@ -1,7 +1,15 @@
-import { Archive, FileText, Plus, Search, Star, Trash2 } from "lucide-react";
+import {
+  Archive,
+  FileText,
+  Plus,
+  Search,
+  Settings,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { Button } from "../ui/button";
 import { Logo } from "../Logo";
-import { useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { cn } from "../../lib/utils";
 import { useIsMobile } from "../../hooks/use-mobile";
 import { Sheet, SheetContent } from "../ui/sheet";
@@ -10,6 +18,8 @@ import { Section, SectionHeader } from "../sidebar-com/Section";
 import { NavItem } from "../sidebar-com/NavItem";
 import NotebookRow from "../sidebar-com/NotebookRow";
 import TagRow from "../sidebar-com/TagRow";
+import { useAuthStore } from "../../store/authStore";
+import { Avatar, AvatarFallback } from "../ui/avatar";
 const notebooks = [
   {
     id: 1,
@@ -35,6 +45,7 @@ export function Sidebar() {
   const isMobile = useIsMobile();
   const sidebarOpen = useUIStore((state) => state.sidebarOpen);
   const setSidebar = useUIStore((state) => state.setSidebar);
+  const user = useAuthStore((s) => s.user);
   const inner = (
     <>
       <div className="flex h-12 items-center justify-between px-3 border-b border-border">
@@ -129,7 +140,7 @@ export function Sidebar() {
         </Section>
       </nav>
 
-      {/* <div className="border-t border-border p-2">
+      <div className="border-t border-border p-2">
         <NavLink
           to="/settings"
           className={({ isActive }) =>
@@ -154,7 +165,7 @@ export function Sidebar() {
           </div>
           <Settings className="h-3.5 w-3.5 text-muted-foreground" />
         </NavLink>
-      </div> */}
+      </div>
 
       {/* Create notebook */}
       {/* <Dialog open={createOpen} onOpenChange={setCreateOpen}>
