@@ -21,6 +21,7 @@ import TagRow from "../sidebar-com/TagRow";
 import { useAuthStore } from "../../store/authStore";
 import { Avatar, AvatarFallback } from "../ui/avatar";
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -29,16 +30,9 @@ import {
   DialogTitle,
 } from "../ui/dialog";
 import NameColorForm from "../sidebar-com/NameColorForm";
-const notebooks = [
-  {
-    id: 1,
-    name: "Personal",
-    color: "245 80% 66%",
-    createdAt: Date.now(),
-  },
-  { id: 1, name: "Work", color: "200 80% 60%", createdAt: Date.now() },
-  { id: 1, name: "Ideas", color: "38 92% 60%", createdAt: Date.now() },
-];
+import { useCreateNotebook, useNotebooks } from "../../hooks/useNotebooks";
+import EditNotebookForm from "../sidebar-com/EditNotebookForm";
+import DeleteNotebookDialog from "../sidebar-com/DeleteNotebookDialog";
 const tags = [
   {
     id: 1,
@@ -63,12 +57,25 @@ export function Sidebar() {
   const [createOpen, setCreateOpen] = useState(false);
   const [name, setName] = useState("");
   const [color, setColor] = useState(COLORS[0]);
-
+  const [editNotebook, setEditNotebook] = useState(null);
+  const [deleteNotebook, setDeleteNotebook] = useState(null);
+  // react query
+  const notebooks = useNotebooks();
+  const createNoteBook = useCreateNotebook();
+  // zustand
   const sidebarOpen = useUIStore((state) => state.sidebarOpen);
   const setSidebar = useUIStore((state) => state.setSidebar);
   const user = useAuthStore((s) => s.user);
-
-  const createNotebook = () => {};
+  // handlers
+  const createNotebook = async () => {
+    try {
+      await createNoteBook.mutateAsync({ name, color });
+      setCreateOpen(false);
+      toast.success("Notebook created");
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
   const inner = (
     <>
       <div className="flex h-12 items-center justify-between px-3 border-b border-border">
@@ -122,20 +129,27 @@ export function Sidebar() {
           }
         />
         <Section>
-          {notebooks.map((nb) => (
-            <NotebookRow
-              key={nb.id}
-              notebook={nb}
-              count={6}
-              onEdit={() => {}}
-              onDelete={() => {}}
-            />
-          ))}
-          {notebooks.length === 0 && (
-            <div className="px-2 py-1.5 text-xs text-muted-foreground">
-              No notebooks yet
-            </div>
-          )}
+          {notebooks.isLoading && <div>Loading</div>}
+          {notebooks.isError && <div>Error</div>}
+          {!notebooks.isLoading &&
+            !notebooks.isError &&
+            notebooks.data.length > 0 &&
+            notebooks.data.map((nb) => (
+              <NotebookRow
+                key={nb.id}
+                notebook={nb}
+                count={6}
+                onEdit={() => setEditNotebook(nb)}
+                onDelete={() => setDeleteNotebook(nb)}
+              />
+            ))}
+          {!notebooks.isLoading &&
+            !notebooks.isError &&
+            notebooks.data.length === 0 && (
+              <div className="px-2 py-1.5 text-xs text-muted-foreground">
+                No notebooks yet
+              </div>
+            )}
         </Section>
 
         <SectionHeader
@@ -217,7 +231,7 @@ export function Sidebar() {
       </Dialog>
 
       {/* Edit notebook */}
-      {/* <Dialog
+      <Dialog
         open={!!editNotebook}
         onOpenChange={(o) => !o && setEditNotebook(null)}
       >
@@ -229,17 +243,17 @@ export function Sidebar() {
             <EditNotebookForm
               notebook={editNotebook}
               onClose={() => setEditNotebook(null)}
-              onSaved={() => qc.invalidateQueries({ queryKey: ["notebooks"] })}
+              onSaved={() => {}}
             />
           )}
         </DialogContent>
-      </Dialog> */}
+      </Dialog>
 
       {/* Delete notebook */}
-      {/* <DeleteNotebookDialog
+      <DeleteNotebookDialog
         notebook={deleteNotebook}
         onClose={() => setDeleteNotebook(null)}
-      /> */}
+      />
 
       {/* Create tag */}
       {/* <Dialog open={tagCreateOpen} onOpenChange={setTagCreateOpen}>
