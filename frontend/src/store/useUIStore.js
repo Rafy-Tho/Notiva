@@ -1,4 +1,6 @@
+// store/uiStore.js
 import { create } from "zustand";
+import { devtools } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
 import { persist, createJSONStorage } from "zustand/middleware";
 
@@ -6,26 +8,79 @@ const initialSidebarOpen =
   typeof window !== "undefined" && window.innerWidth >= 768;
 
 export const useUIStore = create(
-  persist(
-    immer((set) => ({
-      theme: "system",
-      fontPref: "inter",
-      sidebarOpen: initialSidebarOpen,
-      cmdkOpen: false,
-      setTheme: (theme) => set((s) => (s.theme = theme)),
-      setFontPref: (fontPref) => set((s) => (s.fontPref = fontPref)),
-      toggleSidebar: () => set((s) => (s.sidebarOpen = !s.sidebarOpen)),
-      toggleCmdk: () => set((s) => (s.cmdkOpen = !s.cmdkOpen)),
-      setCmdk: (cmdkOpen) => set((s) => (s.cmdkOpen = cmdkOpen)),
-      setSidebar: (sidebarOpen) => set((s) => (s.sidebarOpen = sidebarOpen)),
-    })),
-    {
-      name: "ui",
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({
-        theme: state.theme,
-        fontPref: state.fontPref,
-      }),
-    },
+  devtools(
+    persist(
+      immer((set) => ({
+        // State
+        theme: "system",
+        fontPref: "inter",
+        sidebarOpen: initialSidebarOpen,
+        cmdkOpen: false,
+
+        // Actions
+        setTheme: (theme) =>
+          set(
+            (s) => {
+              s.theme = theme;
+            },
+            false,
+            "ui/setTheme",
+          ),
+
+        setFontPref: (fontPref) =>
+          set(
+            (s) => {
+              s.fontPref = fontPref;
+            },
+            false,
+            "ui/setFontPref",
+          ),
+
+        toggleSidebar: () =>
+          set(
+            (s) => {
+              s.sidebarOpen = !s.sidebarOpen;
+            },
+            false,
+            "ui/toggleSidebar",
+          ),
+
+        setSidebar: (sidebarOpen) =>
+          set(
+            (s) => {
+              s.sidebarOpen = sidebarOpen;
+            },
+            false,
+            "ui/setSidebar",
+          ),
+
+        toggleCmdk: () =>
+          set(
+            (s) => {
+              s.cmdkOpen = !s.cmdkOpen;
+            },
+            false,
+            "ui/toggleCmdk",
+          ),
+
+        setCmdk: (cmdkOpen) =>
+          set(
+            (s) => {
+              s.cmdkOpen = cmdkOpen;
+            },
+            false,
+            "ui/setCmdk",
+          ),
+      })),
+      {
+        name: "ui",
+        storage: createJSONStorage(() => localStorage),
+        partialize: (state) => ({
+          theme: state.theme,
+          fontPref: state.fontPref,
+        }),
+      },
+    ),
+    { name: "UIStore" }, // ← label in DevTools
   ),
 );

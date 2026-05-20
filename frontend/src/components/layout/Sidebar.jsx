@@ -6,9 +6,30 @@ import { cn } from "../../lib/utils";
 import { useIsMobile } from "../../hooks/use-mobile";
 import { Sheet, SheetContent } from "../ui/sheet";
 import { useUIStore } from "../../store/useUIStore";
-import { Section } from "../sidebar-com/Section";
+import { Section, SectionHeader } from "../sidebar-com/Section";
 import { NavItem } from "../sidebar-com/NavItem";
-
+import NotebookRow from "../sidebar-com/NotebookRow";
+import TagRow from "../sidebar-com/TagRow";
+const notebooks = [
+  {
+    id: 1,
+    name: "Personal",
+    color: "245 80% 66%",
+    createdAt: Date.now(),
+  },
+  { id: 1, name: "Work", color: "200 80% 60%", createdAt: Date.now() },
+  { id: 1, name: "Ideas", color: "38 92% 60%", createdAt: Date.now() },
+];
+const tags = [
+  {
+    id: 1,
+    name: "Personal",
+    color: "245 80% 66%",
+    createdAt: Date.now(),
+  },
+  { id: 1, name: "Work", color: "200 80% 60%", createdAt: Date.now() },
+  { id: 1, name: "Ideas", color: "38 92% 60%", createdAt: Date.now() },
+];
 export function Sidebar() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -51,31 +72,25 @@ export function Sidebar() {
           <NavItem to="/trash" icon={Trash2} label="Trash" count={10} />
         </Section>
 
-        {/* <SectionHeader
+        <SectionHeader
           label="Notebooks"
           action={
             <button
-              onClick={() => {
-                setName("");
-                setColor(COLORS[0]);
-                setCreateOpen(true);
-              }}
+              onClick={() => {}}
               className="text-muted-foreground hover:text-foreground"
             >
               <Plus className="h-3.5 w-3.5" />
             </button>
           }
-        /> */}
-        {/* <Section>
+        />
+        <Section>
           {notebooks.map((nb) => (
             <NotebookRow
               key={nb.id}
               notebook={nb}
-              count={countIn(
-                (n) => n.notebookId === nb.id && !n.isDeleted && !n.isArchived,
-              )}
-              onEdit={() => setEditNotebook(nb)}
-              onDelete={() => setDeleteNotebook(nb)}
+              count={6}
+              onEdit={() => {}}
+              onDelete={() => {}}
             />
           ))}
           {notebooks.length === 0 && (
@@ -83,33 +98,27 @@ export function Sidebar() {
               No notebooks yet
             </div>
           )}
-        </Section> */}
+        </Section>
 
-        {/* <SectionHeader
+        <SectionHeader
           label="Tags"
           action={
             <button
-              onClick={() => {
-                setName("");
-                setColor(COLORS[0]);
-                setTagCreateOpen(true);
-              }}
+              onClick={() => {}}
               className="text-muted-foreground hover:text-foreground"
             >
               <Plus className="h-3.5 w-3.5" />
             </button>
           }
-        /> */}
-        {/* <Section>
+        />
+        <Section>
           {tags.slice(0, 12).map((t) => (
             <TagRow
               key={t.id}
               tag={t}
-              count={countIn(
-                (n) => n.tagIds.includes(t.id) && !n.isDeleted && !n.isArchived,
-              )}
-              onEdit={() => setEditTag(t)}
-              onDelete={() => setDeleteTag(t)}
+              count={9}
+              onEdit={() => {}}
+              onDelete={() => {}}
             />
           ))}
           {tags.length === 0 && (
@@ -117,7 +126,7 @@ export function Sidebar() {
               No tags yet
             </div>
           )}
-        </Section> */}
+        </Section>
       </nav>
 
       {/* <div className="border-t border-border p-2">
