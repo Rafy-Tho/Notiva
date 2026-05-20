@@ -16,6 +16,7 @@ export const useUIStore = create(
         fontPref: "inter",
         sidebarOpen: initialSidebarOpen,
         cmdkOpen: false,
+        aiPanelOpen: false,
 
         // Actions
         setTheme: (theme) =>
@@ -70,6 +71,15 @@ export const useUIStore = create(
             },
             false,
             "ui/setCmdk",
+          ),
+
+        toggleAiPanel: () =>
+          set(
+            (s) => {
+              s.aiPanelOpen = !s.aiPanelOpen;
+            },
+            false,
+            "ui/toggleAiPanel",
           ),
       })),
       {
