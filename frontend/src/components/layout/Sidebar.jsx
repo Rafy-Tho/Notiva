@@ -20,6 +20,15 @@ import NotebookRow from "../sidebar-com/NotebookRow";
 import TagRow from "../sidebar-com/TagRow";
 import { useAuthStore } from "../../store/authStore";
 import { Avatar, AvatarFallback } from "../ui/avatar";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
+import NameColorForm from "../sidebar-com/NameColorForm";
 const notebooks = [
   {
     id: 1,
@@ -40,12 +49,26 @@ const tags = [
   { id: 1, name: "Work", color: "200 80% 60%", createdAt: Date.now() },
   { id: 1, name: "Ideas", color: "38 92% 60%", createdAt: Date.now() },
 ];
+const COLORS = [
+  "245 80% 66%",
+  "200 80% 60%",
+  "38 92% 60%",
+  "142 65% 50%",
+  "0 70% 60%",
+  "280 70% 65%",
+];
 export function Sidebar() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const [createOpen, setCreateOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [color, setColor] = useState(COLORS[0]);
+
   const sidebarOpen = useUIStore((state) => state.sidebarOpen);
   const setSidebar = useUIStore((state) => state.setSidebar);
   const user = useAuthStore((s) => s.user);
+
+  const createNotebook = () => {};
   const inner = (
     <>
       <div className="flex h-12 items-center justify-between px-3 border-b border-border">
@@ -87,7 +110,11 @@ export function Sidebar() {
           label="Notebooks"
           action={
             <button
-              onClick={() => {}}
+              onClick={() => {
+                setName("");
+                setColor(COLORS[0]);
+                setCreateOpen(true);
+              }}
               className="text-muted-foreground hover:text-foreground"
             >
               <Plus className="h-3.5 w-3.5" />
@@ -168,7 +195,7 @@ export function Sidebar() {
       </div>
 
       {/* Create notebook */}
-      {/* <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>New notebook</DialogTitle>
@@ -187,7 +214,7 @@ export function Sidebar() {
             <Button onClick={createNotebook}>Create</Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog> */}
+      </Dialog>
 
       {/* Edit notebook */}
       {/* <Dialog
