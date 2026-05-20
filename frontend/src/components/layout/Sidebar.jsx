@@ -7,42 +7,35 @@ import {
   Star,
   Trash2,
 } from "lucide-react";
-import { Button } from "../ui/button";
-import { Logo } from "../Logo";
-import { NavLink, useNavigate } from "react-router-dom";
-import { cn } from "../../lib/utils";
+import { useState } from "react";
+import { NavLink } from "react-router-dom";
+import { toast } from "sonner";
 import { useIsMobile } from "../../hooks/use-mobile";
-import { Sheet, SheetContent } from "../ui/sheet";
+import { useCreateNotebook, useNotebooks } from "../../hooks/useNotebooks";
+import { useCreateTag, useDeleteTag, useTags } from "../../hooks/useTags";
+import { cn } from "../../lib/utils";
+import { useAuthStore } from "../../store/authStore";
 import { useUIStore } from "../../store/useUIStore";
-import { Section, SectionHeader } from "../sidebar-com/Section";
+import { Logo } from "../Logo";
+import DeleteNotebookDialog from "../sidebar-com/DeleteNotebookDialog";
+import EditNotebookForm from "../sidebar-com/EditNotebookForm";
+import EditTagForm from "../sidebar-com/EditTagForm";
+import NameColorForm from "../sidebar-com/NameColorForm";
 import { NavItem } from "../sidebar-com/NavItem";
 import NotebookRow from "../sidebar-com/NotebookRow";
+import { Section, SectionHeader } from "../sidebar-com/Section";
 import TagRow from "../sidebar-com/TagRow";
-import { useAuthStore } from "../../store/authStore";
 import { Avatar, AvatarFallback } from "../ui/avatar";
-import { useState } from "react";
-import { toast } from "sonner";
+import { Button } from "../ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "../ui/dialog";
-import NameColorForm from "../sidebar-com/NameColorForm";
-import { useCreateNotebook, useNotebooks } from "../../hooks/useNotebooks";
-import EditNotebookForm from "../sidebar-com/EditNotebookForm";
-import DeleteNotebookDialog from "../sidebar-com/DeleteNotebookDialog";
-const tags = [
-  {
-    id: 1,
-    name: "Personal",
-    color: "245 80% 66%",
-    createdAt: Date.now(),
-  },
-  { id: 1, name: "Work", color: "200 80% 60%", createdAt: Date.now() },
-  { id: 1, name: "Ideas", color: "38 92% 60%", createdAt: Date.now() },
-];
+import { Sheet, SheetContent } from "../ui/sheet";
 const COLORS = [
   "245 80% 66%",
   "200 80% 60%",
@@ -52,16 +45,21 @@ const COLORS = [
   "280 70% 65%",
 ];
 export function Sidebar() {
-  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [createOpen, setCreateOpen] = useState(false);
+  const [tagCreateOpen, setTagCreateOpen] = useState(false);
   const [name, setName] = useState("");
   const [color, setColor] = useState(COLORS[0]);
   const [editNotebook, setEditNotebook] = useState(null);
+  const [editTag, setEditTag] = useState(null);
   const [deleteNotebook, setDeleteNotebook] = useState(null);
+  const [deleteTag, setDeleteTag] = useState(null);
   // react query
   const notebooks = useNotebooks();
   const createNoteBook = useCreateNotebook();
+  const tags = useTags();
+  const tagCreate = useCreateTag();
+  const tagDelete = useDeleteTag();
   // zustand
   const sidebarOpen = useUIStore((state) => state.sidebarOpen);
   const setSidebar = useUIStore((state) => state.setSidebar);
@@ -72,6 +70,24 @@ export function Sidebar() {
       await createNoteBook.mutateAsync({ name, color });
       setCreateOpen(false);
       toast.success("Notebook created");
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+  const createTag = async () => {
+    try {
+      await tagCreate.mutateAsync({ name, color });
+      setTagCreateOpen(false);
+      toast.success("Tag created");
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+  const deleteTagHandler = async () => {
+    try {
+      await tagDelete.mutateAsync(deleteTag.id);
+      setDeleteTag(null);
+      toast.success("Tag deleted");
     } catch (err) {
       toast.error(err.message);
     }
@@ -156,7 +172,9 @@ export function Sidebar() {
           label="Tags"
           action={
             <button
-              onClick={() => {}}
+              onClick={() => {
+                setTagCreateOpen(true);
+              }}
               className="text-muted-foreground hover:text-foreground"
             >
               <Plus className="h-3.5 w-3.5" />
@@ -164,16 +182,25 @@ export function Sidebar() {
           }
         />
         <Section>
-          {tags.slice(0, 12).map((t) => (
-            <TagRow
-              key={t.id}
-              tag={t}
-              count={9}
-              onEdit={() => {}}
-              onDelete={() => {}}
-            />
-          ))}
-          {tags.length === 0 && (
+          {tags.isLoading && <div>Loading</div>}
+          {tags.isError && <div>Error</div>}
+          {!tags.isLoading &&
+            !tags.isError &&
+            tags.data.length > 0 &&
+            tags.data.slice(0, 12).map((t) => (
+              <TagRow
+                key={t.id}
+                tag={t}
+                count={9}
+                onEdit={() => {
+                  setEditTag(t);
+                }}
+                onDelete={() => {
+                  setDeleteTag(t);
+                }}
+              />
+            ))}
+          {!tags.isLoading && !tags.isError && tags.data.length === 0 && (
             <div className="px-2 py-1.5 text-xs text-muted-foreground">
               No tags yet
             </div>
@@ -256,7 +283,7 @@ export function Sidebar() {
       />
 
       {/* Create tag */}
-      {/* <Dialog open={tagCreateOpen} onOpenChange={setTagCreateOpen}>
+      <Dialog open={tagCreateOpen} onOpenChange={setTagCreateOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>New tag</DialogTitle>
@@ -275,26 +302,22 @@ export function Sidebar() {
             <Button onClick={createTag}>Create</Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog> */}
+      </Dialog>
 
       {/* Edit tag */}
-      {/* <Dialog open={!!editTag} onOpenChange={(o) => !o && setEditTag(null)}>
+      <Dialog open={!!editTag} onOpenChange={(o) => !o && setEditTag(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit tag</DialogTitle>
           </DialogHeader>
           {editTag && (
-            <EditTagForm
-              tag={editTag}
-              onClose={() => setEditTag(null)}
-              onSaved={() => qc.invalidateQueries({ queryKey: ["tags"] })}
-            />
+            <EditTagForm tag={editTag} onClose={() => setEditTag(null)} />
           )}
         </DialogContent>
-      </Dialog> */}
+      </Dialog>
 
       {/* Delete tag */}
-      {/* <Dialog open={!!deleteTag} onOpenChange={(o) => !o && setDeleteTag(null)}>
+      <Dialog open={!!deleteTag} onOpenChange={(o) => !o && setDeleteTag(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete tag “{deleteTag?.name}”?</DialogTitle>
@@ -307,23 +330,12 @@ export function Sidebar() {
             <Button variant="ghost" onClick={() => setDeleteTag(null)}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={async () => {
-                if (!deleteTag) return;
-                await tagsApi.remove(deleteTag.id);
-                qc.invalidateQueries({ queryKey: ["tags"] });
-                qc.invalidateQueries({ queryKey: ["notes"] });
-                qc.invalidateQueries({ queryKey: ["sidebar-counts"] });
-                toast.success("Tag deleted");
-                setDeleteTag(null);
-              }}
-            >
+            <Button variant="destructive" onClick={deleteTagHandler}>
               Delete
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog> */}
+      </Dialog>
     </>
   );
 
