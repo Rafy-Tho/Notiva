@@ -5,7 +5,7 @@ const { Schema } = mongoose;
 const NoteSchema = new Schema(
   {
     title: {
-      Type: String,
+      type: String,
       default: "Untitled",
     },
     content: {
@@ -21,7 +21,6 @@ const NoteSchema = new Schema(
     notebookId: {
       type: Schema.Types.ObjectId,
       ref: "Notebook",
-      required: true,
       index: true,
     },
     tags: [

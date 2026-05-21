@@ -7,6 +7,7 @@ import authRoutes from "./routes/auth.routes.js";
 import meRoutes from "./routes/me.routes.js";
 import notebooksRoutes from "./routes/notebooks.routes.js";
 import tagsRoutes from "./routes/tags.routes.js";
+import notesRoutes from "./routes/notes.routes.js";
 import { generalLimiter } from "./middleware/rateLimit.js";
 export const app = express();
 
@@ -30,5 +31,6 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/me", meRoutes);
 app.use("/api/v1/notebooks", notebooksRoutes);
 app.use("/api/v1/tags", tagsRoutes);
+app.use("/api/v1/notes", notesRoutes);
 app.use(notFoundHandler);
 app.use(errorHandler);
