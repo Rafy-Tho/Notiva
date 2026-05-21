@@ -1,5 +1,7 @@
 import { FileQuestion } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
+import { NoteCard } from "./NoteCard";
+import { useParams } from "react-router-dom";
 
 export function NoteList({
   notes,
@@ -7,6 +9,7 @@ export function NoteList({
   emptyTitle = "No notes",
   emptyHint = "Create your first note with ⌘N",
 }) {
+  const { id } = useParams();
   if (loading) {
     return (
       <div className="p-3 space-y-3">
@@ -37,9 +40,9 @@ export function NoteList({
 
   return (
     <div className="overflow-y-auto h-full">
-      {/* {notes.map((n) => (
+      {notes.map((n) => (
         <NoteCard key={n.id} note={n} active={n.id === id} />
-      ))} */}
+      ))}
     </div>
   );
 }

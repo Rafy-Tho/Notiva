@@ -90,6 +90,9 @@ export const useAuthStore = create(
 
       // ── Restore session on page reload ───────────────────────
       restoreSession: () => {
+        // Already running or completed — return the same promise
+        const existing = get().sessionRestorePromise;
+        if (existing) return existing;
         // Return and store the promise so fetchWithAuth can await it
         const promise = (async () => {
           set({ isLoading: true }, false, "auth/restoreSession/pending");
