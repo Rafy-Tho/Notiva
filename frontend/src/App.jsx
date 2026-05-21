@@ -7,6 +7,8 @@ import { LoginPage } from "./pages/auth/LoginPage";
 import { PrivateRoute } from "./components/PrivateRoute";
 import AppLayout from "./components/layout/AppLayout";
 import { PublicRoute } from "./components/PublicRroute";
+import Index from "./pages/Index";
+import { NotesPage } from "./pages/NotesPage";
 const queryClient = new QueryClient();
 
 function Bootstrap({ children }) {
@@ -46,7 +48,10 @@ function App() {
                 </PrivateRoute>
               }
             >
-              <Route path="/" element={<h1>Home</h1>} />
+              <Route path="/" element={<Index />} />
+              <Route path="/notes" element={<NotesPage title="All notes" />}>
+                {/* <Route path=":id" element={<NoteDetailPage />} /> */}
+              </Route>
             </Route>
           </Routes>
         </Bootstrap>

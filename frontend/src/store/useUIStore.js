@@ -17,7 +17,7 @@ export const useUIStore = create(
         sidebarOpen: initialSidebarOpen,
         cmdkOpen: false,
         aiPanelOpen: false,
-
+        noteListOpen: true,
         // Actions
         setTheme: (theme) =>
           set(
@@ -80,6 +80,33 @@ export const useUIStore = create(
             },
             false,
             "ui/toggleAiPanel",
+          ),
+
+        setAiPanel: (aiPanelOpen) =>
+          set(
+            (s) => {
+              s.aiPanelOpen = aiPanelOpen;
+            },
+            false,
+            "ui/setAiPanel",
+          ),
+
+        toggleNoteList: () =>
+          set(
+            (s) => {
+              s.noteListOpen = !s.noteListOpen;
+            },
+            false,
+            "ui/toggleNoteList",
+          ),
+
+        setNoteList: (noteListOpen) =>
+          set(
+            (s) => {
+              s.noteListOpen = noteListOpen;
+            },
+            false,
+            "ui/setNoteList",
           ),
       })),
       {
