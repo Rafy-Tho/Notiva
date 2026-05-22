@@ -25,13 +25,13 @@ export const create = [
     .withMessage("Invalid notebook id")
     .bail(),
 
-  body("tagsIds")
+  body("tagIds")
     .optional({ nullable: true })
     .isArray({ min: 0 })
     .withMessage("Invalid tags")
     .bail(),
 
-  body("tagsIds.*").optional().isMongoId().withMessage("Invalid tag id").bail(),
+  body("tagIds.*").optional().isMongoId().withMessage("Invalid tag id").bail(),
 ];
 
 export const update = [
@@ -61,13 +61,13 @@ export const update = [
     .withMessage("Invalid notebook id")
     .bail(),
 
-  body("tagsIds")
+  body("tagIds")
     .optional({ nullable: true })
     .isArray({ min: 0 })
     .withMessage("Invalid tags")
     .bail(),
 
-  body("tagsIds.*").optional().isMongoId().withMessage("Invalid tag id").bail(),
+  body("tagIds.*").optional().isMongoId().withMessage("Invalid tag id").bail(),
 
   body("isPinned")
     .optional()
@@ -81,7 +81,7 @@ export const update = [
     .withMessage("isArchived must be a boolean")
     .bail(),
 
-  body("isFavourite")
+  body("isFavorite")
     .optional()
     .isBoolean()
     .withMessage("isFavourite must be a boolean")

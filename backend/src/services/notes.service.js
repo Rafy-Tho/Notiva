@@ -17,7 +17,7 @@ export async function listNotes(userId, query = {}) {
 
   // Tag filter
   if (query.tagId) {
-    filter.tags = query.tagId;
+    filter.tagIds = query.tagId;
   }
 
   // Favorite filter
@@ -48,7 +48,7 @@ export async function listNotes(userId, query = {}) {
   const sort =
     query.sort === "title" ? { title: 1 } : { isPinned: -1, updatedAt: -1 };
 
-  return await Note.find(filter).sort(sort).lean();
+  return await Note.find(filter).sort(sort);
 }
 
 export async function getNote(userId, id) {
@@ -68,7 +68,7 @@ export async function createNote(userId, data) {
     title: data.title || "Untitled",
     content,
     notebookId: data.notebookId || null,
-    tags: data.tags || [],
+    tagIds: data.tagIds || [],
     cover: data.cover || {},
     wordCound: wordCount(content) || 0,
   });

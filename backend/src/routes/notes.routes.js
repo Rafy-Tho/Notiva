@@ -11,5 +11,5 @@ r.get("/", asyncHandler(c.list));
 r.post("/", validate(v.create), asyncHandler(c.create));
 r.patch("/:id", validate(v.update), asyncHandler(c.update));
 r.delete("/:id", asyncHandler(c.remove));
-
+r.get("/:id", asyncHandler(c.get));
 export default r;

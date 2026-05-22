@@ -23,7 +23,7 @@ const NoteSchema = new Schema(
       ref: "Notebook",
       index: true,
     },
-    tags: [
+    tagIds: [
       {
         type: Schema.Types.ObjectId,
         ref: "Tag",
@@ -34,7 +34,7 @@ const NoteSchema = new Schema(
       type: Boolean,
       default: false,
     },
-    isFavourite: {
+    isFavorite: {
       type: Boolean,
       default: false,
     },
