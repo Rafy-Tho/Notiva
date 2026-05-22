@@ -1,12 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchWithAuth } from "../lib/fecthWithAuth";
+import { useAuthStore } from "../store/authStore";
 
 const BASE_URL = import.meta.env.VITE_BASE_API;
 
 // ── GET ──────────────────────────────────────────────────────────
 export function useNotebooks() {
+  const token = useAuthStore((s) => s.accessToken);
   return useQuery({
     queryKey: ["notebooks"],
+    enabled: !!token,
     queryFn: async () => {
       const res = await fetchWithAuth(`${BASE_URL}/notebooks`);
       if (!res.ok) {

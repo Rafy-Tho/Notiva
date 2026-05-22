@@ -1,14 +1,16 @@
-import { Toaster as Sonner } from "./components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { useLayoutEffect } from "react";
 import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
-import { registerSessionExpiredHandler, useAuthStore } from "./store/authStore";
-import { useEffect } from "react";
-import { LoginPage } from "./pages/auth/LoginPage";
-import { PrivateRoute } from "./components/PrivateRoute";
 import AppLayout from "./components/layout/AppLayout";
+import { PrivateRoute } from "./components/PrivateRoute";
 import { PublicRoute } from "./components/PublicRroute";
+import { Toaster as Sonner } from "./components/ui/sonner";
+import { LoginPage } from "./pages/auth/LoginPage";
 import Index from "./pages/Index";
+import { NoteDetailPage } from "./pages/NoteDetailPage";
 import { NotesPage } from "./pages/NotesPage";
+import { registerSessionExpiredHandler, useAuthStore } from "./store/authStore";
 const queryClient = new QueryClient();
 
 function Bootstrap({ children }) {
@@ -16,7 +18,7 @@ function Bootstrap({ children }) {
   const restoreSession = useAuthStore((state) => state.restoreSession);
   const sessionRestored = useAuthStore((state) => state.sessionRestored);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Tell the store where to send the user when refresh fails
     registerSessionExpiredHandler(() => navigate("/login", { replace: true }));
     restoreSession();
@@ -50,12 +52,52 @@ function App() {
             >
               <Route path="/" element={<Index />} />
               <Route path="/notes" element={<NotesPage title="All notes" />}>
-                {/* <Route path=":id" element={<NoteDetailPage />} /> */}
+                <Route path=":id" element={<NoteDetailPage />} />
+              </Route>
+              <Route
+                path="/favorites"
+                element={
+                  <NotesPage
+                    title="Favorites"
+                    filter={{ favorite: true }}
+                    emptyTitle="No favorites"
+                    emptyHint="Star a note to find it here"
+                  />
+                }
+              >
+                <Route path=":id" element={<NoteDetailPage />} />
+              </Route>
+              <Route
+                path="/archive"
+                element={
+                  <NotesPage
+                    title="Archive"
+                    filter={{ archived: true }}
+                    emptyTitle="No archived notes"
+                    emptyHint="Archived notes appear here"
+                  />
+                }
+              >
+                <Route path=":id" element={<NoteDetailPage />} />
+              </Route>
+              <Route
+                path="/trash"
+                element={
+                  <NotesPage
+                    title="Trash"
+                    filter={{ trashed: true }}
+                    emptyTitle="Trash is empty"
+                    emptyHint="Deleted notes appear here for 30 days"
+                  />
+                }
+              >
+                <Route path=":id" element={<NoteDetailPage />} />
               </Route>
             </Route>
           </Routes>
         </Bootstrap>
       </BrowserRouter>
+      <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
 }
