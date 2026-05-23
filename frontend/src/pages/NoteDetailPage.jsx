@@ -107,6 +107,7 @@ export function NoteDetailPage() {
       setSelectTags(note.tagIds);
     }
   }, [note?.id]); // eslint-disable-line
+
   // Sanitize only when content changes
   const sanitizedContent = useMemo(() => {
     return sanitizeHtml(content);
@@ -122,17 +123,13 @@ export function NoteDetailPage() {
 
   // Stable save handler
   const handleSave = useCallback(
-    async (value, signal) => {
+    async (value) => {
       if (!id) return;
 
-      await updateNote(
-        {
-          title: value.title.trim() || "Untitled",
-
-          content: value.content,
-        },
-        signal,
-      );
+      await updateNote({
+        title: value.title.trim() || "Untitled",
+        content: value.content,
+      });
     },
     [id, updateNote],
   );
@@ -140,15 +137,19 @@ export function NoteDetailPage() {
   const { status, lastSavedAt, flush } = useAutosave(
     autosaveValue,
     handleSave,
-    2000,
+    {
+      delay: 2000,
+      // Reset baseline when note changes
+      resetKey: note?.updatedAt,
+    },
   );
-
   // Best-effort save on unmount
   useEffect(() => {
     return () => {
       void flush();
     };
   }, [flush]);
+
   if (!id) return null;
 
   if (noteLoading || tagsLoading || notebooksLoading) {

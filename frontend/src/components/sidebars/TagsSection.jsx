@@ -2,10 +2,12 @@ import { Plus } from "lucide-react";
 import { useTags } from "../../hooks/useTags";
 import TagRow from "./TagRow";
 import { Section, SectionHeader } from "./Section";
+import { useNotes } from "../../hooks/useNotes";
 
 export function TagsSection({ onEdit, onDelete, onCreateClick }) {
-  const tags = useTags();
-
+  const { data: tags, isLoading } = useTags();
+  const { data: notes, isLoading: notesLoading } = useNotes();
+  if (isLoading || notesLoading) return <div>Loading...</div>;
   return (
     <>
       <SectionHeader
@@ -20,23 +22,16 @@ export function TagsSection({ onEdit, onDelete, onCreateClick }) {
         }
       />
       <Section>
-        {tags.isLoading && <div>Loading...</div>}
-        {tags.isError && <div>Error loading tags</div>}
-        {!tags.isLoading &&
-          !tags.isError &&
-          tags.data?.length > 0 &&
-          tags.data
-            .slice(0, 12)
-            .map((t) => (
-              <TagRow
-                key={t.id}
-                tag={t}
-                count={9}
-                onEdit={() => onEdit(t)}
-                onDelete={() => onDelete(t)}
-              />
-            ))}
-        {!tags.isLoading && !tags.isError && tags.data?.length === 0 && (
+        {tags.slice(0, 12).map((t) => (
+          <TagRow
+            key={t.id}
+            tag={t}
+            count={notes.filter((n) => n.tagIds.includes(t.id)).length}
+            onEdit={() => onEdit(t)}
+            onDelete={() => onDelete(t)}
+          />
+        ))}
+        {tags.length === 0 && (
           <div className="px-2 py-1.5 text-xs text-muted-foreground">
             No tags yet
           </div>

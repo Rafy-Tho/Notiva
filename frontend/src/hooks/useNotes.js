@@ -78,6 +78,7 @@ export function useUpdateNote(id) {
     onSuccess: () => {
       queryClient.invalidateQueries(["note", id]);
     },
+    enabled: !!id,
   });
 }
 

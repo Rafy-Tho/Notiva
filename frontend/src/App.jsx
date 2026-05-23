@@ -1,7 +1,13 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useLayoutEffect } from "react";
-import { BrowserRouter, Route, Routes, useNavigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Route,
+  Routes,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 import AppLayout from "./components/layout/AppLayout";
 import { PrivateRoute } from "./components/PrivateRoute";
 import { PublicRoute } from "./components/PublicRroute";
@@ -93,6 +99,12 @@ function App() {
               >
                 <Route path=":id" element={<NoteDetailPage />} />
               </Route>
+              <Route path="/notebooks/:notebookId" element={<NotebookRoute />}>
+                <Route path=":id" element={<NoteDetailPage />} />
+              </Route>
+              <Route path="/tags/:tagId" element={<TagRoute />}>
+                <Route path=":id" element={<NoteDetailPage />} />
+              </Route>
             </Route>
           </Routes>
         </Bootstrap>
@@ -101,5 +113,12 @@ function App() {
     </QueryClientProvider>
   );
 }
-
+function NotebookRoute() {
+  const { notebookId } = useParams();
+  return <NotesPage title="Notebook" filter={{ notebookId }} />;
+}
+function TagRoute() {
+  const { tagId } = useParams();
+  return <NotesPage title="Tag" filter={{ tagId }} />;
+}
 export default App;

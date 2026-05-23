@@ -24,7 +24,12 @@ export function NotesPage({
     if (filter?.favorite) return notes.data?.filter((note) => note.isFavorite);
     if (filter?.trashed)
       return notes.data?.filter((note) => note.deletedAt !== null);
-
+    if (filter?.notebookId)
+      return notes.data?.filter(
+        (note) => note.notebookId === filter.notebookId,
+      );
+    if (filter?.tagId)
+      return notes.data?.filter((note) => note.tagIds.includes(filter.tagId));
     return notes.data?.filter((note) => !note.deletedAt);
   }, [notes.data, filter]);
   // Compute the list URL by stripping the trailing /:id from the current path.
