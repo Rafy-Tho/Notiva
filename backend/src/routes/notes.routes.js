@@ -15,4 +15,6 @@ r.get("/:id", asyncHandler(c.get));
 r.post("/:id/pin", asyncHandler(c.togglePin));
 r.post("/:id/favorite", asyncHandler(c.toggleFavorite));
 r.post("/:id/archive", asyncHandler(c.toggleArchive));
+r.post("/:id/restore", asyncHandler(c.restore));
+r.post("/:id/purge", asyncHandler(c.purge));
 export default r;

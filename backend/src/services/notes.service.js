@@ -5,7 +5,7 @@ export async function listNotes(userId, query = {}) {
   const sort =
     query.sort === "title" ? { title: 1 } : { isPinned: -1, updatedAt: -1 };
 
-  return await Note.find({ userId, deletedAt: null }).sort(sort);
+  return await Note.find({ userId }).sort(sort);
 }
 
 export async function getNote(userId, id) {
