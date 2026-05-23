@@ -10,8 +10,6 @@ import {
   Loader2,
   MoreHorizontal,
   Pin,
-  RefreshCw,
-  RotateCcw,
   Smile,
   Star,
   Tag as TagIcon,
@@ -20,34 +18,8 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Skeleton } from "../components/ui/skeleton";
-import { Button } from "../components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "../components/ui/alert-dialog";
-import { readingTime, wordCount } from "../lib/sanitize";
 import { Badge } from "../components/ui/badge";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "../components/ui/popover";
-import { cn } from "../lib/utils";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../components/ui/select";
+import { Button } from "../components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,31 +27,72 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
-import { useTags } from "../hooks/useTags";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "../components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
+import { Skeleton } from "../components/ui/skeleton";
 import { useNotebooks } from "../hooks/useNotebooks";
-import { useNote } from "../hooks/useNotes";
-
+import {
+  useNote,
+  useToggleArchive,
+  useToggleFavorite,
+  useTogglePin,
+  useUpdateNote,
+} from "../hooks/useNotes";
+import { useTags } from "../hooks/useTags";
+import { readingTime, wordCount } from "../lib/sanitize";
+import { cn } from "../lib/utils";
+import { toast } from "sonner";
 export function NoteDetailPage() {
   const { id } = useParams();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [conflict, setConflict] = useState(false);
-  const [baseUpdatedAt, setBaseUpdatedAt] = useState("");
-  const { data: note } = useNote(id);
-  const { data: tags } = useTags();
-  const { data: notebooks } = useNotebooks();
+  const [icon, setIcon] = useState(null);
+  const [cover, setCover] = useState(null);
+  const [isPinned, setIsPinned] = useState(false);
+  const [isFav, setIsFav] = useState(false);
+  const [selectNotebook, setSelectNotebook] = useState("__none__");
+  const [selectTags, setSelectTags] = useState([]);
+
+  const { data: note, isLoading: noteLoading } = useNote(id);
+  const { data: tags, isLoading: tagsLoading } = useTags();
+  const { data: notebooks, isLoading: notebooksLoading } = useNotebooks();
+  const { mutateAsync: updateNote } = useUpdateNote(id);
+  const { mutateAsync: togglePin } = useTogglePin(id);
+  const { mutateAsync: toggleFav } = useToggleFavorite(id);
+  const { mutateAsync: toggleArchive } = useToggleArchive(id);
 
   useEffect(() => {
     if (note) {
       setTitle(note.title);
       setContent(note.content);
-      setBaseUpdatedAt(note.updatedAt);
-      setConflict(false);
+      setIcon(note.cover.emoji);
+      setCover(note.cover.color);
+      setIsPinned(note.isPinned);
+      setIsFav(note.isFavorite);
+      setSelectNotebook(note.notebookId);
+      setSelectTags(note.tagIds);
     }
   }, [note?.id]); // eslint-disable-line
-
+  useEffect(() => {
+    if (note) {
+      console.log("notebookId:", note.notebookId, typeof note.notebookId);
+      console.log("notebooks:", notebooks);
+      // ...
+    }
+  }, [note?.id]);
   if (!id) return null;
-  if (!note) {
+
+  if (noteLoading || tagsLoading || notebooksLoading) {
     return (
       <div className="p-8 max-w-3xl mx-auto space-y-3">
         <Skeleton className="h-8 w-2/3" />
@@ -88,45 +101,70 @@ export function NoteDetailPage() {
       </div>
     );
   }
+  const hadndleIcon = async (emoji) => {
+    try {
+      setIcon(emoji);
+      await updateNote({ cover: { emoji, color: cover } });
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
 
-  const togglePin = async () => {};
-  const changeNotebook = async (value) => {};
-  const toggleTag = async (tagId) => {};
-  const clearTags = async () => {};
-  const toggleFav = async () => {};
-  const archive = async () => {};
+  const handleCover = async (color) => {
+    try {
+      setCover(color);
+      await updateNote({ cover: { color, emoji: icon } });
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const handleNotebook = async (notebookId) => {
+    try {
+      setSelectNotebook(notebookId);
+      await updateNote({ notebookId });
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const handleTags = async (tagIds) => {
+    try {
+      setSelectTags(tagIds);
+      await updateNote({ tagIds });
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+  const handleTogglePin = async () => {
+    try {
+      setIsPinned(!isPinned);
+      await togglePin();
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+  const handleToggleFav = async () => {
+    try {
+      setIsFav(!isFav);
+      await toggleFav();
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+  const handleToggleArchive = async () => {
+    try {
+      await toggleArchive();
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
   const trash = async () => {};
-  const restore = async () => {};
-  const deleteForever = async () => {};
-
   const wc = wordCount(content);
-
-  const setCover = async (patch) => {};
-  const onCoverFile = async (e) => {};
-  const reloadFromServer = async () => {};
 
   return (
     <div className="flex flex-col h-full">
-      {conflict && (
-        <div className="px-4 sm:px-6 md:px-10 lg:px-12 pt-4 max-w-3xl mx-auto w-full">
-          <div className="flex items-center justify-between gap-3 rounded-md border border-warning/40 bg-warning/10 px-3 py-2">
-            <div className="text-xs text-warning-foreground flex items-center gap-2">
-              <AlertCircle className="h-3.5 w-3.5" />
-              This note was updated elsewhere. Reload to see the latest version
-              (your unsaved changes will be lost).
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-7 gap-1 text-[11px]"
-              onClick={reloadFromServer}
-            >
-              <RefreshCw className="h-3 w-3" /> Reload
-            </Button>
-          </div>
-        </div>
-      )}
-      {note.isDeleted && (
+      {/* {note.isDeleted && (
         <div className="px-4 sm:px-6 md:px-10 lg:px-12 pt-4 max-w-3xl mx-auto w-full">
           <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-muted/40 px-3 py-2">
             <div className="text-xs text-muted-foreground flex items-center gap-2">
@@ -177,20 +215,15 @@ export function NoteDetailPage() {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Cover */}
-      {(note.cover?.url || note.cover?.color) && (
+      {cover && (
         <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 md:px-10 lg:px-12 pt-4">
           <div
             className="h-32 w-full rounded-lg border border-border bg-cover bg-center"
             style={{
-              backgroundImage: note.cover?.url
-                ? `url(${note.cover.url})`
-                : undefined,
-              backgroundColor: note.cover?.color
-                ? `hsl(${note.cover.color})`
-                : undefined,
+              backgroundColor: cover ? `hsl(${cover})` : undefined,
             }}
           />
         </div>
@@ -207,10 +240,8 @@ export function NoteDetailPage() {
                 size="sm"
                 className="h-7 px-2 text-[11px] border border-border bg-transparent hover:bg-muted/40 gap-1.5"
               >
-                {note.cover?.emoji ? (
-                  <span className="text-sm leading-none">
-                    {note.cover.emoji}
-                  </span>
+                {icon ? (
+                  <span className="text-sm leading-none">{icon}</span>
                 ) : (
                   <Smile className="h-3 w-3 text-muted-foreground" />
                 )}
@@ -220,17 +251,17 @@ export function NoteDetailPage() {
             <PopoverContent align="end" className="p-0 w-auto border-border">
               <EmojiPicker
                 theme={EmojiTheme.AUTO}
-                onEmojiClick={(d) => setCover({ emoji: d.emoji })}
+                onEmojiClick={(d) => hadndleIcon(d.emoji)}
                 width={320}
                 height={360}
               />
-              {note.cover?.emoji && (
+              {icon && (
                 <div className="border-t border-border p-2">
                   <Button
                     size="sm"
                     variant="ghost"
                     className="w-full h-7 text-[11px]"
-                    onClick={() => setCover({ emoji: undefined })}
+                    onClick={() => setIcon("")}
                   >
                     Remove icon
                   </Button>
@@ -267,10 +298,10 @@ export function NoteDetailPage() {
                     <button
                       key={c}
                       type="button"
-                      onClick={() => setCover({ color: c, url: undefined })}
+                      onClick={() => handleCover(c)}
                       className={cn(
                         "h-7 rounded-md border-2",
-                        note.cover?.color === c
+                        cover === c
                           ? "border-foreground"
                           : "border-transparent",
                       )}
@@ -280,37 +311,23 @@ export function NoteDetailPage() {
                   ))}
                 </div>
               </div>
-              <div>
-                <div className="text-[11px] font-medium text-muted-foreground mb-1.5">
-                  Image
-                </div>
-                <label className="block">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={onCoverFile}
-                  />
-                  <span className="cursor-pointer inline-flex items-center justify-center w-full h-8 rounded-md border border-border bg-background hover:bg-accent text-xs">
-                    Upload image
-                  </span>
-                </label>
-              </div>
-              {(note.cover?.url || note.cover?.color) && (
+
+              {cover && (
                 <Button
                   size="sm"
                   variant="ghost"
                   className="w-full h-7 text-[11px]"
-                  onClick={() => setCover({ color: undefined, url: undefined })}
+                  onClick={() => setCover(null)}
                 >
                   Remove cover
                 </Button>
               )}
             </PopoverContent>
           </Popover>
+          {/* Notebook */}
           <Select
-            value={note.notebookId ?? "__none__"}
-            onValueChange={changeNotebook}
+            value={selectNotebook ?? "__none__"}
+            onValueChange={(v) => handleNotebook(v)}
           >
             <SelectTrigger className="h-7 gap-1.5 px-2 text-[11px] border-border bg-transparent hover:bg-muted/40 w-auto min-w-0">
               <BookOpen className="h-3 w-3 text-muted-foreground" />
@@ -331,6 +348,7 @@ export function NoteDetailPage() {
               ))}
             </SelectContent>
           </Select>
+          {/*  Tags */}
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -339,12 +357,12 @@ export function NoteDetailPage() {
                 className="h-7 gap-1.5 px-2 text-[11px] border border-border bg-transparent hover:bg-muted/40"
               >
                 <TagIcon className="h-3 w-3 text-muted-foreground" />
-                {note.tagIds.length === 0 ? (
+                {selectTags.length === 0 ? (
                   <span className="text-muted-foreground">No tags</span>
                 ) : (
                   <span>
-                    {note.tagIds.length} tag
-                    {note.tagIds.length === 1 ? "" : "s"}
+                    {selectTags.length} tag
+                    {selectTags.length === 1 ? "" : "s"}
                   </span>
                 )}
               </Button>
@@ -354,9 +372,12 @@ export function NoteDetailPage() {
                 <span className="text-[11px] font-medium text-muted-foreground">
                   Tags
                 </span>
-                {note.tagIds.length > 0 && (
+                {selectTags.length > 0 && (
                   <button
-                    onClick={clearTags}
+                    onClick={() => {
+                      setSelectTags([]);
+                      handleTags([]);
+                    }}
                     className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
                   >
                     <X className="h-3 w-3" /> Clear
@@ -370,11 +391,21 @@ export function NoteDetailPage() {
               ) : (
                 <div className="max-h-64 overflow-y-auto">
                   {tags?.map((t) => {
-                    const selected = note.tagIds.includes(t.id);
+                    const selected = selectTags.includes(t.id);
                     return (
                       <button
                         key={t.id}
-                        onClick={() => toggleTag(t.id)}
+                        onClick={() => {
+                          if (selected) {
+                            setSelectTags((prev) =>
+                              prev.filter((id) => id !== t.id),
+                            );
+                            handleTags(selectTags.filter((id) => id !== t.id));
+                          } else {
+                            setSelectTags((prev) => [...prev, t.id]);
+                            handleTags([...selectTags, t.id]);
+                          }
+                        }}
                         className="flex w-full items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-xs hover:bg-accent hover:text-accent-foreground"
                       >
                         <span className="flex items-center gap-2 min-w-0">
@@ -397,7 +428,7 @@ export function NoteDetailPage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={togglePin}
+            onClick={handleTogglePin}
             className="h-7 w-7"
             aria-label="Pin"
           >
@@ -408,7 +439,7 @@ export function NoteDetailPage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={toggleFav}
+            onClick={handleToggleFav}
             className="h-7 w-7"
             aria-label="Favorite"
           >
@@ -423,10 +454,7 @@ export function NoteDetailPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => {}}>
-                <History className="h-3.5 w-3.5 mr-2" /> Version history
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={archive}>
+              <DropdownMenuItem onClick={handleToggleArchive}>
                 <Archive className="h-3.5 w-3.5 mr-2" /> Archive
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -448,9 +476,9 @@ export function NoteDetailPage() {
         <div className="mt-1 text-[11px] text-muted-foreground">
           {wc} words · {readingTime(wc)}
         </div>
-        {note.tagIds.length > 0 && (
+        {selectTags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
-            {note.tagIds.map((tid) => {
+            {selectTags.map((tid) => {
               const t = tags.find((x) => x.id === tid);
               if (!t) return null;
               return (
@@ -465,7 +493,10 @@ export function NoteDetailPage() {
                   />
                   {t.name}
                   <button
-                    onClick={() => toggleTag(t.id)}
+                    onClick={() => {
+                      setSelectTags((prev) => prev.filter((id) => id !== t.id));
+                      handleTags(selectTags.filter((id) => id !== t.id));
+                    }}
                     className="ml-0.5 rounded-sm hover:bg-background/60 p-0.5"
                     aria-label={`Remove ${t.name}`}
                   >
@@ -481,13 +512,6 @@ export function NoteDetailPage() {
       {/* <div className="flex-1 min-h-0 overflow-y-auto">
         <NoteEditor content={content} onChange={setContent} onCmdS={() => {}} />
       </div> */}
-
-      {/* <VersionHistoryDrawer
-        open={historyOpen}
-        onOpenChange={setHistoryOpen}
-        noteId={id}
-        onRestored={() => {}}
-      /> */}
     </div>
   );
 }
