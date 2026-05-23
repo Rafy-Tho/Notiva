@@ -12,4 +12,7 @@ r.post("/", validate(v.create), asyncHandler(c.create));
 r.patch("/:id", validate(v.update), asyncHandler(c.update));
 r.delete("/:id", asyncHandler(c.remove));
 r.get("/:id", asyncHandler(c.get));
+r.post("/:id/pin", asyncHandler(c.togglePin));
+r.post("/:id/favorite", asyncHandler(c.toggleFavorite));
+r.post("/:id/archive", asyncHandler(c.toggleArchive));
 export default r;

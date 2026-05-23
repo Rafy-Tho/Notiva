@@ -45,3 +45,24 @@ export const togglePin = async (req, res) => {
   });
   return ok(res, updatedNote, "Toggle pin note");
 };
+
+export const toggleArchive = async (req, res) => {
+  const note = await svc.getNote(req.userId, req.params.id);
+  const updatedNote = await svc.updateNote(req.userId, req.params.id, {
+    isArchived: !note.isArchived,
+  });
+  return ok(res, updatedNote, "Toggle archive note");
+};
+
+export const toggleFavorite = async (req, res) => {
+  const note = await svc.getNote(req.userId, req.params.id);
+  const updatedNote = await svc.updateNote(req.userId, req.params.id, {
+    isFavorite: !note.isFavorite,
+  });
+  return ok(res, updatedNote, "Toggle favorite note");
+};
+
+export const getTrashNotes = async (req, res) => {
+  const notes = await svc.trashNotes(req.userId);
+  return ok(res, notes, "Get trash notes");
+};

@@ -2,50 +2,10 @@ import Note from "../models/Note.js";
 import { cleanHtml, wordCount } from "../utils/sanitize.js";
 
 export async function listNotes(userId, query = {}) {
-  const filter = {
-    userId,
-    deletedAt: null,
-  };
-
-  // Notebook filter
-  if (query.notebookId) {
-    filter.notebookId = query.notebookId;
-  }
-
-  // Tag filter
-  if (query.tagId) {
-    filter.tagIds = query.tagId;
-  }
-
-  // Favorite filter
-  if (query.favorite === "true") {
-    filter.isFavorite = true;
-  }
-
-  // Archive filter
-  filter.isArchived = query.archived === "true";
-
-  // Trash filter
-  if (query.trashed === "true") {
-    delete filter.isArchived;
-    filter.deletedAt = { $ne: null };
-  }
-
-  // Search
-  if (query.search) {
-    const escaped = query.search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-    filter.$or = [
-      { title: { $regex: escaped, $options: "i" } },
-      { content: { $regex: escaped, $options: "i" } },
-    ];
-  }
-
-  // Sorting
   const sort =
     query.sort === "title" ? { title: 1 } : { isPinned: -1, updatedAt: -1 };
 
-  return await Note.find(filter).sort(sort);
+  return await Note.find({ userId, deletedAt: null }).sort(sort);
 }
 
 export async function getNote(userId, id) {
@@ -105,4 +65,8 @@ export async function restore(userId, id) {
 
 export async function permanentDelete(userId, id) {
   await Note.deleteOne({ _id: id, userId });
+}
+
+export async function trashNotes(userId) {
+  await Note.find({ userId, deletedAt: { $ne: null } });
 }
