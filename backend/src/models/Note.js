@@ -43,9 +43,8 @@ const NoteSchema = new Schema(
       default: false,
     },
     cover: {
-      url: String,
-      color: String,
-      emoji: String,
+      color: { type: String, default: "" },
+      emoji: { type: String, default: "" },
     },
     wordCound: {
       type: Number,

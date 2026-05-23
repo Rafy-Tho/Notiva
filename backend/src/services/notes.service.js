@@ -1,8 +1,5 @@
 import Note from "../models/Note.js";
-import NoteVersion from "../models/NoteVersion.js";
 import { cleanHtml, wordCount } from "../utils/sanitize.js";
-
-const PURGE_DAY = 30;
 
 export async function listNotes(userId, query = {}) {
   const filter = {
@@ -86,16 +83,7 @@ export async function updateNote(userId, id, data, opts = {}) {
     e.status = 409;
     throw e;
   }
-  if (data.content !== undefined) {
-    await NoteVersion.create({
-      noteId: note._id,
-      userId,
-      title: note.title,
-      content: note.content,
-    });
-    data.content = cleanHtml(data.content);
-    data.wordCount = wordCount(data.content);
-  }
+
   Object.assign(note, data);
   await note.save();
   return note;
@@ -117,15 +105,4 @@ export async function restore(userId, id) {
 
 export async function permanentDelete(userId, id) {
   await Note.deleteOne({ _id: id, userId });
-  await NoteVersion.deleteMany({ noteId: id, userId });
-}
-
-export async function listversions(userId, id) {
-  const note = await getNote(userId, id);
-  if (note.deletedAt) {
-    const e = new Error("Note not found");
-    e.status = 404;
-    throw e;
-  }
-  return await NoteVersion.find({ noteId: id, userId }).sort({ saveAt: -1 });
 }
