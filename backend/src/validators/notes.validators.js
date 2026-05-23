@@ -15,8 +15,8 @@ export const create = [
     .isString()
     .withMessage("Content must be a string")
     .bail()
-    .isLength({ max: 1000 })
-    .withMessage("Content must be between 2 and 1000 characters")
+    .isLength({ max: 100_000_000 })
+    .withMessage("Content must be between 2 and 100 million characters")
     .bail(),
 
   body("notebookId")
@@ -51,8 +51,8 @@ export const update = [
     .isString()
     .withMessage("Content must be a string")
     .bail()
-    .isLength({ max: 1000 })
-    .withMessage("Content must be between 2 and 1000 characters")
+    .isLength({ max: 100_000_000 })
+    .withMessage("Content must be between 2 and 100 million characters")
     .bail(),
 
   body("notebookId")
