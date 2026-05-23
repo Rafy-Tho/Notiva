@@ -119,3 +119,63 @@ export function useToggleArchive(id) {
     },
   });
 }
+
+export function useRemove(id) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await fetchWithAuth(`${BASE_URL}/notes/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const { message } = await res.json();
+        throw new Error(message ?? "Something went wrong");
+      }
+      const { data } = await res.json();
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["notes"]);
+    },
+  });
+}
+
+export function usePurge(id) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await fetchWithAuth(`${BASE_URL}/notes/${id}/purge`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const { message } = await res.json();
+        throw new Error(message ?? "Something went wrong");
+      }
+      const { data } = await res.json();
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["notes"]);
+    },
+  });
+}
+
+export function useRestore(id) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const res = await fetchWithAuth(`${BASE_URL}/notes/${id}/restore`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const { message } = await res.json();
+        throw new Error(message ?? "Something went wrong");
+      }
+      const { data } = await res.json();
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["notes"]);
+    },
+  });
+}

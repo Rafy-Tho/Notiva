@@ -20,12 +20,12 @@ export function NotesPage({
   const toggleNoteList = useUIStore((s) => s.toggleNoteList);
   const notes = useNotes();
   const filteredNotes = useMemo(() => {
-    console.log(filter);
-    if (filter?.archived) return notes.data.filter((note) => note.isArchived);
-    if (filter?.favorite) return notes.data.filter((note) => note.isFavorite);
+    if (filter?.archived) return notes.data?.filter((note) => note.isArchived);
+    if (filter?.favorite) return notes.data?.filter((note) => note.isFavorite);
     if (filter?.trashed)
-      return notes.data.filter((note) => note.deletedAt !== null);
-    return notes.data;
+      return notes.data?.filter((note) => note.deletedAt !== null);
+
+    return notes.data?.filter((note) => !note.deletedAt);
   }, [notes.data, filter]);
   // Compute the list URL by stripping the trailing /:id from the current path.
   const listPath = id

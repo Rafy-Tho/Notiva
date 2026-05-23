@@ -5,11 +5,11 @@ import {
   BookOpen,
   Check,
   CheckCircle2,
-  History,
   Image as ImageIcon,
   Loader2,
   MoreHorizontal,
   Pin,
+  RotateCcw,
   Smile,
   Star,
   Tag as TagIcon,
@@ -17,7 +17,8 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import {
@@ -43,6 +44,9 @@ import { Skeleton } from "../components/ui/skeleton";
 import { useNotebooks } from "../hooks/useNotebooks";
 import {
   useNote,
+  usePurge,
+  useRemove,
+  useRestore,
   useToggleArchive,
   useToggleFavorite,
   useTogglePin,
@@ -51,9 +55,21 @@ import {
 import { useTags } from "../hooks/useTags";
 import { readingTime, wordCount } from "../lib/sanitize";
 import { cn } from "../lib/utils";
-import { toast } from "sonner";
+import { useCreateNoteContext } from "../hooks/useCreateNoteContext";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogAction,
+  AlertDialogTrigger,
+} from "../components/ui/alert-dialog";
 export function NoteDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [icon, setIcon] = useState(null);
@@ -62,6 +78,7 @@ export function NoteDetailPage() {
   const [isFav, setIsFav] = useState(false);
   const [selectNotebook, setSelectNotebook] = useState("__none__");
   const [selectTags, setSelectTags] = useState([]);
+  const path = useCreateNoteContext();
 
   const { data: note, isLoading: noteLoading } = useNote(id);
   const { data: tags, isLoading: tagsLoading } = useTags();
@@ -70,9 +87,13 @@ export function NoteDetailPage() {
   const { mutateAsync: togglePin } = useTogglePin(id);
   const { mutateAsync: toggleFav } = useToggleFavorite(id);
   const { mutateAsync: toggleArchive } = useToggleArchive(id);
+  const { mutateAsync: remove } = useRemove(id);
+  const { mutateAsync: restore } = useRestore(id);
+  const { mutateAsync: purge } = usePurge(id);
 
   useEffect(() => {
     if (note) {
+      // eslint-disable-next-line
       setTitle(note.title);
       setContent(note.content);
       setIcon(note.cover.emoji);
@@ -83,13 +104,7 @@ export function NoteDetailPage() {
       setSelectTags(note.tagIds);
     }
   }, [note?.id]); // eslint-disable-line
-  useEffect(() => {
-    if (note) {
-      console.log("notebookId:", note.notebookId, typeof note.notebookId);
-      console.log("notebooks:", notebooks);
-      // ...
-    }
-  }, [note?.id]);
+
   if (!id) return null;
 
   if (noteLoading || tagsLoading || notebooksLoading) {
@@ -101,6 +116,7 @@ export function NoteDetailPage() {
       </div>
     );
   }
+
   const hadndleIcon = async (emoji) => {
     try {
       setIcon(emoji);
@@ -159,12 +175,37 @@ export function NoteDetailPage() {
       toast.error(error.message);
     }
   };
-  const trash = async () => {};
+  const handleTrash = async () => {
+    try {
+      await remove();
+      navigate(path.basePath);
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const handleRestore = async () => {
+    try {
+      await restore();
+      navigate(path.basePath);
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const handlePurge = async () => {
+    try {
+      await purge();
+      navigate(path.basePath);
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
   const wc = wordCount(content);
 
   return (
     <div className="flex flex-col h-full">
-      {/* {note.isDeleted && (
+      {note?.deletedAt && (
         <div className="px-4 sm:px-6 md:px-10 lg:px-12 pt-4 max-w-3xl mx-auto w-full">
           <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-muted/40 px-3 py-2">
             <div className="text-xs text-muted-foreground flex items-center gap-2">
@@ -176,7 +217,7 @@ export function NoteDetailPage() {
                 size="sm"
                 variant="outline"
                 className="h-7 gap-1 text-[11px]"
-                onClick={restore}
+                onClick={handleRestore}
               >
                 <RotateCcw className="h-3 w-3" /> Restore
               </Button>
@@ -204,7 +245,7 @@ export function NoteDetailPage() {
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={deleteForever}
+                      onClick={handlePurge}
                       className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     >
                       Delete forever
@@ -215,7 +256,7 @@ export function NoteDetailPage() {
             </div>
           </div>
         </div>
-      )} */}
+      )}
 
       {/* Cover */}
       {cover && (
@@ -433,7 +474,7 @@ export function NoteDetailPage() {
             aria-label="Pin"
           >
             <Pin
-              className={`h-3.5 w-3.5 ${note.isPinned ? "fill-primary text-primary" : ""}`}
+              className={`h-3.5 w-3.5 ${isPinned ? "fill-primary text-primary" : ""}`}
             />
           </Button>
           <Button
@@ -444,7 +485,7 @@ export function NoteDetailPage() {
             aria-label="Favorite"
           >
             <Star
-              className={`h-3.5 w-3.5 ${note.isFavorite ? "fill-warning text-warning" : ""}`}
+              className={`h-3.5 w-3.5 ${isFav ? "fill-warning text-warning" : ""}`}
             />
           </Button>
           <DropdownMenu>
@@ -458,7 +499,10 @@ export function NoteDetailPage() {
                 <Archive className="h-3.5 w-3.5 mr-2" /> Archive
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={trash} className="text-destructive">
+              <DropdownMenuItem
+                onClick={handleTrash}
+                className="text-destructive"
+              >
                 <Trash2 className="h-3.5 w-3.5 mr-2" /> Move to Trash
               </DropdownMenuItem>
             </DropdownMenuContent>
