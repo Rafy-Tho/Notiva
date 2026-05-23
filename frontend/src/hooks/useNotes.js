@@ -39,6 +39,27 @@ export function useNote(id) {
   });
 }
 
+export function useCreateNote() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (note) => {
+      const res = await fetchWithAuth(`${BASE_URL}/notes`, {
+        method: "POST",
+        body: JSON.stringify(note),
+      });
+      if (!res.ok) {
+        const { message } = await res.json();
+        throw new Error(message ?? "Something went wrong");
+      }
+      const { data } = await res.json();
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["notes"]);
+    },
+  });
+}
+
 export function useUpdateNote(id) {
   const queryClient = useQueryClient();
   return useMutation({

@@ -1,3 +1,4 @@
+// hooks/useAutosave.js
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -18,12 +19,18 @@ export function useAutosave(value, save, delay = 3000) {
   const initial = useRef(true);
   const mounted = useRef(true);
 
-  // Keep latest value without rerendering
+  // Track last successful save
+  const lastSavedValue = useRef(null);
+
+  // Abort previous request
+  const abortController = useRef(null);
+
+  // Keep latest value
   useEffect(() => {
     latestValue.current = value;
   }, [value]);
 
-  // Cleanup on unmount
+  // Cleanup
   useEffect(() => {
     return () => {
       mounted.current = false;
@@ -35,15 +42,34 @@ export function useAutosave(value, save, delay = 3000) {
       if (resetTimer.current) {
         clearTimeout(resetTimer.current);
       }
+
+      if (abortController.current) {
+        abortController.current.abort();
+      }
     };
   }, []);
 
-  // Main save executor
   const executeSave = useCallback(
     async (initialValue) => {
       let toSave = initialValue;
 
-      while (true) {
+      let loops = 0;
+
+      while (loops < 20) {
+        loops++;
+
+        // Skip if already saved
+        if (JSON.stringify(toSave) === JSON.stringify(lastSavedValue.current)) {
+          break;
+        }
+
+        // Cancel previous request
+        if (abortController.current) {
+          abortController.current.abort();
+        }
+
+        abortController.current = new AbortController();
+
         inFlight.current = true;
 
         if (mounted.current) {
@@ -51,28 +77,39 @@ export function useAutosave(value, save, delay = 3000) {
         }
 
         try {
-          await save(toSave);
+          await save(toSave, abortController.current.signal);
+
+          lastSavedValue.current = toSave;
 
           if (mounted.current) {
             setStatus("saved");
             setLastSavedAt(new Date());
           }
         } catch (error) {
+          // Ignore abort errors
+          if (error?.name === "AbortError") {
+            break;
+          }
+
           console.error(error);
 
           if (mounted.current) {
             setStatus("error");
-            toast.error("Failed to save changes");
+
+            toast.error("Failed to save changes", {
+              id: "autosave-error",
+            });
           }
 
-          // STOP all queued saves after failure
+          // Clear queue after failure
           pending.current = EMPTY;
+
           break;
         } finally {
           inFlight.current = false;
         }
 
-        // Process only the newest pending value
+        // Process latest queued value only
         if (pending.current !== EMPTY) {
           toSave = pending.current;
           pending.current = EMPTY;
@@ -81,7 +118,7 @@ export function useAutosave(value, save, delay = 3000) {
         }
       }
 
-      // Reset "saved" badge
+      // Reset status
       if (resetTimer.current) {
         clearTimeout(resetTimer.current);
       }
@@ -89,13 +126,13 @@ export function useAutosave(value, save, delay = 3000) {
       resetTimer.current = setTimeout(() => {
         if (!mounted.current) return;
 
-        setStatus((s) => (s === "saved" ? "idle" : s));
+        setStatus((current) => (current === "saved" ? "idle" : current));
       }, 2000);
     },
     [save],
   );
 
-  // Keep latest executeSave reference
+  // Stable executeSave reference
   const executeSaveRef = useRef(executeSave);
 
   useEffect(() => {
@@ -107,6 +144,15 @@ export function useAutosave(value, save, delay = 3000) {
     // Skip initial render
     if (initial.current) {
       initial.current = false;
+
+      // Initial value is already saved
+      lastSavedValue.current = value;
+
+      return;
+    }
+
+    // Skip if nothing changed
+    if (JSON.stringify(value) === JSON.stringify(lastSavedValue.current)) {
       return;
     }
 
@@ -115,8 +161,7 @@ export function useAutosave(value, save, delay = 3000) {
     }
 
     timer.current = setTimeout(() => {
-      // If already saving,
-      // keep only latest value queued
+      // Queue latest value
       if (inFlight.current) {
         pending.current = latestValue.current;
         return;
@@ -132,12 +177,21 @@ export function useAutosave(value, save, delay = 3000) {
     };
   }, [value, delay]);
 
-  // Stable flush
+  // Manual flush
   const flush = useCallback(async () => {
     if (timer.current) {
       clearTimeout(timer.current);
     }
 
+    // Skip if nothing changed
+    if (
+      JSON.stringify(latestValue.current) ===
+      JSON.stringify(lastSavedValue.current)
+    ) {
+      return;
+    }
+
+    // Queue newest value
     if (inFlight.current) {
       pending.current = latestValue.current;
       return;
@@ -150,5 +204,9 @@ export function useAutosave(value, save, delay = 3000) {
     status,
     lastSavedAt,
     flush,
+    isSaving: status === "saving",
+    isError: status === "error",
+    isSaved: status === "saved",
+    isIdle: status === "idle",
   };
 }

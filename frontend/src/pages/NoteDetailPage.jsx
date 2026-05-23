@@ -68,7 +68,8 @@ import {
   AlertDialogTrigger,
 } from "../components/ui/alert-dialog";
 import { NoteEditor } from "../editor/NoteEditor";
-import { useAutosave } from "../hooks/useAutoSave";
+import { useAutosave } from "../hooks/useAutosave";
+
 export function NoteDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -93,35 +94,6 @@ export function NoteDetailPage() {
   const { mutateAsync: restore } = useRestore(id);
   const { mutateAsync: purge } = usePurge(id);
 
-  const sanitizedContent = useMemo(() => sanitizeHtml(content), [content]);
-
-  const autosaveValue = useMemo(
-    () => ({
-      title,
-      content: sanitizedContent,
-    }),
-    [title, sanitizedContent],
-  );
-
-  const handleSave = useCallback(
-    async (v) => {
-      if (!id) return;
-
-      await updateNote({
-        title: v.title.trim() || "Untitled",
-        content: v.content,
-      });
-    },
-    [id, updateNote],
-  );
-
-  const { status, lastSavedAt, flush } = useAutosave(autosaveValue, handleSave);
-
-  useEffect(() => {
-    return () => {
-      void flush();
-    };
-  }, [flush]);
   useEffect(() => {
     if (note) {
       // eslint-disable-next-line
@@ -135,7 +107,48 @@ export function NoteDetailPage() {
       setSelectTags(note.tagIds);
     }
   }, [note?.id]); // eslint-disable-line
+  // Sanitize only when content changes
+  const sanitizedContent = useMemo(() => {
+    return sanitizeHtml(content);
+  }, [content]);
 
+  // Stable autosave payload
+  const autosaveValue = useMemo(() => {
+    return {
+      title,
+      content: sanitizedContent,
+    };
+  }, [title, sanitizedContent]);
+
+  // Stable save handler
+  const handleSave = useCallback(
+    async (value, signal) => {
+      if (!id) return;
+
+      await updateNote(
+        {
+          title: value.title.trim() || "Untitled",
+
+          content: value.content,
+        },
+        signal,
+      );
+    },
+    [id, updateNote],
+  );
+
+  const { status, lastSavedAt, flush } = useAutosave(
+    autosaveValue,
+    handleSave,
+    2000,
+  );
+
+  // Best-effort save on unmount
+  useEffect(() => {
+    return () => {
+      void flush();
+    };
+  }, [flush]);
   if (!id) return null;
 
   if (noteLoading || tagsLoading || notebooksLoading) {
