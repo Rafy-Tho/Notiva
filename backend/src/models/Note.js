@@ -46,7 +46,7 @@ const NoteSchema = new Schema(
       color: { type: String, default: "" },
       emoji: { type: String, default: "" },
     },
-    wordCound: {
+    wordCount: {
       type: Number,
       default: 0,
     },

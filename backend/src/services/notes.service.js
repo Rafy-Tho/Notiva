@@ -27,12 +27,14 @@ export async function createNote(userId, data) {
     notebookId: data.notebookId || null,
     tagIds: data.tagIds || [],
     cover: data.cover || {},
-    wordCound: wordCount(content) || 0,
+    isFavorite: data.isFavorite || false,
+    wordCount: wordCount(content) || 0,
   });
   return note;
 }
 
 export async function updateNote(userId, id, data, opts = {}) {
+  const content = cleanHtml(data.content || "");
   const note = await getNote(userId, id);
   if (
     opts.expectedUpdateAt &&
@@ -44,7 +46,7 @@ export async function updateNote(userId, id, data, opts = {}) {
     throw e;
   }
 
-  Object.assign(note, data);
+  Object.assign(note, { ...data, wordCount: wordCount(content) || 0, content });
   await note.save();
   return note;
 }

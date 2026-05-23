@@ -1,6 +1,6 @@
 import sanitize from "sanitize-html";
 
-export const cleanHtml = (html = "") => {
+export const cleanHtml = (html = "") =>
   sanitize(html, {
     allowedTags: sanitize.defaults.allowedTags.concat([
       "img",
@@ -22,7 +22,6 @@ export const cleanHtml = (html = "") => {
     },
     allowedSchemes: ["http", "https", "mailto", "data"],
   });
-};
 
 export const htmlToText = (html = "") =>
   html
