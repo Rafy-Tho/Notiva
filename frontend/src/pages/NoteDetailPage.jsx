@@ -16,7 +16,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Badge } from "../components/ui/badge";
@@ -53,7 +53,7 @@ import {
   useUpdateNote,
 } from "../hooks/useNotes";
 import { useTags } from "../hooks/useTags";
-import { readingTime, wordCount } from "../lib/sanitize";
+import { readingTime, sanitizeHtml, wordCount } from "../lib/sanitize";
 import { cn } from "../lib/utils";
 import { useCreateNoteContext } from "../hooks/useCreateNoteContext";
 import {
@@ -67,6 +67,8 @@ import {
   AlertDialogAction,
   AlertDialogTrigger,
 } from "../components/ui/alert-dialog";
+import { NoteEditor } from "../editor/NoteEditor";
+import { useAutosave } from "../hooks/useAutoSave";
 export function NoteDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -91,6 +93,35 @@ export function NoteDetailPage() {
   const { mutateAsync: restore } = useRestore(id);
   const { mutateAsync: purge } = usePurge(id);
 
+  const sanitizedContent = useMemo(() => sanitizeHtml(content), [content]);
+
+  const autosaveValue = useMemo(
+    () => ({
+      title,
+      content: sanitizedContent,
+    }),
+    [title, sanitizedContent],
+  );
+
+  const handleSave = useCallback(
+    async (v) => {
+      if (!id) return;
+
+      await updateNote({
+        title: v.title.trim() || "Untitled",
+        content: v.content,
+      });
+    },
+    [id, updateNote],
+  );
+
+  const { status, lastSavedAt, flush } = useAutosave(autosaveValue, handleSave);
+
+  useEffect(() => {
+    return () => {
+      void flush();
+    };
+  }, [flush]);
   useEffect(() => {
     if (note) {
       // eslint-disable-next-line
@@ -271,7 +302,7 @@ export function NoteDetailPage() {
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-y-2 gap-x-2 px-4 sm:px-6 md:px-10 lg:px-12 pt-6 max-w-3xl mx-auto w-full">
-        {/* <SaveBadge status={status} lastSavedAt={note.updatedAt} /> */}
+        <SaveBadge status={status} lastSavedAt={lastSavedAt} />
         <div className="flex items-center gap-1 flex-wrap">
           {/* Emoji picker */}
           <Popover>
@@ -552,10 +583,11 @@ export function NoteDetailPage() {
           </div>
         )}
       </div>
-
-      {/* <div className="flex-1 min-h-0 overflow-y-auto">
-        <NoteEditor content={content} onChange={setContent} onCmdS={() => {}} />
-      </div> */}
+      <div className="px-4 sm:px-6 md:px-10 lg:px-12 pt-2 pb-0 max-w-3xl mx-auto w-full">
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <NoteEditor content={content} onChange={setContent} onCmdS={flush} />
+        </div>
+      </div>
     </div>
   );
 }
