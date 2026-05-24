@@ -6,11 +6,7 @@ import equal from "fast-deep-equal";
 
 const EMPTY = Symbol("EMPTY");
 
-export function useAutosave(
-  value,
-  save,
-  { delay = 2000, resetKey, localStorageKey } = {},
-) {
+export function useAutosave(value, save, { delay = 2000, resetKey } = {}) {
   const [status, setStatus] = useState("idle");
   const [lastSavedAt, setLastSavedAt] = useState(null);
 
@@ -39,17 +35,6 @@ export function useAutosave(
 
     lastSavedValue.current = value;
   }, [resetKey]);
-
-  // Persist draft locally
-  useEffect(() => {
-    if (!localStorageKey) return;
-
-    try {
-      localStorage.setItem(localStorageKey, JSON.stringify(value));
-    } catch (error) {
-      console.error(error);
-    }
-  }, [value, localStorageKey]);
 
   // Cleanup
   useEffect(() => {
@@ -83,11 +68,6 @@ export function useAutosave(
         await save(valueToSave);
 
         lastSavedValue.current = valueToSave;
-
-        // Clear local draft after successful save
-        if (localStorageKey) {
-          localStorage.removeItem(localStorageKey);
-        }
 
         if (mounted.current) {
           setStatus("saved");
@@ -132,7 +112,7 @@ export function useAutosave(
         setStatus((current) => (current === "saved" ? "idle" : current));
       }, 2000);
     },
-    [save, localStorageKey],
+    [save],
   );
 
   const executeSaveRef = useRef(executeSave);

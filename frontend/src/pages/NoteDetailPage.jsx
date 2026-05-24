@@ -105,22 +105,8 @@ export function NoteDetailPage() {
 
     hydratedNoteId.current = note.id;
 
-    // Restore local draft if available
-    const localDraft = localStorage.getItem(`draft:${note.id}`);
-
-    if (localDraft) {
-      try {
-        const parsed = JSON.parse(localDraft);
-        setTitle(parsed.title ?? note.title ?? "");
-        setContent(parsed.content ?? note.content ?? "");
-      } catch {
-        setTitle(note.title ?? "");
-        setContent(note.content ?? "");
-      }
-    } else {
-      setTitle(note.title ?? "");
-      setContent(note.content ?? "");
-    }
+    setTitle(note.title ?? "");
+    setContent(note.content ?? "");
 
     setIcon(note.cover?.emoji ?? null);
     setCover(note.cover?.color ?? null);
@@ -167,7 +153,6 @@ export function NoteDetailPage() {
     {
       delay: 2000,
       resetKey: note?.id,
-      localStorageKey: id ? `draft:${id}` : null,
     },
   );
   const flushRef = useRef(flush);
