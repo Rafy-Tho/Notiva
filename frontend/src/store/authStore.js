@@ -172,6 +172,15 @@ export const useAuthStore = create(
           isRefreshing = false;
         }
       },
+      // delete account
+      delete: async () => {
+        const res = await fetch(`${BASE_URL}/me`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+        if (!res.ok) throw new Error("Delete account failed");
+        set({ accessToken: null, user: null }, false, "auth/deleteAccount");
+      },
     }),
     { name: "AuthStore" },
   ),

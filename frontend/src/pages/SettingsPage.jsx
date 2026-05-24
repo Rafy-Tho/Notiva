@@ -49,6 +49,7 @@ export function SettingsPage() {
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   const logout = useAuthStore((s) => s.logout);
+  const deleteAccount = useAuthStore((s) => s.delete);
   const theme = useUIStore((s) => s.theme);
   const fontPref = useUIStore((s) => s.fontPref);
   const setFontPref = useUIStore((s) => s.setFontPref);
@@ -65,6 +66,7 @@ export function SettingsPage() {
   const { mutateAsync: updateMe, isPending: namePending } = useUpdateUser();
   const { mutateAsync: changePassword, isPending: pwPending } =
     useChangePassword();
+
   useEffect(() => {
     if (user?.name) setName(user.name);
   }, [user?.name]);
@@ -107,9 +109,13 @@ export function SettingsPage() {
     );
   };
 
-  const deleteAccount = async () => {
-    await logout();
-    navigate("/register");
+  const handleDelete = async () => {
+    try {
+      await deleteAccount();
+      toast.success("Account deleted");
+    } catch (err) {
+      toast.error(err.message);
+    }
   };
 
   const onAvatarPick = async (file) => {
@@ -431,8 +437,12 @@ export function SettingsPage() {
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction
                     onClick={async () => {
-                      await logout();
-                      navigate("/login");
+                      try {
+                        await logout();
+                        navigate("/login");
+                      } catch (e) {
+                        toast.error(e.message);
+                      }
                     }}
                   >
                     Sign out
@@ -471,7 +481,7 @@ export function SettingsPage() {
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction
-                    onClick={deleteAccount}
+                    onClick={handleDelete}
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   >
                     Delete account

@@ -35,22 +35,6 @@ export const useUpdateAvatar = () => {
   });
 };
 
-export const useDeleteUser = () => {
-  return useMutation({
-    mutationFn: async () => {
-      const res = await fetchWithAuth(`${BASE_URL}/me`, {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        const { message } = await res.json();
-        throw new Error(message ?? "Something went wrong");
-      }
-      const { data } = await res.json();
-      return data;
-    },
-  });
-};
-
 export const useChangePassword = () => {
   return useMutation({
     mutationFn: async (passwords) => {
