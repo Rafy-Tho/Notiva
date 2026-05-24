@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { AppHeader } from "./AppHeader";
 import { useTheme } from "../../hooks/useTheme";
+import { CommandPalette } from "../search/CommandPalette";
 
 function AppLayout() {
   useTheme();
@@ -14,6 +15,7 @@ function AppLayout() {
           <Outlet />
         </div>
       </main>
+      <CommandPalette />
     </div>
   );
 }

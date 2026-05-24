@@ -4,8 +4,10 @@ import { useCreateNote } from "../../hooks/useNotes";
 import { Button } from "../ui/button";
 import { Plus, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useUIStore } from "../../store/useUIStore";
 
 export function ActionButtons() {
+  const setCmdk = useUIStore((state) => state.setCmdk);
   const { mutateAsync: createNote } = useCreateNote();
   const { defaults, basePath } = useCreateNoteContext();
   const navigate = useNavigate();
@@ -28,7 +30,7 @@ export function ActionButtons() {
         <Plus className="h-4 w-4" /> New note
       </Button>
       <Button
-        onClick={() => {}}
+        onClick={() => setCmdk(true)}
         variant="outline"
         size="sm"
         className="justify-between gap-2 bg-background/40"
