@@ -67,8 +67,17 @@ export function useAutosave(
   const isEmptyValue = useCallback((v) => {
     if (v == null) return true;
 
+    // String
     if (typeof v === "string") {
       return v.trim() === "";
+    }
+
+    // Object support
+    if (typeof v === "object") {
+      const title = v.title?.trim?.() ?? "";
+      const content = v.content?.trim?.() ?? "";
+
+      return title === "" && content === "";
     }
 
     return false;

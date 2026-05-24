@@ -135,6 +135,8 @@ export function NoteDetailPage() {
 
       const version = ++saveVersion.current;
 
+      if (title === "" || content === "") return;
+
       await updateNote({
         title: value.title.trim() || "Untitled",
         content: sanitizeHtml(value.content),
@@ -151,8 +153,11 @@ export function NoteDetailPage() {
     autosaveValue,
     handleSave,
     {
-      delay: 2000,
+      delay: 3000,
       resetKey: note?.id,
+      isValidValue: (v) => {
+        return v.title.trim().length > 0 || v.content.trim().length > 0;
+      },
     },
   );
   const flushRef = useRef(flush);
