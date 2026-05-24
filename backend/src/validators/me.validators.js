@@ -20,31 +20,59 @@ export const update = [
 ];
 
 export const password = [
-  body("password")
+  body("oldPassword")
     .notEmpty()
-    .withMessage("Password is required")
+    .withMessage("Old password is required")
     .bail()
     // Minimum length
     .isLength({ min: 8 })
-    .withMessage("Password must be at least 8 characters")
+    .withMessage("Old password must be at least 8 characters")
     .bail()
     // At least one uppercase letter
     .matches(/[A-Z]/)
-    .withMessage("Password must contain an uppercase letter")
+    .withMessage("Old password must contain an uppercase letter")
     .bail()
     // At least one lowercase letter
     .matches(/[a-z]/)
-    .withMessage("Password must contain a lowercase letter")
+    .withMessage("Old password must contain a lowercase letter")
     .bail()
     // At least one number
     .matches(/[0-9]/)
-    .withMessage("Password must contain a number")
+    .withMessage("Old password must contain a number")
     .bail()
     // At least one special character
     .matches(/[!@#$%^&*]/)
-    .withMessage("Password must contain a special character")
+    .withMessage("Old password must contain a special character")
     .bail()
-    // Password cannot contain emojis or non-ASCII characters
+    // Old password cannot contain emojis or non-ASCII characters
     .matches(/^[A-Za-z0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]+$/)
-    .withMessage("Password contains invalid characters"),
+    .withMessage("Old password contains invalid characters"),
+
+  body("newPassword")
+    .notEmpty()
+    .withMessage("New password is required")
+    .bail()
+    // Minimum length
+    .isLength({ min: 8 })
+    .withMessage("New password must be at least 8 characters")
+    .bail()
+    // At least one uppercase letter
+    .matches(/[A-Z]/)
+    .withMessage("New password must contain an uppercase letter")
+    .bail()
+    // At least one lowercase letter
+    .matches(/[a-z]/)
+    .withMessage("New password must contain a lowercase letter")
+    .bail()
+    // At least one number
+    .matches(/[0-9]/)
+    .withMessage("New password must contain a number")
+    .bail()
+    // At least one special character
+    .matches(/[!@#$%^&*]/)
+    .withMessage("New password must contain a special character")
+    .bail()
+    // New password cannot contain emojis or non-ASCII characters
+    .matches(/^[A-Za-z0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]+$/)
+    .withMessage("New password contains invalid characters"),
 ];

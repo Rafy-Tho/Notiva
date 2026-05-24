@@ -13,7 +13,7 @@ export const update = async (req, res) => {
 };
 
 export const changePassword = async (req, res) => {
-  const user = await svc.changePassword(req.userId, req.body.password);
+  const user = await svc.changePassword(req.userId, req.body);
   return ok(res, user, "Change password");
 };
 
@@ -26,5 +26,10 @@ export const deleteAccount = async (req, res) => {
 export const updateAvatar = async (req, res) => {
   const result = await uploadImage(req.file);
   const user = await svc.updateAvatar(req.userId, result.secure_url);
+  return ok(res, user, "Update avatar");
+};
+
+export const removeAvatar = async (req, res) => {
+  const user = await svc.updateAvatar(req.userId, "");
   return ok(res, user, "Update avatar");
 };

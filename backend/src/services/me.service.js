@@ -29,13 +29,13 @@ export const changePassword = async (id, password) => {
     e.status = 404;
     throw e;
   }
-  const ok = await user.compare(password, user.password);
+  const ok = await user.compare(password.oldPassword, user.password);
   if (!ok) {
     const e = new Error("Invalid credentials");
     e.status = 401;
     throw e;
   }
-  user.password = await bcrypt.hash(password, 12);
+  user.password = await bcrypt.hash(password.newPassword, 12);
   await user.save();
   return user;
 };
