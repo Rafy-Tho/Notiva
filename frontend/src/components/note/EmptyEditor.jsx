@@ -7,7 +7,6 @@ import { Button } from "../ui/button";
 export function EmptyEditor() {
   const { mutateAsync: createNote } = useCreateNote();
   const { defaults, basePath } = useCreateNoteContext();
-  console.log(defaults);
   const navigate = useNavigate();
   const handleCreate = async () => {
     try {

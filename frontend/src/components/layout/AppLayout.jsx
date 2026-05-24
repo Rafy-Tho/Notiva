@@ -1,8 +1,10 @@
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { AppHeader } from "./AppHeader";
+import { useTheme } from "../../hooks/useTheme";
 
 function AppLayout() {
+  useTheme();
   return (
     <div className="flex h-dvh w-full overflow-hidden bg-background text-foreground">
       <Sidebar />

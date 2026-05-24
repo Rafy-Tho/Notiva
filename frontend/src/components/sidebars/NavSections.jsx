@@ -32,7 +32,6 @@ export function NavSections() {
       trash: 0,
     },
   );
-  console.log(counts);
   return (
     <Section>
       <NavItem

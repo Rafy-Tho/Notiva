@@ -17,6 +17,7 @@ import Index from "./pages/Index";
 import { NoteDetailPage } from "./pages/NoteDetailPage";
 import { NotesPage } from "./pages/NotesPage";
 import { registerSessionExpiredHandler, useAuthStore } from "./store/authStore";
+import { SettingsPage } from "./pages/SettingsPage";
 const queryClient = new QueryClient();
 
 function Bootstrap({ children }) {
@@ -105,6 +106,7 @@ function App() {
               <Route path="/tags/:tagId" element={<TagRoute />}>
                 <Route path=":id" element={<NoteDetailPage />} />
               </Route>
+              <Route path="/settings" element={<SettingsPage />} />
             </Route>
           </Routes>
         </Bootstrap>

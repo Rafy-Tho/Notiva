@@ -34,6 +34,8 @@ export const useAuthStore = create(
       sessionRestored: false, // ← gate for fetchWithAuth
       sessionRestorePromise: null, // ← fetchWithAuth awaits this on page load
 
+      setUser: (user) => set({ user }),
+
       // ── Login ────────────────────────────────────────────────
       login: async (email, password) => {
         set({ isLoading: true, error: null }, false, "auth/login/pending");
