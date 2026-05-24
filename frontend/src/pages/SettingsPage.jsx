@@ -44,6 +44,7 @@ import { htmlToText } from "../lib/sanitize";
 import { cn } from "../lib/utils";
 import { useAuthStore } from "../store/authStore";
 import { useUIStore } from "../store/useUIStore";
+import { useNotes } from "../hooks/useNotes";
 
 export function SettingsPage() {
   const user = useAuthStore((s) => s.user);
@@ -66,6 +67,7 @@ export function SettingsPage() {
   const { mutateAsync: updateMe, isPending: namePending } = useUpdateUser();
   const { mutateAsync: changePassword, isPending: pwPending } =
     useChangePassword();
+  const { data: notes } = useNotes();
 
   useEffect(() => {
     if (user?.name) setName(user.name);
@@ -87,13 +89,13 @@ export function SettingsPage() {
   };
 
   const exportZip = async () => {
-    const notes = [];
-    if (notes.length === 0) {
+    const ns = notes.filter((n) => !n.deletedAt);
+    if (ns.length === 0) {
       toast.info("No notes to export");
       return;
     }
     const zip = new JSZip();
-    notes.forEach((n) => {
+    ns.forEach((n) => {
       const safe = (n.title || "untitled")
         .replace(/[^a-z0-9-_ ]/gi, "_")
         .slice(0, 60);
@@ -104,9 +106,7 @@ export function SettingsPage() {
     });
     const blob = await zip.generateAsync({ type: "blob" });
     saveAs(blob, "noteflow-export.zip");
-    toast.success(
-      `Exported ${notes.length} note${notes.length === 1 ? "" : "s"}`,
-    );
+    toast.success(`Exported ${ns.length} note${ns.length === 1 ? "" : "s"}`);
   };
 
   const handleDelete = async () => {
