@@ -1,38 +1,55 @@
 // hooks/useAutosave.js
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import equal from "fast-deep-equal";
 
 const EMPTY = Symbol("EMPTY");
 
-export function useAutosave(value, save, { delay = 3000, resetKey } = {}) {
+export function useAutosave(
+  value,
+  save,
+  { delay = 2000, resetKey, localStorageKey } = {},
+) {
   const [status, setStatus] = useState("idle");
   const [lastSavedAt, setLastSavedAt] = useState(null);
+
+  const mounted = useRef(true);
 
   const timer = useRef(null);
   const resetTimer = useRef(null);
 
-  const inFlight = useRef(false);
-  const pending = useRef(EMPTY);
-
   const latestValue = useRef(value);
+  const lastSavedValue = useRef(value);
 
-  const initial = useRef(true);
-  const mounted = useRef(true);
+  const pendingValue = useRef(EMPTY);
 
-  const lastSavedValue = useRef(null);
+  const inFlight = useRef(false);
 
-  const abortController = useRef(null);
+  const ready = useRef(false);
 
   // Keep latest value
   useEffect(() => {
     latestValue.current = value;
   }, [value]);
 
-  // IMPORTANT:
-  // Reset baseline when server data changes
+  // Reset when switching resource/note
   useEffect(() => {
+    ready.current = false;
+
     lastSavedValue.current = value;
   }, [resetKey]);
+
+  // Persist draft locally
+  useEffect(() => {
+    if (!localStorageKey) return;
+
+    try {
+      localStorage.setItem(localStorageKey, JSON.stringify(value));
+    } catch (error) {
+      console.error(error);
+    }
+  }, [value, localStorageKey]);
 
   // Cleanup
   useEffect(() => {
@@ -46,73 +63,63 @@ export function useAutosave(value, save, { delay = 3000, resetKey } = {}) {
       if (resetTimer.current) {
         clearTimeout(resetTimer.current);
       }
-
-      if (abortController.current) {
-        abortController.current.abort();
-      }
     };
   }, []);
 
   const executeSave = useCallback(
-    async (initialValue) => {
-      let toSave = initialValue;
+    async (valueToSave) => {
+      // Prevent duplicate saves
+      if (equal(valueToSave, lastSavedValue.current)) {
+        return;
+      }
 
-      while (true) {
-        // Skip identical saves
-        if (JSON.stringify(toSave) === JSON.stringify(lastSavedValue.current)) {
-          break;
+      inFlight.current = true;
+
+      if (mounted.current) {
+        setStatus("saving");
+      }
+
+      try {
+        await save(valueToSave);
+
+        lastSavedValue.current = valueToSave;
+
+        // Clear local draft after successful save
+        if (localStorageKey) {
+          localStorage.removeItem(localStorageKey);
         }
-
-        // Cancel previous request
-        if (abortController.current) {
-          abortController.current.abort();
-        }
-
-        abortController.current = new AbortController();
-
-        inFlight.current = true;
 
         if (mounted.current) {
-          setStatus("saving");
+          setStatus("saved");
+          setLastSavedAt(new Date());
+        }
+      } catch (error) {
+        console.error(error);
+
+        if (mounted.current) {
+          setStatus("error");
+
+          toast.error("Failed to save changes", {
+            id: "autosave-error",
+          });
         }
 
-        try {
-          await save(toSave, abortController.current.signal);
+        return;
+      } finally {
+        inFlight.current = false;
+      }
 
-          lastSavedValue.current = toSave;
+      // Save latest queued change
+      if (pendingValue.current !== EMPTY) {
+        const nextValue = pendingValue.current;
 
-          if (mounted.current) {
-            setStatus("saved");
-            setLastSavedAt(new Date());
-          }
-        } catch (error) {
-          if (error?.name === "AbortError") {
-            break;
-          }
+        pendingValue.current = EMPTY;
 
-          console.error(error);
-
-          if (mounted.current) {
-            setStatus("error");
-
-            toast.error("Failed to save changes", {
-              id: "autosave-error",
-            });
-          }
-
-          pending.current = EMPTY;
-
-          break;
-        } finally {
-          inFlight.current = false;
+        if (!equal(nextValue, lastSavedValue.current)) {
+          await executeSave(nextValue);
         }
 
-        if (pending.current !== EMPTY) {
-          toSave = pending.current;
-          pending.current = EMPTY;
-        } else {
-          break;
-        }
+        return;
       }
 
       if (resetTimer.current) {
@@ -125,7 +132,7 @@ export function useAutosave(value, save, { delay = 3000, resetKey } = {}) {
         setStatus((current) => (current === "saved" ? "idle" : current));
       }, 2000);
     },
-    [save],
+    [save, localStorageKey],
   );
 
   const executeSaveRef = useRef(executeSave);
@@ -134,19 +141,19 @@ export function useAutosave(value, save, { delay = 3000, resetKey } = {}) {
     executeSaveRef.current = executeSave;
   }, [executeSave]);
 
-  // Autosave
+  // Autosave effect
   useEffect(() => {
-    // Skip initial mount
-    if (initial.current) {
-      initial.current = false;
+    // Prevent first-render save
+    if (!ready.current) {
+      ready.current = true;
 
       lastSavedValue.current = value;
 
       return;
     }
 
-    // Skip unchanged values
-    if (JSON.stringify(value) === JSON.stringify(lastSavedValue.current)) {
+    // Prevent duplicate save
+    if (equal(value, lastSavedValue.current)) {
       return;
     }
 
@@ -155,8 +162,9 @@ export function useAutosave(value, save, { delay = 3000, resetKey } = {}) {
     }
 
     timer.current = setTimeout(() => {
+      // Queue latest value while request active
       if (inFlight.current) {
-        pending.current = latestValue.current;
+        pendingValue.current = latestValue.current;
 
         return;
       }
@@ -177,21 +185,33 @@ export function useAutosave(value, save, { delay = 3000, resetKey } = {}) {
       clearTimeout(timer.current);
     }
 
-    if (
-      JSON.stringify(latestValue.current) ===
-      JSON.stringify(lastSavedValue.current)
-    ) {
+    const latest = latestValue.current;
+
+    if (equal(latest, lastSavedValue.current)) {
       return;
     }
 
     if (inFlight.current) {
-      pending.current = latestValue.current;
+      pendingValue.current = latest;
 
       return;
     }
 
-    await executeSaveRef.current(latestValue.current);
+    await executeSaveRef.current(latest);
   }, []);
+
+  // Best effort save on refresh/tab close
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      void flush();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [flush]);
 
   return {
     status,

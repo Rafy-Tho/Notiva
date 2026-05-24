@@ -16,9 +16,20 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../components/ui/alert-dialog";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import {
@@ -41,6 +52,9 @@ import {
   SelectValue,
 } from "../components/ui/select";
 import { Skeleton } from "../components/ui/skeleton";
+import { NoteEditor } from "../editor/NoteEditor";
+import { useAutosave } from "../hooks/useAutosave";
+import { useCreateNoteContext } from "../hooks/useCreateNoteContext";
 import { useNotebooks } from "../hooks/useNotebooks";
 import {
   useNote,
@@ -55,24 +69,12 @@ import {
 import { useTags } from "../hooks/useTags";
 import { readingTime, sanitizeHtml, wordCount } from "../lib/sanitize";
 import { cn } from "../lib/utils";
-import { useCreateNoteContext } from "../hooks/useCreateNoteContext";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogAction,
-  AlertDialogTrigger,
-} from "../components/ui/alert-dialog";
-import { NoteEditor } from "../editor/NoteEditor";
-import { useAutosave } from "../hooks/useAutosave";
 
 export function NoteDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const saveVersion = useRef(0);
+  const hydratedNoteId = useRef(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [icon, setIcon] = useState(null);
@@ -82,7 +84,6 @@ export function NoteDetailPage() {
   const [selectNotebook, setSelectNotebook] = useState("__none__");
   const [selectTags, setSelectTags] = useState([]);
   const path = useCreateNoteContext();
-
   const { data: note, isLoading: noteLoading } = useNote(id);
   const { data: tags, isLoading: tagsLoading } = useTags();
   const { data: notebooks, isLoading: notebooksLoading } = useNotebooks();
@@ -95,59 +96,84 @@ export function NoteDetailPage() {
   const { mutateAsync: purge } = usePurge(id);
 
   useEffect(() => {
-    if (note) {
-      // eslint-disable-next-line
-      setTitle(note.title);
-      setContent(note.content);
-      setIcon(note.cover.emoji);
-      setCover(note.cover.color);
-      setIsPinned(note.isPinned);
-      setIsFav(note.isFavorite);
-      setSelectNotebook(note.notebookId);
-      setSelectTags(note.tagIds);
+    if (!note) return;
+
+    // Prevent rehydrating same note repeatedly
+    if (hydratedNoteId.current === note.id) {
+      return;
     }
-  }, [note?.id]); // eslint-disable-line
 
-  // Sanitize only when content changes
-  const sanitizedContent = useMemo(() => {
-    return sanitizeHtml(content);
-  }, [content]);
+    hydratedNoteId.current = note.id;
 
-  // Stable autosave payload
+    // Restore local draft if available
+    const localDraft = localStorage.getItem(`draft:${note.id}`);
+
+    if (localDraft) {
+      try {
+        const parsed = JSON.parse(localDraft);
+        setTitle(parsed.title ?? note.title ?? "");
+        setContent(parsed.content ?? note.content ?? "");
+      } catch {
+        setTitle(note.title ?? "");
+        setContent(note.content ?? "");
+      }
+    } else {
+      setTitle(note.title ?? "");
+      setContent(note.content ?? "");
+    }
+
+    setIcon(note.cover?.emoji ?? null);
+    setCover(note.cover?.color ?? null);
+
+    setIsPinned(note.isPinned ?? false);
+    setIsFav(note.isFavorite ?? false);
+
+    setSelectNotebook(note.notebookId ?? "__none__");
+    setSelectTags(note.tagIds ?? []);
+  }, [note]);
+
   const autosaveValue = useMemo(() => {
     return {
       title,
-      content: sanitizedContent,
+      content,
     };
-  }, [title, sanitizedContent]);
+  }, [title, content]);
 
-  // Stable save handler
+  const wc = useMemo(() => {
+    return wordCount(content);
+  }, [content]);
+
   const handleSave = useCallback(
     async (value) => {
       if (!id) return;
 
+      const version = ++saveVersion.current;
+
       await updateNote({
         title: value.title.trim() || "Untitled",
-        content: value.content,
+        content: sanitizeHtml(value.content),
       });
+
+      // Ignore outdated save completion
+      if (version !== saveVersion.current) {
+        return;
+      }
     },
     [id, updateNote],
   );
-
   const { status, lastSavedAt, flush } = useAutosave(
     autosaveValue,
     handleSave,
     {
       delay: 2000,
-      // Reset baseline when note changes
-      resetKey: note?.updatedAt,
+      resetKey: note?.id,
+      localStorageKey: id ? `draft:${id}` : null,
     },
   );
-  // Best-effort save on unmount
+  const flushRef = useRef(flush);
+
   useEffect(() => {
-    return () => {
-      void flush();
-    };
+    flushRef.current = flush;
   }, [flush]);
 
   if (!id) return null;
@@ -179,7 +205,34 @@ export function NoteDetailPage() {
       toast.error(error.message);
     }
   };
+  const removeIcon = async () => {
+    try {
+      setIcon(null);
 
+      await updateNote({
+        cover: {
+          emoji: null,
+          color: cover,
+        },
+      });
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+  const removeCover = async () => {
+    try {
+      setCover(null);
+
+      await updateNote({
+        cover: {
+          emoji: icon,
+          color: null,
+        },
+      });
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
   const handleNotebook = async (notebookId) => {
     try {
       setSelectNotebook(notebookId);
@@ -197,6 +250,16 @@ export function NoteDetailPage() {
       toast.error(error.message);
     }
   };
+  const toggleTag = async (tagId) => {
+    setSelectTags((prev) => {
+      const exists = prev.includes(tagId);
+      const next = exists
+        ? prev.filter((id) => id !== tagId)
+        : [...prev, tagId];
+      void handleTags(next);
+      return next;
+    });
+  };
   const handleTogglePin = async () => {
     try {
       setIsPinned(!isPinned);
@@ -205,6 +268,7 @@ export function NoteDetailPage() {
       toast.error(error.message);
     }
   };
+
   const handleToggleFav = async () => {
     try {
       setIsFav(!isFav);
@@ -213,13 +277,16 @@ export function NoteDetailPage() {
       toast.error(error.message);
     }
   };
+
   const handleToggleArchive = async () => {
     try {
       await toggleArchive();
+      if (note.isArchived) navigate("/archive");
     } catch (error) {
       toast.error(error.message);
     }
   };
+
   const handleTrash = async () => {
     try {
       await remove();
@@ -241,12 +308,11 @@ export function NoteDetailPage() {
   const handlePurge = async () => {
     try {
       await purge();
-      navigate(path.basePath);
+      navigate("/trash");
     } catch (error) {
       toast.error(error.message);
     }
   };
-  const wc = wordCount(content);
 
   return (
     <div className="flex flex-col h-full">
@@ -347,7 +413,7 @@ export function NoteDetailPage() {
                     size="sm"
                     variant="ghost"
                     className="w-full h-7 text-[11px]"
-                    onClick={() => setIcon("")}
+                    onClick={removeIcon}
                   >
                     Remove icon
                   </Button>
@@ -403,7 +469,7 @@ export function NoteDetailPage() {
                   size="sm"
                   variant="ghost"
                   className="w-full h-7 text-[11px]"
-                  onClick={() => setCover(null)}
+                  onClick={removeCover}
                 >
                   Remove cover
                 </Button>
@@ -481,17 +547,7 @@ export function NoteDetailPage() {
                     return (
                       <button
                         key={t.id}
-                        onClick={() => {
-                          if (selected) {
-                            setSelectTags((prev) =>
-                              prev.filter((id) => id !== t.id),
-                            );
-                            handleTags(selectTags.filter((id) => id !== t.id));
-                          } else {
-                            setSelectTags((prev) => [...prev, t.id]);
-                            handleTags([...selectTags, t.id]);
-                          }
-                        }}
+                        onClick={() => toggleTag(t.id)}
                         className="flex w-full items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-xs hover:bg-accent hover:text-accent-foreground"
                       >
                         <span className="flex items-center gap-2 min-w-0">
@@ -599,7 +655,11 @@ export function NoteDetailPage() {
       </div>
       <div className="px-4 sm:px-6 md:px-10 lg:px-12 pt-2 pb-0 max-w-3xl mx-auto w-full">
         <div className="flex-1 min-h-0 overflow-y-auto">
-          <NoteEditor content={content} onChange={setContent} onCmdS={flush} />
+          <NoteEditor
+            content={content}
+            onChange={setContent}
+            onCmdS={() => flushRef.current()}
+          />
         </div>
       </div>
     </div>
