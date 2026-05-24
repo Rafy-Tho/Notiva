@@ -1,21 +1,19 @@
 import {
   Bold,
-  Italic,
-  Underline as UIcon,
-  Strikethrough,
+  Code,
   Heading1,
   Heading2,
   Heading3,
+  Italic,
   List,
-  ListOrdered,
   ListChecks,
-  Code,
+  ListOrdered,
   Quote,
-  Link as LinkIcon,
-  Image as ImageIcon,
-  Table as TableIcon,
-  Undo2,
   Redo2,
+  Strikethrough,
+  Table as TableIcon,
+  Underline as UIcon,
+  Undo2,
 } from "lucide-react";
 import { cn } from "../lib/utils";
 
@@ -37,27 +35,6 @@ const Btn = ({ on, active, children, label }) => (
 );
 export function EditorToolbar({ editor }) {
   if (!editor) return null;
-
-  const promptLink = () => {
-    const previous = editor.getAttributes("link").href;
-    const url = window.prompt("URL", previous || "https://");
-    if (url === null) return;
-    if (url === "") {
-      editor.chain().focus().extendMarkRange("link").unsetLink().run();
-      return;
-    }
-    editor
-      .chain()
-      .focus()
-      .extendMarkRange("link")
-      .setLink({ href: url, target: "_blank" })
-      .run();
-  };
-
-  const insertImage = () => {
-    const url = window.prompt("Image URL");
-    if (url) editor.chain().focus().setImage({ src: url }).run();
-  };
 
   return (
     <div className="sticky top-0 z-10 flex flex-wrap items-center gap-0.5 border-b border-border bg-background/80 backdrop-blur px-3 py-1.5">
@@ -155,12 +132,7 @@ export function EditorToolbar({ editor }) {
       >
         <Quote className="h-3.5 w-3.5" />
       </Btn>
-      <Btn label="Link" active={editor.isActive("link")} on={promptLink}>
-        <LinkIcon className="h-3.5 w-3.5" />
-      </Btn>
-      <Btn label="Image" on={insertImage}>
-        <ImageIcon className="h-3.5 w-3.5" />
-      </Btn>
+
       <Btn
         label="Table"
         on={() =>
