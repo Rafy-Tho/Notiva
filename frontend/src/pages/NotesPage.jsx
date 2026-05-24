@@ -20,8 +20,10 @@ export function NotesPage({
   const toggleNoteList = useUIStore((s) => s.toggleNoteList);
   const notes = useNotes();
   const filteredNotes = useMemo(() => {
-    if (filter?.archived) return notes.data?.filter((note) => note.isArchived);
-    if (filter?.favorite) return notes.data?.filter((note) => note.isFavorite);
+    if (filter?.archived)
+      return notes.data?.filter((note) => note.isArchived && !note.deletedAt);
+    if (filter?.favorite)
+      return notes.data?.filter((note) => note.isFavorite && !note.deletedAt);
     if (filter?.trashed)
       return notes.data?.filter((note) => note.deletedAt !== null);
     if (filter?.notebookId)
