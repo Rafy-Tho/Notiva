@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { User } from "../models/User.js";
 import bcrypt from "bcrypt";
 import { RefreshToken } from "../models/RefreshToken.js";
+import Note from "../models/Note.js";
 export const me = async (id) => {
   const user = await User.findById(id);
   if (!user) {
