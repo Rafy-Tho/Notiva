@@ -1,11 +1,27 @@
+import { toast } from "sonner";
+import { useCreateNoteContext } from "../../hooks/useCreateNoteContext";
+import { useCreateNote } from "../../hooks/useNotes";
 import { Button } from "../ui/button";
 import { Plus, Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export function ActionButtons() {
+  const { mutateAsync: createNote } = useCreateNote();
+  const { defaults, basePath } = useCreateNoteContext();
+  const navigate = useNavigate();
+  const handleCreate = async () => {
+    try {
+      const note = await createNote(defaults);
+      navigate(`${basePath}/${note.id}`);
+      toast.success("Note created");
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
   return (
     <div className="px-3 pt-3 flex flex-col gap-1.5">
       <Button
-        onClick={() => {}}
+        onClick={handleCreate}
         size="sm"
         className="justify-start gap-2 bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow"
       >
