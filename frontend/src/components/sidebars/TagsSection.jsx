@@ -26,7 +26,10 @@ export function TagsSection({ onEdit, onDelete, onCreateClick }) {
           <TagRow
             key={t.id}
             tag={t}
-            count={notes.filter((n) => n.tagIds.includes(t.id)).length}
+            count={
+              notes.filter((n) => n.tagIds.includes(t.id) && !n.deletedAt)
+                .length
+            }
             onEdit={() => onEdit(t)}
             onDelete={() => onDelete(t)}
           />

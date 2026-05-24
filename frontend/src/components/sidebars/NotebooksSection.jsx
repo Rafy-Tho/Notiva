@@ -26,7 +26,9 @@ export function NotebooksSection({ onEdit, onDelete, onCreateClick }) {
           <NotebookRow
             key={nb.id}
             notebook={nb}
-            count={notes.filter((n) => n.notebookId === nb.id).length}
+            count={
+              notes.filter((n) => n.notebookId === nb.id && !n.deletedAt).length
+            }
             onEdit={() => onEdit(nb)}
             onDelete={() => onDelete(nb)}
           />
