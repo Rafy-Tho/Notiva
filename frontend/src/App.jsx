@@ -19,6 +19,9 @@ import { NotesPage } from "./pages/NotesPage";
 import { registerSessionExpiredHandler, useAuthStore } from "./store/authStore";
 import { SettingsPage } from "./pages/SettingsPage";
 import SearchPage from "./pages/SearchPage";
+import { RegisterPage } from "./pages/auth/RegisterPage";
+import { ForgotPasswordPage } from "./pages/auth/ForgotPasswordPage";
+import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 const queryClient = new QueryClient();
 
 function Bootstrap({ children }) {
@@ -50,6 +53,9 @@ function App() {
           <Routes>
             <Route element={<PublicRoute />}>
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
             </Route>
             <Route
               element={

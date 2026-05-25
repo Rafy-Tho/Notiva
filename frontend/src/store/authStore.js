@@ -36,6 +36,41 @@ export const useAuthStore = create(
 
       setUser: (user) => set({ user }),
 
+      register: async (name, email, password) => {
+        set({ isLoading: true, error: null }, false, "auth/register/pending");
+        try {
+          const res = await fetch(`${BASE_URL}/auth/register`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, email, password }),
+          });
+
+          if (!res.ok) {
+            const { message } = await res.json();
+            throw new Error(message ?? "Invalid credentials");
+          }
+
+          const { data } = await res.json();
+          set(
+            {
+              accessToken: data.accessToken,
+              user: data.user,
+              isLoading: false,
+              error: null,
+            },
+            false,
+            "auth/register/fulfilled",
+          );
+        } catch (err) {
+          set(
+            { error: err.message, isLoading: false },
+            false,
+            "auth/register/rejected",
+          );
+          throw err;
+        }
+      },
       // ── Login ────────────────────────────────────────────────
       login: async (email, password) => {
         set({ isLoading: true, error: null }, false, "auth/login/pending");
