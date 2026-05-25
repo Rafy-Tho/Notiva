@@ -1,3 +1,4 @@
+import * as svc from "../services/auth.service.js";
 export function notFoundHandler(req, res) {
   res.status(404).json({
     success: false,
@@ -96,6 +97,22 @@ function normalizeError(err) {
 
 export function errorHandler(err, req, res, _next) {
   const { status, code, message } = normalizeError(err);
+
+  // Clear refresh cookie
+  if (
+    [
+      "NO_TOKEN",
+      "INVALID_REFRESH_TOKEN",
+      "TOKEN_REUSE",
+      "TOKEN_INVALID",
+      "TOKEN_EXPIRED",
+      "TOKEN_NOT_ACTIVE",
+      "REFRESH_FAILED",
+      "USER_NOT_FOUND",
+    ].includes(code)
+  ) {
+    res.clearCookie("rt", svc.cookieOpts());
+  }
 
   // Log unexpected server errors
   if (status === 500) {

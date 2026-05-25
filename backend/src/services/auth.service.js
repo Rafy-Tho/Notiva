@@ -108,49 +108,51 @@ export async function issueTokens(user, meta = {}) {
  * Rotate refresh token
  * Old refresh token becomes invalid
  */
+// services/auth.service.js
+
 export async function rotateRefresh(oldToken, meta = {}) {
   let payload;
 
   try {
-    // Verify JWT signature and expiration
+    // Verify JWT signature + expiration
     payload = verifyRefresh(oldToken);
   } catch {
-    // Invalid or expired JWT
-    const e = new Error("Invalid refresh token");
-    e.status = 401;
-    throw e;
+    const err = new Error("Invalid refresh token");
+    err.status = 401;
+    err.code = "INVALID_REFRESH_TOKEN";
+    throw err;
   }
 
-  // Find stored refresh token in database
+  // Find token in DB
   const stored = await RefreshToken.findOne({
     token: hashToken(oldToken),
   });
 
-  // Token not found
+  // Token deleted / revoked / reused
   if (!stored) {
-    const e = new Error("Invalid refresh token");
-    e.status = 401;
-    throw e;
+    const err = new Error("Invalid refresh token");
+    err.status = 401;
+    err.code = "INVALID_REFRESH_TOKEN";
+    throw err;
   }
 
-  // Delete old refresh token
-  // This prevents reuse attacks
+  // Remove old token (rotation)
   await stored.deleteOne();
 
-  // Find associated user
+  // Find user
   const user = await User.findById(payload.sub);
 
-  // User no longer exists
+  // User deleted
   if (!user) {
-    const e = new Error("User not found");
-    e.status = 404;
-    throw e;
+    const err = new Error("User not found");
+    err.status = 401;
+    err.code = "USER_NOT_FOUND";
+    throw err;
   }
 
-  // Create new access + refresh token pair
+  // Issue new token pair
   return issueTokens(user, meta);
 }
-
 /**
  * Create password reset token
  */
