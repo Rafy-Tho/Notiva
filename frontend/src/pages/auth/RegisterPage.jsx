@@ -13,7 +13,7 @@ export function RegisterPage() {
   const register = useAuthStore((s) => s.register);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("Password123!");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
   const submit = async (e) => {
