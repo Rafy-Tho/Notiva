@@ -17,12 +17,32 @@ export function useDebounce(value, delay) {
 
   return debounced;
 }
+
+/**
+ * useAutoSave
+ *
+ * @param {any}      data                  - The value to watch and save
+ * @param {function} saveFn                - Async save function: (data, signal) => Promise<void>
+ * @param {object}   options
+ * @param {number}   options.debounceMs    - ms to wait after last change (default: 1000)
+ * @param {number}   options.intervalMs    - ms between interval-saves (default: 0 = disabled)
+ * @param {boolean}  options.saveOnBlur    - save when tab loses visibility (default: true)
+ * @param {boolean}  options.enabled       - master switch (default: true)
+ * @param {number}   options.maxRetries    - max retry attempts on error (default: 3)
+ *
+ * @returns {{ status, lastSaved, isDirty, saveNow }}
+ *   status    — 'idle' | 'dirty' | 'saving' | 'saved' | 'error'
+ *   lastSaved — Date | null
+ *   isDirty   — boolean
+ *   saveNow   — () => void  (trigger a manual save)
+ */
 export function useAutoSave(data, saveFn, options = {}) {
   const {
     debounceMs = 1000,
     intervalMs = 0,
     saveOnBlur = true,
     enabled = true,
+    maxRetries = 3,
   } = options;
 
   const [status, setStatus] = useState("idle");
@@ -35,6 +55,7 @@ export function useAutoSave(data, saveFn, options = {}) {
   const isDirtyRef = useRef(false);
   const abortRef = useRef(null);
   const lastSavedDataRef = useRef(undefined); // tracks what was last successfully saved
+  const retryCountRef = useRef(0);
 
   // Keep refs in sync
   useEffect(() => {
@@ -56,12 +77,17 @@ export function useAutoSave(data, saveFn, options = {}) {
       JSON.stringify(data) !== JSON.stringify(lastSavedDataRef.current);
     isDirtyRef.current = dirty;
     setIsDirty(dirty);
-    if (dirty) setStatus("dirty");
+
+    if (dirty) {
+      retryCountRef.current = 0; // user made a new change — reset retry count
+      setStatus("dirty");
+    }
   }, [data]);
 
   // Core save executor
   const executeSave = useCallback(async () => {
     if (!isDirtyRef.current || !enabled) return;
+    if (retryCountRef.current >= maxRetries) return; // stop retrying after max failures
 
     // Cancel any previous in-flight save
     abortRef.current?.abort();
@@ -77,15 +103,20 @@ export function useAutoSave(data, saveFn, options = {}) {
 
       lastSavedDataRef.current = dataRef.current;
       isDirtyRef.current = false;
+      retryCountRef.current = 0; // reset on success
       setIsDirty(false);
       setLastSaved(new Date());
       setStatus("saved");
     } catch (err) {
       if (err?.name === "AbortError") return;
-      console.error("[useAutoSave] Save failed:", err);
+      retryCountRef.current += 1; // increment on failure
+      console.error(
+        `[useAutoSave] Save failed (attempt ${retryCountRef.current}/${maxRetries}):`,
+        err,
+      );
       setStatus("error");
     }
-  }, [enabled]);
+  }, [enabled, maxRetries]);
 
   // ── 1. Debounce save ──────────────────────────────────────────────────────
   const debouncedData = useDebounce(data, debounceMs);

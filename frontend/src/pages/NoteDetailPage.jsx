@@ -57,7 +57,6 @@ import { useAutoSave } from "../hooks/useAutosave";
 import { useCreateNoteContext } from "../hooks/useCreateNoteContext";
 import { useNotebooks } from "../hooks/useNotebooks";
 import {
-  saveNoteData,
   useNote,
   usePurge,
   useRemove,
@@ -127,9 +126,12 @@ export function NoteDetailPage() {
       content,
     };
   }, [title, content]);
+
   const { status, lastSaved, isDirty, saveNow } = useAutoSave(
     autosaveValue,
-    saveNoteData,
+    async (payload, signal) => {
+      await updateNote({ ...payload, signal });
+    },
     {
       debounceMs: 1000, // save 1s after the user stops typing
       intervalMs: 10000, // also save every 10s as a safety net

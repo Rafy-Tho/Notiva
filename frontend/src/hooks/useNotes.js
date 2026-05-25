@@ -63,7 +63,8 @@ export function useCreateNote() {
 export function useUpdateNote(id) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (note, signal) => {
+    mutationFn: async ({ signal, ...note }) => {
+      // ✅ signal extracted here
       const res = await fetchWithAuth(`${BASE_URL}/notes/${id}`, {
         method: "PATCH",
         body: JSON.stringify(note),
@@ -79,7 +80,7 @@ export function useUpdateNote(id) {
     onSuccess: () => {
       queryClient.invalidateQueries(["note", id]);
     },
-    enabled: !!id,
+    // ✅ removed invalid `enabled`
   });
 }
 
@@ -201,22 +202,4 @@ export function useRestore(id) {
       queryClient.invalidateQueries(["notes"]);
     },
   });
-}
-
-// ── Fake API call — replace with your real endpoint ──────────────────────────
-export async function saveNoteData(data, signal) {
-  const { id, ...payload } = data;
-  if (!id) throw new Error("Missing note ID");
-
-  const response = await fetchWithAuth(
-    `${import.meta.env.VITE_BASE_API}/notes/${id}`,
-    {
-      method: "PATCH",
-      body: JSON.stringify(payload),
-      signal, // honours AbortController so stale saves are cancelled
-    },
-  );
-
-  if (!response.ok) throw new Error("Save failed");
-  return response.json();
 }
