@@ -16,7 +16,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -53,10 +53,11 @@ import {
 } from "../components/ui/select";
 import { Skeleton } from "../components/ui/skeleton";
 import { NoteEditor } from "../editor/NoteEditor";
-import { useAutosave } from "../hooks/useAutosave";
+import { useAutoSave } from "../hooks/useAutosave";
 import { useCreateNoteContext } from "../hooks/useCreateNoteContext";
 import { useNotebooks } from "../hooks/useNotebooks";
 import {
+  saveNoteData,
   useNote,
   usePurge,
   useRemove,
@@ -67,13 +68,14 @@ import {
   useUpdateNote,
 } from "../hooks/useNotes";
 import { useTags } from "../hooks/useTags";
-import { readingTime, sanitizeHtml, wordCount } from "../lib/sanitize";
+import { readingTime, wordCount } from "../lib/sanitize";
 import { cn } from "../lib/utils";
+
+// ── Fake API call — replace with your real endpoint ──────────────────────────
 
 export function NoteDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const saveVersion = useRef(0);
   const hydratedNoteId = useRef(null);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -120,51 +122,23 @@ export function NoteDetailPage() {
 
   const autosaveValue = useMemo(() => {
     return {
+      id,
       title,
       content,
     };
   }, [title, content]);
-
+  const { status, lastSaved, isDirty, saveNow } = useAutoSave(
+    autosaveValue,
+    saveNoteData,
+    {
+      debounceMs: 1000, // save 1s after the user stops typing
+      intervalMs: 10000, // also save every 10s as a safety net
+      saveOnBlur: true, // save immediately when the user switches tabs
+    },
+  );
   const wc = useMemo(() => {
     return wordCount(content);
   }, [content]);
-
-  const handleSave = useCallback(
-    async (value) => {
-      if (!id) return;
-
-      const version = ++saveVersion.current;
-
-      if (title === "" || content === "") return;
-
-      await updateNote({
-        title: value.title.trim() || "Untitled",
-        content: sanitizeHtml(value.content),
-      });
-
-      // Ignore outdated save completion
-      if (version !== saveVersion.current) {
-        return;
-      }
-    },
-    [id, updateNote],
-  );
-  const { status, lastSavedAt, flush } = useAutosave(
-    autosaveValue,
-    handleSave,
-    {
-      delay: 3000,
-      resetKey: note?.id,
-      isValidValue: (v) => {
-        return v.title.trim().length > 0 || v.content.trim().length > 0;
-      },
-    },
-  );
-  const flushRef = useRef(flush);
-
-  useEffect(() => {
-    flushRef.current = flush;
-  }, [flush]);
 
   if (!id) return null;
 
@@ -303,7 +277,6 @@ export function NoteDetailPage() {
       toast.error(error.message);
     }
   };
-
   return (
     <div className="flex flex-col h-full">
       {note?.deletedAt && (
@@ -372,7 +345,7 @@ export function NoteDetailPage() {
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-y-2 gap-x-2 px-4 sm:px-6 md:px-10 lg:px-12 pt-6 max-w-3xl mx-auto w-full">
-        <SaveBadge status={status} lastSavedAt={lastSavedAt} />
+        <SaveBadge status={status} lastSavedAt={lastSaved} />
         <div className="flex items-center gap-1 flex-wrap">
           {/* Emoji picker */}
           <Popover>
@@ -648,7 +621,7 @@ export function NoteDetailPage() {
           <NoteEditor
             content={content}
             onChange={setContent}
-            onCmdS={() => flushRef.current()}
+            onCmdS={saveNow}
           />
         </div>
       </div>

@@ -1,335 +1,124 @@
-// hooks/useAutosave.js
+// useAutoSave.js — drop-in auto-save hook for React
+// Combines debounce + interval + visibilitychange for full coverage
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
-import equal from "fast-deep-equal";
+import { useState, useEffect, useRef, useCallback } from "react";
 
-const EMPTY = Symbol("EMPTY");
+/**
+ * useDebounce
+ * Returns a debounced version of `value` after `delay` ms of inactivity.
+ */
+export function useDebounce(value, delay) {
+  const [debounced, setDebounced] = useState(value);
 
-export function useAutosave(
-  value,
-  save,
-  {
-    delay = 2000,
-    resetKey,
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(timer);
+  }, [value, delay]);
 
-    // Prevent accidental empty overwrite
-    allowEmpty = false,
+  return debounced;
+}
+export function useAutoSave(data, saveFn, options = {}) {
+  const {
+    debounceMs = 1000,
+    intervalMs = 0,
+    saveOnBlur = true,
+    enabled = true,
+  } = options;
 
-    // Optional validation
-    isValidValue,
-  } = {},
-) {
   const [status, setStatus] = useState("idle");
-  const [lastSavedAt, setLastSavedAt] = useState(null);
+  const [lastSaved, setLastSaved] = useState(null);
+  const [isDirty, setIsDirty] = useState(false);
 
-  const mounted = useRef(true);
+  // Refs so callbacks always see fresh values without re-creating effects
+  const dataRef = useRef(data);
+  const saveFnRef = useRef(saveFn);
+  const isDirtyRef = useRef(false);
+  const abortRef = useRef(null);
+  const lastSavedDataRef = useRef(undefined); // tracks what was last successfully saved
 
-  const timer = useRef(null);
-  const resetTimer = useRef(null);
-
-  const latestValue = useRef(value);
-
-  // The actual confirmed saved value
-  const lastSavedValue = useRef(value);
-
-  // Queue while request active
-  const pendingValue = useRef(EMPTY);
-
-  // Prevent concurrent saves
-  const inFlight = useRef(false);
-
-  // Skip first render
-  const ready = useRef(false);
-
-  // Prevent stale async saves
-  const version = useRef(0);
-
-  // Detect reset/loading state
-  const resetting = useRef(false);
-
-  // -----------------------------
-  // Helpers
-  // -----------------------------
-
-  const clearAllTimers = () => {
-    if (timer.current) {
-      clearTimeout(timer.current);
-      timer.current = null;
-    }
-
-    if (resetTimer.current) {
-      clearTimeout(resetTimer.current);
-      resetTimer.current = null;
-    }
-  };
-
-  const isEmptyValue = useCallback((v) => {
-    if (v == null) return true;
-
-    // String
-    if (typeof v === "string") {
-      return v.trim() === "";
-    }
-
-    // Object support
-    if (typeof v === "object") {
-      const title = v.title?.trim?.() ?? "";
-      const content = v.content?.trim?.() ?? "";
-
-      return title === "" && content === "";
-    }
-
-    return false;
-  }, []);
-
-  const canSaveValue = useCallback(
-    (v) => {
-      if (!allowEmpty && isEmptyValue(v)) {
-        return false;
-      }
-
-      if (isValidValue && !isValidValue(v)) {
-        return false;
-      }
-
-      return true;
-    },
-    [allowEmpty, isEmptyValue, isValidValue],
-  );
-
-  // -----------------------------
-  // Keep latest value
-  // -----------------------------
-
+  // Keep refs in sync
   useEffect(() => {
-    latestValue.current = value;
-  }, [value]);
-
-  // -----------------------------
-  // Reset when switching note
-  // -----------------------------
-
+    dataRef.current = data;
+  }, [data]);
   useEffect(() => {
-    resetting.current = true;
+    saveFnRef.current = saveFn;
+  }, [saveFn]);
 
-    clearAllTimers();
-
-    pendingValue.current = EMPTY;
-
-    version.current += 1;
-
-    lastSavedValue.current = value;
-    latestValue.current = value;
-
-    ready.current = false;
-
-    // Wait one tick so editor can hydrate
-    queueMicrotask(() => {
-      resetting.current = false;
-      ready.current = true;
-    });
-  }, [resetKey]);
-
-  // -----------------------------
-  // Cleanup
-  // -----------------------------
-
+  // Detect dirty state whenever data changes
   useEffect(() => {
-    return () => {
-      mounted.current = false;
-      clearAllTimers();
-    };
-  }, []);
-
-  // -----------------------------
-  // Save executor
-  // -----------------------------
-
-  const executeSave = useCallback(
-    async (valueToSave) => {
-      // Ignore invalid values
-      if (!canSaveValue(valueToSave)) {
-        return;
-      }
-
-      // Ignore duplicates
-      if (equal(valueToSave, lastSavedValue.current)) {
-        return;
-      }
-
-      const currentVersion = version.current;
-
-      inFlight.current = true;
-
-      if (mounted.current) {
-        setStatus("saving");
-      }
-
-      try {
-        await save(valueToSave);
-
-        // Ignore stale save result
-        if (currentVersion !== version.current) {
-          return;
-        }
-
-        lastSavedValue.current = valueToSave;
-
-        if (mounted.current) {
-          setStatus("saved");
-          setLastSavedAt(new Date());
-        }
-      } catch (error) {
-        console.error(error);
-
-        if (mounted.current) {
-          setStatus("error");
-
-          toast.error("Failed to save changes", {
-            id: "autosave-error",
-          });
-        }
-
-        return;
-      } finally {
-        inFlight.current = false;
-      }
-
-      // Process queued change
-      if (pendingValue.current !== EMPTY) {
-        const nextValue = pendingValue.current;
-
-        pendingValue.current = EMPTY;
-
-        if (
-          canSaveValue(nextValue) &&
-          !equal(nextValue, lastSavedValue.current)
-        ) {
-          await executeSave(nextValue);
-        }
-
-        return;
-      }
-
-      if (resetTimer.current) {
-        clearTimeout(resetTimer.current);
-      }
-
-      resetTimer.current = setTimeout(() => {
-        if (!mounted.current) return;
-
-        setStatus((current) => (current === "saved" ? "idle" : current));
-      }, 2000);
-    },
-    [save, canSaveValue],
-  );
-
-  const executeSaveRef = useRef(executeSave);
-
-  useEffect(() => {
-    executeSaveRef.current = executeSave;
-  }, [executeSave]);
-
-  // -----------------------------
-  // Autosave effect
-  // -----------------------------
-
-  useEffect(() => {
-    // Ignore during reset
-    if (resetting.current) {
+    if (lastSavedDataRef.current === undefined) {
+      // First render — treat as clean baseline
+      lastSavedDataRef.current = data;
       return;
     }
 
-    // First render baseline
-    if (!ready.current) {
-      ready.current = true;
+    const dirty =
+      JSON.stringify(data) !== JSON.stringify(lastSavedDataRef.current);
+    isDirtyRef.current = dirty;
+    setIsDirty(dirty);
+    if (dirty) setStatus("dirty");
+  }, [data]);
 
-      lastSavedValue.current = value;
+  // Core save executor
+  const executeSave = useCallback(async () => {
+    if (!isDirtyRef.current || !enabled) return;
 
-      return;
+    // Cancel any previous in-flight save
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    setStatus("saving");
+
+    try {
+      await saveFnRef.current(dataRef.current, controller.signal);
+
+      if (controller.signal.aborted) return; // a newer save superseded this one
+
+      lastSavedDataRef.current = dataRef.current;
+      isDirtyRef.current = false;
+      setIsDirty(false);
+      setLastSaved(new Date());
+      setStatus("saved");
+    } catch (err) {
+      if (err?.name === "AbortError") return;
+      console.error("[useAutoSave] Save failed:", err);
+      setStatus("error");
     }
+  }, [enabled]);
 
-    // Ignore invalid values
-    if (!canSaveValue(value)) {
-      return;
-    }
+  // ── 1. Debounce save ──────────────────────────────────────────────────────
+  const debouncedData = useDebounce(data, debounceMs);
 
-    // Ignore unchanged
-    if (equal(value, lastSavedValue.current)) {
-      return;
-    }
+  useEffect(() => {
+    if (!enabled) return;
+    executeSave();
+  }, [debouncedData]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    clearAllTimers();
+  // ── 2. Interval save ──────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!enabled || !intervalMs) return;
 
-    timer.current = setTimeout(() => {
-      const latest = latestValue.current;
+    const id = setInterval(() => {
+      if (isDirtyRef.current) executeSave();
+    }, intervalMs);
 
-      // Ignore invalid latest value
-      if (!canSaveValue(latest)) {
-        return;
-      }
+    return () => clearInterval(id);
+  }, [enabled, intervalMs, executeSave]);
 
-      // Queue while request active
-      if (inFlight.current) {
-        pendingValue.current = latest;
-        return;
-      }
+  // ── 3. Visibility-change (tab blur) save ──────────────────────────────────
+  useEffect(() => {
+    if (!enabled || !saveOnBlur) return;
 
-      void executeSaveRef.current(latest);
-    }, delay);
-
-    return () => {
-      if (timer.current) {
-        clearTimeout(timer.current);
+    const handler = () => {
+      if (document.visibilityState === "hidden" && isDirtyRef.current) {
+        executeSave();
       }
     };
-  }, [value, delay, canSaveValue]);
 
-  // -----------------------------
-  // Manual flush
-  // -----------------------------
+    document.addEventListener("visibilitychange", handler);
+    return () => document.removeEventListener("visibilitychange", handler);
+  }, [enabled, saveOnBlur, executeSave]);
 
-  const flush = useCallback(async () => {
-    clearAllTimers();
-
-    const latest = latestValue.current;
-
-    if (!canSaveValue(latest)) {
-      return;
-    }
-
-    if (equal(latest, lastSavedValue.current)) {
-      return;
-    }
-
-    if (inFlight.current) {
-      pendingValue.current = latest;
-      return;
-    }
-
-    await executeSaveRef.current(latest);
-  }, [canSaveValue]);
-
-  // -----------------------------
-  // Before unload
-  // -----------------------------
-
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      void flush();
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
-  }, [flush]);
-
-  return {
-    status,
-    lastSavedAt,
-    flush,
-  };
+  return { status, lastSaved, isDirty, saveNow: executeSave };
 }
