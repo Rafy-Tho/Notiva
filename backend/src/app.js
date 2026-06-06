@@ -15,8 +15,8 @@ const origins = process.env.FRONTEND_ORIGIN.split(",").map((s) => s.trim());
 app.set("trust proxy", 1);
 app.use(helmet());
 app.use(cors({ origin: origins, credentials: true }));
-app.use(express.json({ limit: "2mb" }));
 app.use(cookieParser());
+app.use(express.json({ limit: "2mb" }));
 if (process.env.NODE_ENV === "development") {
   const { default: morgan } = await import("morgan");
   app.use(morgan("dev"));

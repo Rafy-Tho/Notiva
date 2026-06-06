@@ -1,8 +1,5 @@
-import mongoose from "mongoose";
 import { User } from "../models/User.js";
 import bcrypt from "bcrypt";
-import { RefreshToken } from "../models/RefreshToken.js";
-import Note from "../models/Note.js";
 export const me = async (id) => {
   const user = await User.findById(id);
   if (!user) {
@@ -23,44 +20,26 @@ export const update = async (id, name) => {
   return user;
 };
 
-export const changePassword = async (id, password) => {
+export const changePassword = async (id, { oldPassword, newPassword }) => {
   const user = await User.findById(id);
   if (!user) {
     const e = new Error("User not found");
     e.status = 404;
     throw e;
   }
-  const ok = await user.compare(password.oldPassword, user.password);
+  const ok = await bcrypt.compare(oldPassword, user.password);
   if (!ok) {
     const e = new Error("Invalid credentials");
     e.status = 401;
     throw e;
   }
-  user.password = await bcrypt.hash(password.newPassword, 12);
+  user.password = await bcrypt.hash(newPassword, 12);
   await user.save();
   return user;
 };
 
 export async function deleteAccount(id) {
-  const session = await mongoose.startSession();
-  session.startTransaction();
-
-  try {
-    const now = new Date();
-
-    await User.findByIdAndUpdate(id, { deletedAt: now }, { session });
-    await RefreshToken.updateMany(
-      { userId: id },
-      { deletedAt: now },
-      { session },
-    );
-    await session.commitTransaction();
-  } catch (err) {
-    await session.abortTransaction();
-    throw err;
-  } finally {
-    session.endSession();
-  }
+  await User.findByIdAndUpdate(id, { deletedAt: new Date() });
 }
 
 export async function updateAvatar(id, url) {

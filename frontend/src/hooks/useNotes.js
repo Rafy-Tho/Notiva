@@ -6,7 +6,7 @@ const BASE_URL = import.meta.env.VITE_BASE_API;
 
 // ── GET ──────────────────────────────────────────────────────────
 export function useNotes() {
-  const token = useAuthStore((s) => s.accessToken);
+  const user = useAuthStore((s) => s.user);
   return useQuery({
     queryKey: ["notes"],
     queryFn: async () => {
@@ -18,12 +18,12 @@ export function useNotes() {
       const { data } = await res.json();
       return data;
     },
-    enabled: !!token,
+    enabled: !!user,
   });
 }
 
 export function useNote(id) {
-  const token = useAuthStore((s) => s.accessToken);
+  const user = useAuthStore((s) => s.user);
   return useQuery({
     queryKey: ["note", id],
     queryFn: async () => {
@@ -35,7 +35,7 @@ export function useNote(id) {
       const { data } = await res.json();
       return data;
     },
-    enabled: !!token,
+    enabled: !!user,
   });
 }
 

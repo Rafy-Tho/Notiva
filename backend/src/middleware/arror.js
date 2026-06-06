@@ -1,4 +1,3 @@
-import * as svc from "../services/auth.service.js";
 export function notFoundHandler(req, res) {
   res.status(404).json({
     success: false,
@@ -7,11 +6,8 @@ export function notFoundHandler(req, res) {
     message: `Not Found ${req.method} ${req.originalUrl}`,
   });
 }
-// middleware/errorHandler.js
 
 function normalizeError(err) {
-  // ── Mongoose Validation Error ──────────────────────────────────
-  // Triggered by schema validators (required, minlength, enum, etc.)
   if (err.name === "ValidationError") {
     const messages = Object.values(err.errors).map((e) => e.message);
     return {
@@ -21,8 +17,6 @@ function normalizeError(err) {
     };
   }
 
-  // ── Mongoose Duplicate Key Error ───────────────────────────────
-  // Triggered by unique: true constraint
   if (err.code === 11000) {
     const field = Object.keys(err.keyValue ?? {})[0] ?? "field";
     return {
@@ -32,8 +26,6 @@ function normalizeError(err) {
     };
   }
 
-  // ── Mongoose Cast Error ────────────────────────────────────────
-  // Triggered by invalid ObjectId: findById("not-an-id")
   if (err.name === "CastError") {
     return {
       status: 400,
@@ -42,8 +34,6 @@ function normalizeError(err) {
     };
   }
 
-  // ── Mongoose Document Not Found ────────────────────────────────
-  // Triggered by query.orFail()
   if (err.name === "DocumentNotFoundError") {
     return {
       status: 404,
@@ -52,7 +42,6 @@ function normalizeError(err) {
     };
   }
 
-  // ── JWT Errors ─────────────────────────────────────────────────
   if (err.name === "TokenExpiredError") {
     return {
       status: 401,
@@ -77,8 +66,6 @@ function normalizeError(err) {
     };
   }
 
-  // ── App-level errors (thrown manually with a status) ───────────
-  // e.g: const err = new Error("Not found"); err.status = 404; throw err;
   if (err.status) {
     return {
       status: err.status,
@@ -87,7 +74,6 @@ function normalizeError(err) {
     };
   }
 
-  // ── Fallback ───────────────────────────────────────────────────
   return {
     status: 500,
     code: "INTERNAL_ERROR",
@@ -98,23 +84,6 @@ function normalizeError(err) {
 export function errorHandler(err, req, res, _next) {
   const { status, code, message } = normalizeError(err);
 
-  // Clear refresh cookie
-  if (
-    [
-      "NO_TOKEN",
-      "INVALID_REFRESH_TOKEN",
-      "TOKEN_REUSE",
-      "TOKEN_INVALID",
-      "TOKEN_EXPIRED",
-      "TOKEN_NOT_ACTIVE",
-      "REFRESH_FAILED",
-      "USER_NOT_FOUND",
-    ].includes(code)
-  ) {
-    res.clearCookie("rt", svc.cookieOpts());
-  }
-
-  // Log unexpected server errors
   if (status === 500) {
     console.error(
       `[${new Date().toISOString()}] ${req.method} ${req.url}`,
@@ -128,7 +97,7 @@ export function errorHandler(err, req, res, _next) {
     code,
     message:
       process.env.NODE_ENV === "production" && status === 500
-        ? "Internal Server Error" // hide details in production
+        ? "Internal Server Error"
         : message,
   });
 }

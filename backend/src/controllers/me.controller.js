@@ -19,7 +19,6 @@ export const changePassword = async (req, res) => {
 
 export const deleteAccount = async (req, res) => {
   await svc.deleteAccount(req.userId);
-  res.clearCookie("rt", svc.cookieOpts());
   return ok(res, null, "Delete account");
 };
 

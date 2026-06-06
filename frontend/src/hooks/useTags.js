@@ -6,7 +6,7 @@ const BASE_URL = import.meta.env.VITE_BASE_API;
 
 // ── GET ──────────────────────────────────────────────────────────
 export function useTags() {
-  const token = useAuthStore((s) => s.accessToken);
+  const user = useAuthStore((s) => s.user);
   return useQuery({
     queryKey: ["tags"],
     queryFn: async () => {
@@ -18,7 +18,7 @@ export function useTags() {
       const { data } = await res.json();
       return data;
     },
-    enabled: !!token,
+    enabled: !!user,
   });
 }
 

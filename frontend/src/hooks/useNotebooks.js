@@ -6,10 +6,10 @@ const BASE_URL = import.meta.env.VITE_BASE_API;
 
 // ── GET ──────────────────────────────────────────────────────────
 export function useNotebooks() {
-  const token = useAuthStore((s) => s.accessToken);
+  const user = useAuthStore((s) => s.user);
   return useQuery({
     queryKey: ["notebooks"],
-    enabled: !!token,
+    enabled: !!user,
     queryFn: async () => {
       const res = await fetchWithAuth(`${BASE_URL}/notebooks`);
       if (!res.ok) {

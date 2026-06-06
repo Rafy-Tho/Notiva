@@ -1,17 +1,8 @@
-import { useAuthStore } from "../store/authStore";
-const REFRESHABLE_CODES = ["TOKEN_EXPIRED", "NO_TOKEN"];
-
-function buildHeaders(options, token) {
+function buildHeaders(options) {
   const headers = { ...options.headers };
-
-  // Only set content-type for json let the browser handle formdata
 
   if (!(options.body instanceof FormData)) {
     headers["Content-Type"] = headers["Content-Type"] ?? "application/json";
-  }
-
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
   }
 
   return headers;
@@ -27,35 +18,16 @@ async function parseError(response) {
 }
 
 export async function fetchWithAuth(url, option = {}) {
-  const accessToken = useAuthStore.getState().accessToken;
-  const refreshAccessToken = useAuthStore.getState().refreshAccessToken;
-  const sessionRestored = useAuthStore.getState().sessionRestored;
-  const sessionRestorePromise = useAuthStore.getState().sessionRestorePromise;
-
-  // Wait for session restore before making any request
-  if (!sessionRestored && sessionRestorePromise) {
-    await sessionRestorePromise;
-  }
-
-  const makeRequest = (token) =>
-    fetch(url, {
-      ...option,
-      credentials: "include",
-      headers: buildHeaders(option, token),
-    });
-
-  let response = await makeRequest(accessToken);
+  const response = await fetch(url, {
+    ...option,
+    headers: buildHeaders(option),
+    credentials: "include",
+  });
 
   if (response.status === 401) {
-    const { code } = await parseError(response);
-    if (REFRESHABLE_CODES.includes(code)) {
-      try {
-        const newToken = await refreshAccessToken();
-        response = await makeRequest(newToken);
-      } catch {
-        throw new Error("Session expired");
-      }
-    }
+    const { message } = await parseError(response);
+    throw new Error(message ?? "Session expired");
   }
+
   return response;
 }

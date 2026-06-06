@@ -1,22 +1,21 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { useLayoutEffect } from "react";
+import { useEffect } from "react";
 import {
   BrowserRouter,
   Route,
   Routes,
-  useNavigate,
   useParams,
 } from "react-router-dom";
 import AppLayout from "./components/layout/AppLayout";
 import { PrivateRoute } from "./components/PrivateRoute";
-import { PublicRoute } from "./components/PublicRroute";
+import { PublicRoute } from "./components/PublicRoute";
 import { Toaster as Sonner } from "./components/ui/sonner";
 import { LoginPage } from "./pages/auth/LoginPage";
 import Index from "./pages/Index";
 import { NoteDetailPage } from "./pages/NoteDetailPage";
 import { NotesPage } from "./pages/NotesPage";
-import { registerSessionExpiredHandler, useAuthStore } from "./store/authStore";
+import { useAuthStore } from "./store/authStore";
 import { SettingsPage } from "./pages/SettingsPage";
 import SearchPage from "./pages/SearchPage";
 import { RegisterPage } from "./pages/auth/RegisterPage";
@@ -25,23 +24,21 @@ import { ResetPasswordPage } from "./pages/auth/ResetPasswordPage";
 const queryClient = new QueryClient();
 
 function Bootstrap({ children }) {
-  const navigate = useNavigate();
   const restoreSession = useAuthStore((state) => state.restoreSession);
-  const sessionRestored = useAuthStore((state) => state.sessionRestored);
+  const isLoading = useAuthStore((state) => state.isLoading);
 
-  useLayoutEffect(() => {
-    // Tell the store where to send the user when refresh fails
-    registerSessionExpiredHandler(() => navigate("/login", { replace: true }));
+  useEffect(() => {
     restoreSession();
   }, []);
 
-  if (!sessionRestored) {
+  if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <span>Loading...</span>
+      <div className="flex h-screen items-center justify-center text-muted-foreground">
+        Loading…
       </div>
     );
   }
+
   return <>{children}</>;
 }
 function App() {

@@ -1,64 +1,40 @@
-// store/authStore.js
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 
 const BASE_URL = import.meta.env.VITE_BASE_API;
 
-// ── Refresh queue (module-level singleton) ──────────────────────
-let isRefreshing = false;
-let refreshQueue = [];
+async function fetchJson(url, opts = {}) {
+  const headers = { ...opts.headers };
+  if (!(opts.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
+  const res = await fetch(url, { ...opts, headers, credentials: "include" });
+  if (!res.ok) {
+    const { message } = await res.json();
+    throw new Error(message ?? "Something went wrong");
+  }
+  const { data } = await res.json();
+  return data;
+}
 
-const processQueue = (error, token = null) => {
-  refreshQueue.forEach(
-    ({ resolve, reject }) => (error ? reject(error) : resolve(token)), // ← bug fix: was `reject` not `reject(error)`
-  );
-  refreshQueue = [];
-};
-
-// ── Session expired callback ─────────────────────────────────────
-// Registered by the app so the store never touches window.location
-let onSessionExpired = null;
-export const registerSessionExpiredHandler = (fn) => {
-  onSessionExpired = fn;
-};
-
-// ── Store ────────────────────────────────────────────────────────
 export const useAuthStore = create(
   devtools(
-    (set, get) => ({
-      // State
-      accessToken: null,
+    (set) => ({
       user: null,
-      isLoading: false,
+      isLoading: true,
       error: null,
-      sessionRestored: false, // ← gate for fetchWithAuth
-      sessionRestorePromise: null, // ← fetchWithAuth awaits this on page load
 
       setUser: (user) => set({ user }),
 
       register: async (name, email, password) => {
         set({ isLoading: true, error: null }, false, "auth/register/pending");
         try {
-          const res = await fetch(`${BASE_URL}/auth/register`, {
+          const data = await fetchJson(`${BASE_URL}/auth/register`, {
             method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name, email, password }),
           });
-
-          if (!res.ok) {
-            const { message } = await res.json();
-            throw new Error(message ?? "Invalid credentials");
-          }
-
-          const { data } = await res.json();
           set(
-            {
-              accessToken: data.accessToken,
-              user: data.user,
-              isLoading: false,
-              error: null,
-            },
+            { user: data.user, isLoading: false, error: null },
             false,
             "auth/register/fulfilled",
           );
@@ -71,30 +47,16 @@ export const useAuthStore = create(
           throw err;
         }
       },
-      // ── Login ────────────────────────────────────────────────
+
       login: async (email, password) => {
         set({ isLoading: true, error: null }, false, "auth/login/pending");
         try {
-          const res = await fetch(`${BASE_URL}/auth/login`, {
+          const data = await fetchJson(`${BASE_URL}/auth/login`, {
             method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, password }),
           });
-
-          if (!res.ok) {
-            const { message } = await res.json();
-            throw new Error(message ?? "Invalid credentials");
-          }
-
-          const { data } = await res.json();
           set(
-            {
-              accessToken: data.accessToken,
-              user: data.user,
-              isLoading: false,
-              error: null,
-            },
+            { user: data.user, isLoading: false, error: null },
             false,
             "auth/login/fulfilled",
           );
@@ -108,113 +70,28 @@ export const useAuthStore = create(
         }
       },
 
-      // ── Logout ───────────────────────────────────────────────
       logout: async () => {
         try {
-          await fetch(`${BASE_URL}/auth/logout`, {
-            method: "POST",
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${get().accessToken}`,
-            },
-          });
+          await fetchJson(`${BASE_URL}/auth/logout`, { method: "POST" });
         } finally {
-          // Always clear state even if the request fails
-          set({ accessToken: null, user: null }, false, "auth/logout");
+          set({ user: null }, false, "auth/logout");
         }
       },
 
-      // ── Restore session on page reload ───────────────────────
-      restoreSession: () => {
-        // Already running or completed — return the same promise
-        const existing = get().sessionRestorePromise;
-        if (existing) return existing;
-        // Return and store the promise so fetchWithAuth can await it
-        const promise = (async () => {
-          set({ isLoading: true }, false, "auth/restoreSession/pending");
-          try {
-            const res = await fetch(`${BASE_URL}/auth/refresh`, {
-              method: "POST",
-              credentials: "include",
-            });
-
-            if (!res.ok) {
-              set(
-                { isLoading: false, sessionRestored: true },
-                false,
-                "auth/restoreSession/skipped",
-              );
-              return;
-            }
-
-            const { data } = await res.json();
-            set(
-              {
-                accessToken: data.accessToken,
-                user: data.user,
-                isLoading: false,
-                sessionRestored: true,
-              },
-              false,
-              "auth/restoreSession/fulfilled",
-            );
-          } catch {
-            set(
-              { isLoading: false, sessionRestored: true },
-              false,
-              "auth/restoreSession/rejected",
-            );
-          }
-        })();
-
-        set(
-          { sessionRestorePromise: promise },
-          false,
-          "auth/restoreSession/init",
-        );
-        return promise;
-      },
-
-      // ── Silent token refresh (used inside fetchWithAuth) ─────
-      refreshAccessToken: async () => {
-        if (isRefreshing) {
-          return new Promise((resolve, reject) => {
-            refreshQueue.push({ resolve, reject });
-          });
-        }
-
-        isRefreshing = true;
-
+      restoreSession: async () => {
         try {
-          const res = await fetch(`${BASE_URL}/auth/refresh`, {
-            method: "POST",
-            credentials: "include",
-          });
-
-          if (!res.ok) throw new Error("Session expired");
-
-          const { data } = await res.json(); // ← bug fix: was `{ accessToken }`, your API returns `{ data }`
-          set({ accessToken: data.accessToken }, false, "auth/tokenRefreshed");
-          processQueue(null, data.accessToken);
-          return data.accessToken;
-        } catch (err) {
-          processQueue(err);
-          set({ accessToken: null, user: null }, false, "auth/sessionExpired");
-          onSessionExpired?.(); // ← no more window.location here
-          throw err;
+          const data = await fetchJson(`${BASE_URL}/auth/verify`);
+          set({ user: data.user }, false, "auth/verify/fulfilled");
+        } catch {
+          set({ user: null }, false, "auth/verify/rejected");
         } finally {
-          isRefreshing = false;
+          set({ isLoading: false }, false, "auth/verify/done");
         }
       },
-      // delete account
+
       delete: async () => {
-        const res = await fetch(`${BASE_URL}/me`, {
-          method: "DELETE",
-          credentials: "include",
-        });
-        if (!res.ok) throw new Error("Delete account failed");
-        set({ accessToken: null, user: null }, false, "auth/deleteAccount");
+        const data = await fetchJson(`${BASE_URL}/me`, { method: "DELETE" });
+        set({ user: null }, false, "auth/deleteAccount");
       },
     }),
     { name: "AuthStore" },

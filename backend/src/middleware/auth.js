@@ -1,8 +1,9 @@
-import { verifyAccess } from "../utils/tokens.js";
+import { verifyToken } from "../utils/tokens.js";
+
+const COOKIE_NAME = "noteflow_token";
 
 export function authRequired(req, res, next) {
-  const h = req.headers.authorization || "";
-  const token = h?.startsWith("Bearer ") ? h.slice(7) : null;
+  const token = req.cookies?.[COOKIE_NAME];
   if (!token) {
     const err = new Error("No token provided");
     err.status = 401;
@@ -10,7 +11,7 @@ export function authRequired(req, res, next) {
     return next(err);
   }
   try {
-    const payload = verifyAccess(token);
+    const payload = verifyToken(token);
     req.userId = payload.sub;
     next();
   } catch (err) {
