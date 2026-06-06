@@ -56,6 +56,7 @@ export function useAutoSave(data, saveFn, options = {}) {
   const abortRef = useRef(null);
   const lastSavedDataRef = useRef(undefined); // tracks what was last successfully saved
   const retryCountRef = useRef(0);
+  const enabledRef = useRef(enabled);
 
   // Keep refs in sync
   useEffect(() => {
@@ -64,6 +65,20 @@ export function useAutoSave(data, saveFn, options = {}) {
   useEffect(() => {
     saveFnRef.current = saveFn;
   }, [saveFn]);
+  useEffect(() => {
+    enabledRef.current = enabled;
+  }, [enabled]);
+
+  // Save pending changes on unmount
+  useEffect(() => {
+    return () => {
+      if (isDirtyRef.current && enabledRef.current) {
+        saveFnRef
+          .current(dataRef.current, new AbortController().signal)
+          .catch(() => {});
+      }
+    };
+  }, []);
 
   // Detect dirty state whenever data changes
   useEffect(() => {

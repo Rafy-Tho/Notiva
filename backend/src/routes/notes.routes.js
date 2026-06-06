@@ -8,6 +8,7 @@ const r = Router();
 
 r.use(authRequired);
 r.get("/", asyncHandler(c.list));
+r.get("/trash", asyncHandler(c.getTrashNotes));
 r.post("/", validate(v.create), asyncHandler(c.create));
 r.patch("/:id", validate(v.update), asyncHandler(c.update));
 r.delete("/:id", asyncHandler(c.remove));

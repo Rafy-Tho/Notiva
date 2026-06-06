@@ -62,8 +62,8 @@ function App() {
               }
             >
               <Route path="/" element={<Index />} />
-              <Route path="/notes" element={<NotesPage title="All notes" />}>
-                <Route path=":id" element={<NoteDetailPage />} />
+               <Route path="/notes" element={<NotesPage title="All notes" />}>
+                <Route path=":id" element={<NoteDetailPageWrapper />} />
               </Route>
               <Route
                 path="/favorites"
@@ -76,7 +76,7 @@ function App() {
                   />
                 }
               >
-                <Route path=":id" element={<NoteDetailPage />} />
+                <Route path=":id" element={<NoteDetailPageWrapper />} />
               </Route>
               <Route
                 path="/archive"
@@ -89,7 +89,7 @@ function App() {
                   />
                 }
               >
-                <Route path=":id" element={<NoteDetailPage />} />
+                <Route path=":id" element={<NoteDetailPageWrapper />} />
               </Route>
               <Route
                 path="/trash"
@@ -102,13 +102,13 @@ function App() {
                   />
                 }
               >
-                <Route path=":id" element={<NoteDetailPage />} />
+                <Route path=":id" element={<NoteDetailPageWrapper />} />
               </Route>
               <Route path="/notebooks/:notebookId" element={<NotebookRoute />}>
-                <Route path=":id" element={<NoteDetailPage />} />
+                <Route path=":id" element={<NoteDetailPageWrapper />} />
               </Route>
               <Route path="/tags/:tagId" element={<TagRoute />}>
-                <Route path=":id" element={<NoteDetailPage />} />
+                <Route path=":id" element={<NoteDetailPageWrapper />} />
               </Route>
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/search" element={<SearchPage />} />
@@ -119,6 +119,10 @@ function App() {
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
   );
+}
+function NoteDetailPageWrapper() {
+  const { id } = useParams();
+  return <NoteDetailPage key={id} />;
 }
 function NotebookRoute() {
   const { notebookId } = useParams();

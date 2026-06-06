@@ -74,73 +74,9 @@ import { cn } from "../lib/utils";
 
 export function NoteDetailPage() {
   const { id } = useParams();
-  const navigate = useNavigate();
-  const hydratedNoteId = useRef(null);
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [icon, setIcon] = useState(null);
-  const [cover, setCover] = useState(null);
-  const [isPinned, setIsPinned] = useState(false);
-  const [isFav, setIsFav] = useState(false);
-  const [selectNotebook, setSelectNotebook] = useState("__none__");
-  const [selectTags, setSelectTags] = useState([]);
-  const path = useCreateNoteContext();
   const { data: note, isLoading: noteLoading } = useNote(id);
   const { data: tags, isLoading: tagsLoading } = useTags();
   const { data: notebooks, isLoading: notebooksLoading } = useNotebooks();
-  const { mutateAsync: updateNote } = useUpdateNote(id);
-  const { mutateAsync: togglePin } = useTogglePin(id);
-  const { mutateAsync: toggleFav } = useToggleFavorite(id);
-  const { mutateAsync: toggleArchive } = useToggleArchive(id);
-  const { mutateAsync: remove } = useRemove(id);
-  const { mutateAsync: restore } = useRestore(id);
-  const { mutateAsync: purge } = usePurge(id);
-
-  useEffect(() => {
-    if (!note) return;
-
-    // Prevent rehydrating same note repeatedly
-    if (hydratedNoteId.current === note.id) {
-      return;
-    }
-
-    hydratedNoteId.current = note.id;
-
-    setTitle(note.title ?? "");
-    setContent(note.content ?? "");
-
-    setIcon(note.cover?.emoji ?? null);
-    setCover(note.cover?.color ?? null);
-
-    setIsPinned(note.isPinned ?? false);
-    setIsFav(note.isFavorite ?? false);
-
-    setSelectNotebook(note.notebookId ?? "__none__");
-    setSelectTags(note.tagIds ?? []);
-  }, [note]);
-
-  const autosaveValue = useMemo(() => {
-    return {
-      id,
-      title,
-      content,
-    };
-  }, [title, content]);
-
-  const { status, lastSaved, isDirty, saveNow } = useAutoSave(
-    autosaveValue,
-    async (payload, signal) => {
-      await updateNote({ ...payload, signal });
-    },
-    {
-      debounceMs: 1000, // save 1s after the user stops typing
-      intervalMs: 10000, // also save every 10s as a safety net
-      saveOnBlur: true, // save immediately when the user switches tabs
-    },
-  );
-  const wc = useMemo(() => {
-    return wordCount(content);
-  }, [content]);
 
   if (!id) return null;
 
@@ -153,6 +89,58 @@ export function NoteDetailPage() {
       </div>
     );
   }
+
+  return (
+    <NoteDetailEditor
+      id={id}
+      note={note}
+      tags={tags}
+      notebooks={notebooks}
+    />
+  );
+}
+
+function NoteDetailEditor({ id, note, tags, notebooks }) {
+  const navigate = useNavigate();
+  const [title, setTitle] = useState(note.title ?? "");
+  const [content, setContent] = useState(note.content ?? "");
+  const [icon, setIcon] = useState(note.cover?.emoji ?? null);
+  const [cover, setCover] = useState(note.cover?.color ?? null);
+  const [isPinned, setIsPinned] = useState(note.isPinned ?? false);
+  const [isFav, setIsFav] = useState(note.isFavorite ?? false);
+  const [selectNotebook, setSelectNotebook] = useState(note.notebookId ?? "__none__");
+  const [selectTags, setSelectTags] = useState(note.tagIds ?? []);
+  const path = useCreateNoteContext();
+  const { mutateAsync: updateNote } = useUpdateNote(id);
+  const { mutateAsync: togglePin } = useTogglePin(id);
+  const { mutateAsync: toggleFav } = useToggleFavorite(id);
+  const { mutateAsync: toggleArchive } = useToggleArchive(id);
+  const { mutateAsync: remove } = useRemove(id);
+  const { mutateAsync: restore } = useRestore(id);
+  const { mutateAsync: purge } = usePurge(id);
+
+  const autosaveValue = useMemo(() => {
+    return {
+      id,
+      title,
+      content,
+    };
+  }, [id, title, content]);
+
+  const { status, lastSaved, isDirty, saveNow } = useAutoSave(
+    autosaveValue,
+    async (payload, signal) => {
+      await updateNote({ ...payload, signal });
+    },
+    {
+      debounceMs: 1000,
+      intervalMs: 10000,
+      saveOnBlur: true,
+    },
+  );
+  const wc = useMemo(() => {
+    return wordCount(content);
+  }, [content]);
 
   const hadndleIcon = async (emoji) => {
     try {
@@ -347,7 +335,17 @@ export function NoteDetailPage() {
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-y-2 gap-x-2 px-4 sm:px-6 md:px-10 lg:px-12 pt-6 max-w-3xl mx-auto w-full">
-        <SaveBadge status={status} lastSavedAt={lastSaved} />
+        <div className="flex items-center gap-2">
+          <SaveBadge status={status} lastSavedAt={lastSaved} />
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 gap-1 text-[11px]"
+            onClick={saveNow}
+          >
+            <Check className="h-3 w-3" /> Save
+          </Button>
+        </div>
         <div className="flex items-center gap-1 flex-wrap">
           {/* Emoji picker */}
           <Popover>

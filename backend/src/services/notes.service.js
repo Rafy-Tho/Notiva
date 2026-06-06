@@ -69,6 +69,18 @@ export async function permanentDelete(userId, id) {
   await Note.deleteOne({ _id: id, userId });
 }
 
+export async function toggleField(userId, id, field) {
+  const note = await Note.findOne({ _id: id, userId });
+  if (!note) {
+    const e = new Error("Note not found");
+    e.status = 404;
+    throw e;
+  }
+  note[field] = !note[field];
+  await note.save();
+  return note;
+}
+
 export async function trashNotes(userId) {
-  await Note.find({ userId, deletedAt: { $ne: null } });
+  return await Note.find({ userId, deletedAt: { $ne: null } });
 }

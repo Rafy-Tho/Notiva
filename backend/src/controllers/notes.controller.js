@@ -39,27 +39,18 @@ export const purge = async (req, res) => {
 };
 
 export const togglePin = async (req, res) => {
-  const note = await svc.getNote(req.userId, req.params.id);
-  const updatedNote = await svc.updateNote(req.userId, req.params.id, {
-    isPinned: !note.isPinned,
-  });
-  return ok(res, updatedNote, "Toggle pin note");
+  const note = await svc.toggleField(req.userId, req.params.id, "isPinned");
+  return ok(res, note, "Toggle pin note");
 };
 
 export const toggleArchive = async (req, res) => {
-  const note = await svc.getNote(req.userId, req.params.id);
-  const updatedNote = await svc.updateNote(req.userId, req.params.id, {
-    isArchived: !note.isArchived,
-  });
-  return ok(res, updatedNote, "Toggle archive note");
+  const note = await svc.toggleField(req.userId, req.params.id, "isArchived");
+  return ok(res, note, "Toggle archive note");
 };
 
 export const toggleFavorite = async (req, res) => {
-  const note = await svc.getNote(req.userId, req.params.id);
-  const updatedNote = await svc.updateNote(req.userId, req.params.id, {
-    isFavorite: !note.isFavorite,
-  });
-  return ok(res, updatedNote, "Toggle favorite note");
+  const note = await svc.toggleField(req.userId, req.params.id, "isFavorite");
+  return ok(res, note, "Toggle favorite note");
 };
 
 export const getTrashNotes = async (req, res) => {
