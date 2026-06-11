@@ -7,7 +7,7 @@ const COOKIE_NAME = "noteflow_token";
 const COOKIE_OPTS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
-  sameSite: "lax",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
   maxAge: 7 * 24 * 60 * 60 * 1000,
   path: "/",
 };
@@ -38,9 +38,8 @@ export async function forgotPassword(req, res) {
   const result = await svc.createResetToken(req.body.email);
 
   if (result) {
-    const link = `${
-      process.env.FRONTEND_ORIGIN.split(",")[0]
-    }/reset-password?token=${result.token}`;
+    const link = `${process.env.FRONTEND_ORIGIN.split(",")[0]
+      }/reset-password?token=${result.token}`;
 
     await sendResetEmail(result.user.email, link);
   }

@@ -90,7 +90,7 @@ export const useAuthStore = create(
       },
 
       delete: async () => {
-        const data = await fetchJson(`${BASE_URL}/me`, { method: "DELETE" });
+        await fetchJson(`${BASE_URL}/me`, { method: "DELETE" });
         set({ user: null }, false, "auth/deleteAccount");
       },
     }),
