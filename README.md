@@ -6,22 +6,14 @@
 
 ## 1. EXECUTIVE SUMMARY
 
-| Attribute | Detail |
-|---|---|
-| **Project** | NoteFlow — A modern, fast, rich-text note-taking web app |
-| **Target** | Knowledge workers, students, developers |
+| Attribute         | Detail                                                                                                                                                                               |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Project**       | NoteFlow — A modern, fast, rich-text note-taking web app                                                                                                                             |
+| **Target**        | Knowledge workers, students, developers                                                                                                                                              |
 | **Core Features** | Rich-text editor (TipTap), notebooks/tags, pin/favorite/archive/trash, auto-save, ⌘K command palette, full-text search, dark/light theme, data export, avatar upload, password reset |
-| **Architecture** | Two-tier: React SPA (Vite) + Express REST API (Mongoose → MongoDB Atlas) |
+| **Architecture**  | Two-tier: React SPA (Vite) + Express REST API (Mongoose → MongoDB Atlas)                                                                                                             |
 
-```mermaid
-flowchart TB
-    Client["React SPA<br/>(Vite + React 19)"] -->|"HTTP + Cookie"| API["Express 5 REST API"]
-    API --> MONGO["MongoDB Atlas"]
-    API --> CDN["Cloudinary"]
-    API --> MAIL["Brevo SMTP"]
-```
-
----
+<img src="workflow.png" />
 
 ## 2. TECH STACK
 
@@ -64,6 +56,7 @@ frontend/
 ## 4. FRONTEND ARCHITECTURE
 
 ### Routing
+
 ```
 / -> redirect /notes
 /login, /register, /forgot-password, /reset-password  (PublicRoute)
@@ -73,11 +66,13 @@ frontend/
 ```
 
 ### State Management
+
 - **Zustand:** `authStore` (user/session), `useUIStore` (theme/font/sidebar — persisted to localStorage)
 - **TanStack Query:** All server state (notes, notebooks, tags, profile) — auto-caching, mutation invalidation
 - All API calls via `fetchWithAuth` — uses `credentials: "include"` to send httpOnly JWT cookie
 
 ### Layout
+
 ```
 AppLayout
 ├── Sidebar (collapsible, Sheet on mobile)
@@ -97,15 +92,16 @@ AppLayout
 
 ### API Routes
 
-| Prefix | Auth | Rate Limit | Purpose |
-|---|---|---|---|
-| `/api/v1/auth` | Mixed | 10/min | register, login, logout, forgot/reset password, verify |
-| `/api/v1/me` | Required | — | profile, password, avatar, delete account |
-| `/api/v1/notebooks` | Required | — | CRUD notebooks |
-| `/api/v1/tags` | Required | — | CRUD tags |
-| `/api/v1/notes` | Required | — | CRUD + pin/fav/archive/trash/purge/restore |
+| Prefix              | Auth     | Rate Limit | Purpose                                                |
+| ------------------- | -------- | ---------- | ------------------------------------------------------ |
+| `/api/v1/auth`      | Mixed    | 10/min     | register, login, logout, forgot/reset password, verify |
+| `/api/v1/me`        | Required | —          | profile, password, avatar, delete account              |
+| `/api/v1/notebooks` | Required | —          | CRUD notebooks                                         |
+| `/api/v1/tags`      | Required | —          | CRUD tags                                              |
+| `/api/v1/notes`     | Required | —          | CRUD + pin/fav/archive/trash/purge/restore             |
 
 ### Middleware Chain
+
 ```
 Request → helmet → cors → cookieParser → express.json (2MB) → morgan (dev) → generalLimiter (100/min)
 → Route-specific: authRequired | authLimiter | validate → Controller → Service → DB → Response
@@ -113,6 +109,7 @@ Request → helmet → cors → cookieParser → express.json (2MB) → morgan (
 ```
 
 ### Auth Flow
+
 - JWT in httpOnly cookie (`noteflow_token`, 7d expiry, sameSite: lax)
 - Session restored on app boot via `GET /auth/verify`
 - Password: bcrypt (cost 12)
@@ -122,49 +119,35 @@ Request → helmet → cors → cookieParser → express.json (2MB) → morgan (
 
 ## 6. DATABASE MODELS
 
-```mermaid
-erDiagram
-    User ||--o{ Note : creates
-    User ||--o{ Notebook : creates
-    User ||--o{ Tag : creates
-    Note }o--|| Notebook : belongs_to
-    Note }o--o{ Tag : tagged_with
-    
-    User { ObjectId id; string name; string email "unique"; string password "bcrypt"; string avatar; date deletedAt }
-    Note { ObjectId id; string title; string content "HTML"; ObjectId userId FK; ObjectId notebookId FK; ObjectId[] tagIds FK; boolean isPinned; boolean isFavorite; boolean isArchived; object cover; number wordCount; date deletedAt }
-    Notebook { ObjectId id; string name "unique per user"; string color; ObjectId userId FK; date deletedAt }
-    Tag { ObjectId id; string name "unique per user"; string color; ObjectId userId FK; date deletedAt }
-```
-
----
+<img src="diagram.png" alt="Description" >
 
 ## 7. KEY API ENDPOINTS
 
-| Method | Endpoint | Auth | Purpose |
-|---|---|---|---|
-| POST | `/auth/register` | No | Create account (sets cookie) |
-| POST | `/auth/login` | No | Sign in (sets cookie) |
-| POST | `/auth/logout` | No | Clear cookie |
-| GET | `/auth/verify` | Yes | Restore session |
-| POST | `/auth/forgot-password` | No | Send reset email |
-| POST | `/auth/reset-password` | No | Consume token, set new password |
-| GET | `/me` | Yes | Get profile |
-| PATCH | `/me` | Yes | Update name |
-| POST | `/me/password` | Yes | Change password |
-| POST | `/me/avatar` | Yes | Upload avatar (multipart) |
-| DELETE | `/me` | Yes | Soft-delete account |
-| GET/POST | `/notes` | Yes | List/Create notes |
-| GET/PATCH/DELETE | `/notes/:id` | Yes | Read/Update/Soft-delete note |
-| POST | `/notes/:id/pin` | Yes | Toggle pin |
-| POST | `/notes/:id/favorite` | Yes | Toggle favorite |
-| POST | `/notes/:id/archive` | Yes | Toggle archive |
-| POST | `/notes/:id/restore` | Yes | Restore from trash |
-| POST | `/notes/:id/purge` | Yes | Permanent delete |
-| GET | `/notes/trash` | Yes | List trashed notes |
-| GET/POST | `/notebooks` | Yes | List/Create notebooks |
-| PATCH/DELETE | `/notebooks/:id` | Yes | Update/Soft-delete notebook |
-| GET/POST | `/tags` | Yes | List/Create tags |
-| PATCH/DELETE | `/tags/:id` | Yes | Update/Soft-delete tag |
+| Method           | Endpoint                | Auth | Purpose                         |
+| ---------------- | ----------------------- | ---- | ------------------------------- |
+| POST             | `/auth/register`        | No   | Create account (sets cookie)    |
+| POST             | `/auth/login`           | No   | Sign in (sets cookie)           |
+| POST             | `/auth/logout`          | No   | Clear cookie                    |
+| GET              | `/auth/verify`          | Yes  | Restore session                 |
+| POST             | `/auth/forgot-password` | No   | Send reset email                |
+| POST             | `/auth/reset-password`  | No   | Consume token, set new password |
+| GET              | `/me`                   | Yes  | Get profile                     |
+| PATCH            | `/me`                   | Yes  | Update name                     |
+| POST             | `/me/password`          | Yes  | Change password                 |
+| POST             | `/me/avatar`            | Yes  | Upload avatar (multipart)       |
+| DELETE           | `/me`                   | Yes  | Soft-delete account             |
+| GET/POST         | `/notes`                | Yes  | List/Create notes               |
+| GET/PATCH/DELETE | `/notes/:id`            | Yes  | Read/Update/Soft-delete note    |
+| POST             | `/notes/:id/pin`        | Yes  | Toggle pin                      |
+| POST             | `/notes/:id/favorite`   | Yes  | Toggle favorite                 |
+| POST             | `/notes/:id/archive`    | Yes  | Toggle archive                  |
+| POST             | `/notes/:id/restore`    | Yes  | Restore from trash              |
+| POST             | `/notes/:id/purge`      | Yes  | Permanent delete                |
+| GET              | `/notes/trash`          | Yes  | List trashed notes              |
+| GET/POST         | `/notebooks`            | Yes  | List/Create notebooks           |
+| PATCH/DELETE     | `/notebooks/:id`        | Yes  | Update/Soft-delete notebook     |
+| GET/POST         | `/tags`                 | Yes  | List/Create tags                |
+| PATCH/DELETE     | `/tags/:id`             | Yes  | Update/Soft-delete tag          |
 
 **Response Format:** `{ success: bool, data: any, code: string|null, message: string }`
 
@@ -173,6 +156,7 @@ erDiagram
 ## 8. KEY USER WORKFLOWS
 
 ### Auto-Save
+
 ```
 User types → useAutosave hook detects change → 1s debounce → PATCH /notes/:id
 → Also saves on 10s interval + visibilitychange (tab blur) + unmount
@@ -181,6 +165,7 @@ User types → useAutosave hook detects change → 1s debounce → PATCH /notes/
 ```
 
 ### Session Restore
+
 ```
 App mounts → Bootstrap calls authStore.restoreSession()
 → GET /auth/verify (sends cookie)
@@ -189,6 +174,7 @@ App mounts → Bootstrap calls authStore.restoreSession()
 ```
 
 ### Search
+
 ```
 User types query → SearchPage filters all notes client-side
 → Filters by: text, notebook, tag, date range, pinned status
@@ -202,16 +188,17 @@ User types query → SearchPage filters all notes client-side
 
 ### Ratings
 
-| Dimension | Score | Key Issues |
-|---|---|---|
-| Architecture | 7/10 | Clean layers, no pagination, no caching |
-| Code Quality | 7/10 | Consistent patterns, filename typos (`arror.js`, `fecthWithAuth.js`) |
-| Scalability | 6/10 | No pagination, all notes fetched at once |
-| Security | 7/10 | helmet, validation, bcrypt; missing CSRF, refresh tokens, CSP |
-| Maintainability | 8/10 | Well-organized, clear responsibilities |
-| Performance | 5/10 | No lazy loading, no bundle analysis, no pagination |
+| Dimension       | Score | Key Issues                                                           |
+| --------------- | ----- | -------------------------------------------------------------------- |
+| Architecture    | 7/10  | Clean layers, no pagination, no caching                              |
+| Code Quality    | 7/10  | Consistent patterns, filename typos (`arror.js`, `fecthWithAuth.js`) |
+| Scalability     | 6/10  | No pagination, all notes fetched at once                             |
+| Security        | 7/10  | helmet, validation, bcrypt; missing CSRF, refresh tokens, CSP        |
+| Maintainability | 8/10  | Well-organized, clear responsibilities                               |
+| Performance     | 5/10  | No lazy loading, no bundle analysis, no pagination                   |
 
 ### Key Security Measures
+
 - httpOnly + secure + sameSite cookies for JWT
 - bcrypt (cost 12) for passwords
 - express-validator on all inputs
@@ -226,12 +213,14 @@ User types query → SearchPage filters all notes client-side
 ## 10. TOP IMPROVEMENTS
 
 ### Short-Term
+
 1. Fix typos: `arror.js`→`error.js`, `fecthWithAuth.js`→`fetchWithAuth.js`
 2. Add `staleTime` to TanStack queries (reduce refetches)
 3. Route-level code splitting with `React.lazy()`
 4. Add `React.memo` on `NoteCard`
 
 ### Medium-Term
+
 5. Migrate to **TypeScript**
 6. Add **tests** (Vitest/Jest)
 7. Implement **pagination** for notes
@@ -240,6 +229,7 @@ User types query → SearchPage filters all notes client-side
 10. Add **CSRF protection**
 
 ### Long-Term
+
 11. Wire up **AI features** (Anthropic API installed but empty)
 12. **Docker + CI/CD** pipeline
 13. **Real-time collaboration** (WebSocket/Yjs)
@@ -268,4 +258,8 @@ npm run dev           # Port 5173
 
 ---
 
-*Onboarding doc — generated from full source analysis. June 2026.*
+## 12. Frontend Preview
+
+- Link: [Visit App](https://notiva-new-2026.onrender.com/)
+
+  <img src="noteflow.png">
