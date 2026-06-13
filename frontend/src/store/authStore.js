@@ -48,6 +48,7 @@ export const useAuthStore = create(
       user: storedUser,
       isLoading: false,
       error: null,
+      isAuthenticated: isAuthenticated(),
 
       setUser: (user) => {
         saveAuth(user);
@@ -55,7 +56,7 @@ export const useAuthStore = create(
       },
 
       register: async (name, email, password) => {
-        set({ isLoading: true, error: null }, false, "auth/register/pending");
+        set({ isLoading: false, error: null }, false, "auth/register/pending");
         try {
           const data = await fetchJson(`${BASE_URL}/auth/register`, {
             method: "POST",
@@ -78,7 +79,7 @@ export const useAuthStore = create(
       },
 
       login: async (email, password) => {
-        set({ isLoading: true, error: null }, false, "auth/login/pending");
+        set({ isLoading: false, error: null }, false, "auth/login/pending");
         try {
           const data = await fetchJson(`${BASE_URL}/auth/login`, {
             method: "POST",
@@ -110,7 +111,7 @@ export const useAuthStore = create(
       },
 
       restoreSession: async () => {
-        if (isAuthenticated() && !!get().user)
+        if (get().isAuthenticated && !!get().user)
           try {
             const data = await fetchJson(`${BASE_URL}/auth/verify`);
             saveAuth(data.user);

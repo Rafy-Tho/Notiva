@@ -21,12 +21,12 @@ const queryClient = new QueryClient();
 function Bootstrap({ children }) {
   const restoreSession = useAuthStore((state) => state.restoreSession);
   const isLoading = useAuthStore((state) => state.isLoading);
-
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   useEffect(() => {
     restoreSession();
   }, []);
 
-  if (isLoading) {
+  if (isLoading && isAuthenticated) {
     return (
       <div className="flex h-screen items-center justify-center text-muted-foreground">
         Loading…
