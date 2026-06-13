@@ -1,12 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useEffect } from "react";
-import {
-  BrowserRouter,
-  Route,
-  Routes,
-  useParams,
-} from "react-router-dom";
+import { BrowserRouter, Route, Routes, useParams } from "react-router-dom";
 import AppLayout from "./components/layout/AppLayout";
 import { PrivateRoute } from "./components/PrivateRoute";
 import { PublicRoute } from "./components/PublicRoute";
@@ -62,7 +57,7 @@ function App() {
               }
             >
               <Route path="/" element={<Index />} />
-               <Route path="/notes" element={<NotesPage title="All notes" />}>
+              <Route path="/notes" element={<NotesPage title="All notes" />}>
                 <Route path=":id" element={<NoteDetailPageWrapper />} />
               </Route>
               <Route

@@ -3,6 +3,29 @@ import { devtools } from "zustand/middleware";
 
 const BASE_URL = import.meta.env.VITE_BASE_API;
 
+function getAuth() {
+  try {
+    const stored = JSON.parse(localStorage.getItem("auth") || "null");
+    return stored;
+  } catch {
+    return null;
+  }
+}
+
+function isAuthenticated() {
+  return localStorage.getItem("isAuth") === "true";
+}
+
+function saveAuth(user) {
+  if (user) {
+    localStorage.setItem("auth", JSON.stringify(user));
+    localStorage.setItem("isAuth", "true");
+  } else {
+    localStorage.removeItem("auth");
+    localStorage.removeItem("isAuth");
+  }
+}
+
 async function fetchJson(url, opts = {}) {
   const headers = { ...opts.headers };
   if (!(opts.body instanceof FormData)) {
@@ -17,14 +40,19 @@ async function fetchJson(url, opts = {}) {
   return data;
 }
 
+const storedUser = getAuth();
+
 export const useAuthStore = create(
   devtools(
-    (set) => ({
-      user: null,
-      isLoading: true,
+    (set, get) => ({
+      user: storedUser,
+      isLoading: false,
       error: null,
 
-      setUser: (user) => set({ user }),
+      setUser: (user) => {
+        saveAuth(user);
+        set({ user });
+      },
 
       register: async (name, email, password) => {
         set({ isLoading: true, error: null }, false, "auth/register/pending");
@@ -33,6 +61,7 @@ export const useAuthStore = create(
             method: "POST",
             body: JSON.stringify({ name, email, password }),
           });
+          saveAuth(data.user);
           set(
             { user: data.user, isLoading: false, error: null },
             false,
@@ -55,6 +84,7 @@ export const useAuthStore = create(
             method: "POST",
             body: JSON.stringify({ email, password }),
           });
+          saveAuth(data.user);
           set(
             { user: data.user, isLoading: false, error: null },
             false,
@@ -74,23 +104,28 @@ export const useAuthStore = create(
         try {
           await fetchJson(`${BASE_URL}/auth/logout`, { method: "POST" });
         } finally {
+          saveAuth(null);
           set({ user: null }, false, "auth/logout");
         }
       },
 
       restoreSession: async () => {
-        try {
-          const data = await fetchJson(`${BASE_URL}/auth/verify`);
-          set({ user: data.user }, false, "auth/verify/fulfilled");
-        } catch {
-          set({ user: null }, false, "auth/verify/rejected");
-        } finally {
-          set({ isLoading: false }, false, "auth/verify/done");
-        }
+        if (isAuthenticated() && !!get().user)
+          try {
+            const data = await fetchJson(`${BASE_URL}/auth/verify`);
+            saveAuth(data.user);
+            set({ user: data.user }, false, "auth/verify/fulfilled");
+          } catch {
+            saveAuth(null);
+            set({ user: null }, false, "auth/verify/rejected");
+          } finally {
+            set({ isLoading: false }, false, "auth/verify/done");
+          }
       },
 
       delete: async () => {
         await fetchJson(`${BASE_URL}/me`, { method: "DELETE" });
+        saveAuth(null);
         set({ user: null }, false, "auth/deleteAccount");
       },
     }),
