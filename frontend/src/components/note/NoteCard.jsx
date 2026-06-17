@@ -5,7 +5,8 @@ import { htmlToText } from "../../lib/sanitize";
 import { cn } from "../../lib/utils";
 
 export function NoteCard({ note, active, onClick }) {
-  const preview = htmlToText(note.content).slice(0, 140);
+  const preview =
+    note.contentPreview || htmlToText(note.content || "").slice(0, 10);
   const location = useLocation();
 
   // Derive the section base path so opening a note keeps the user in the

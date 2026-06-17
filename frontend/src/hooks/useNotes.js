@@ -1,16 +1,62 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { fetchWithAuth } from "../lib/fecthWithAuth";
 import { useAuthStore } from "../store/authStore";
 
 const BASE_URL = import.meta.env.VITE_BASE_API;
 
-// ── GET ──────────────────────────────────────────────────────────
-export function useNotes() {
+// ── GET (paginated, with search/filter) ─────────────────────────
+export function useNotes(params = {}) {
   const user = useAuthStore((s) => s.user);
   return useQuery({
-    queryKey: ["notes"],
+    queryKey: ["notes", params],
     queryFn: async () => {
-      const res = await fetchWithAuth(`${BASE_URL}/notes`);
+      const sp = new URLSearchParams();
+      if (params.search) sp.set("search", params.search);
+      if (params.dateFilter) sp.set("dateFilter", params.dateFilter);
+      if (params.notebookId) sp.set("notebookId", params.notebookId);
+      if (params.tagId) sp.set("tagId", params.tagId);
+      if (params.trashed) sp.set("trashed", "true");
+      if (params.isArchived) sp.set("isArchived", "true");
+      if (params.isFavorite) sp.set("isFavorite", "true");
+
+      const res = await fetchWithAuth(
+        `${BASE_URL}/notes?limit=10000&${sp.toString()}`,
+      );
+
+      if (!res.ok) {
+        const { message } = await res.json();
+        throw new Error(message ?? "Something went wrong");
+      }
+
+      const { data } = await res.json();
+      return data.notes;
+    },
+    enabled: !!user,
+  });
+}
+
+export function useNotesInfinite(queryParams = {}) {
+  const user = useAuthStore((s) => s.user);
+  return useInfiniteQuery({
+    queryKey: ["notes", "infinite", queryParams],
+    queryFn: async ({ pageParam = 1 }) => {
+      const sp = new URLSearchParams();
+      sp.set("page", pageParam);
+      sp.set("limit", "20");
+      if (queryParams.search) sp.set("search", queryParams.search);
+      if (queryParams.dateFilter) sp.set("dateFilter", queryParams.dateFilter);
+      if (queryParams.notebookId) sp.set("notebookId", queryParams.notebookId);
+      if (queryParams.tagId) sp.set("tagId", queryParams.tagId);
+      if (queryParams.trashed) sp.set("trashed", "true");
+      if (queryParams.isArchived) sp.set("isArchived", "true");
+      if (queryParams.isFavorite) sp.set("isFavorite", "true");
+
+      const res = await fetchWithAuth(`${BASE_URL}/notes?${sp.toString()}`);
       if (!res.ok) {
         const { message } = await res.json();
         throw new Error(message ?? "Something went wrong");
@@ -18,6 +64,8 @@ export function useNotes() {
       const { data } = await res.json();
       return data;
     },
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.page + 1 : undefined,
     enabled: !!user,
   });
 }

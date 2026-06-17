@@ -1,11 +1,102 @@
 import Note from "../models/Note.js";
-import { cleanHtml, wordCount } from "../utils/sanitize.js";
+import { cleanHtml, wordCount, htmlToText } from "../utils/sanitize.js";
 
 export async function listNotes(userId, query = {}) {
-  const sort =
-    query.sort === "title" ? { title: 1 } : { isPinned: -1, updatedAt: -1 };
+  const {
+    search,
+    dateFilter,
+    from,
+    to,
+    page = 1,
+    limit = 20,
+    sort,
+    notebookId,
+    tagId,
+    isArchived,
+    isFavorite,
+    trashed,
+  } = query;
 
-  return await Note.find({ userId }).sort(sort);
+  const filter = { userId };
+
+  if (search) {
+    const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    filter.$or = [
+      { title: { $regex: escaped, $options: "i" } },
+      { content: { $regex: escaped, $options: "i" } },
+    ];
+  }
+
+  const now = new Date();
+  if (dateFilter === "today") {
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    filter.updatedAt = { $gte: start };
+  } else if (dateFilter === "yesterday") {
+    const start = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() - 1,
+    );
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    filter.updatedAt = { $gte: start, $lt: end };
+  } else if (dateFilter === "last_7_days") {
+    const start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    filter.updatedAt = { $gte: start };
+  } else if (dateFilter === "last_30_days") {
+    const start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    filter.updatedAt = { $gte: start };
+  } else if (dateFilter === "last_90_days") {
+    const start = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+    filter.updatedAt = { $gte: start };
+  } else if (dateFilter === "last_year") {
+    const start = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+    filter.updatedAt = { $gte: start };
+  } else if (dateFilter === "custom") {
+    if (from || to) {
+      filter.updatedAt = {};
+      if (from) filter.updatedAt.$gte = new Date(from);
+      if (to) filter.updatedAt.$lte = new Date(to + "T23:59:59");
+    }
+  }
+
+  if (notebookId) filter.notebookId = notebookId;
+  if (tagId) filter.tagIds = tagId;
+  if (isArchived === "true") filter.isArchived = true;
+  if (isFavorite === "true") filter.isFavorite = true;
+  if (trashed === "true") {
+    filter.deletedAt = { $ne: null };
+  } else {
+    filter.deletedAt = null;
+  }
+
+  const sortOption =
+    sort === "title" ? { title: 1 } : { isPinned: -1, updatedAt: -1 };
+
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+  const skip = (pageNum - 1) * limitNum;
+
+  const [notes, total] = await Promise.all([
+    Note.find(filter).sort(sortOption).skip(skip).limit(limitNum),
+    Note.countDocuments(filter),
+  ]);
+
+  const notesWithPreview = notes.map((note) => {
+    const n = note.toJSON();
+    const text = htmlToText(n.content);
+    n.contentPreview = text.slice(0, 50);
+    delete n.content;
+    return n;
+  });
+
+  return {
+    notes: notesWithPreview,
+    page: pageNum,
+    limit: limitNum,
+    total,
+    totalPages: Math.ceil(total / limitNum),
+    hasMore: pageNum * limitNum < total,
+  };
 }
 
 export async function getNote(userId, id) {
@@ -39,7 +130,7 @@ export async function updateNote(userId, id, data, opts = {}) {
   if (
     opts.expectedUpdateAt &&
     new Date(opts.expectedUpdateAt).getTime() !==
-      new Date(note.updatedAt).getTime()
+    new Date(note.updatedAt).getTime()
   ) {
     const e = new Error("Note has been updated since last read");
     e.status = 409;

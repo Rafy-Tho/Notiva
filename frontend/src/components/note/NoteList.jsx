@@ -1,4 +1,5 @@
-import { FileQuestion } from "lucide-react";
+import { useEffect, useRef } from "react";
+import { FileQuestion, Loader2 } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
 import { NoteCard } from "./NoteCard";
 import { useParams } from "react-router-dom";
@@ -8,8 +9,27 @@ export function NoteList({
   loading,
   emptyTitle = "No notes",
   emptyHint = "Create your first note with ⌘N",
+  fetchNextPage,
+  hasNextPage,
+  isFetchingNextPage,
 }) {
   const { id } = useParams();
+  const sentinelRef = useRef(null);
+
+  useEffect(() => {
+    if (!fetchNextPage || !hasNextPage) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) fetchNextPage();
+      },
+      { rootMargin: "200px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [fetchNextPage, hasNextPage]);
+
   if (loading) {
     return (
       <div className="p-3 space-y-3">
@@ -43,6 +63,13 @@ export function NoteList({
       {notes.map((n) => (
         <NoteCard key={n.id} note={n} active={n.id === id} />
       ))}
+      {hasNextPage && (
+        <div ref={sentinelRef} className="flex justify-center py-4">
+          {isFetchingNextPage && (
+            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+          )}
+        </div>
+      )}
     </div>
   );
 }
