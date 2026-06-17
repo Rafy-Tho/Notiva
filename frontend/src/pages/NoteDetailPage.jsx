@@ -91,12 +91,7 @@ export function NoteDetailPage() {
   }
 
   return (
-    <NoteDetailEditor
-      id={id}
-      note={note}
-      tags={tags}
-      notebooks={notebooks}
-    />
+    <NoteDetailEditor id={id} note={note} tags={tags} notebooks={notebooks} />
   );
 }
 
@@ -108,7 +103,9 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
   const [cover, setCover] = useState(note.cover?.color ?? null);
   const [isPinned, setIsPinned] = useState(note.isPinned ?? false);
   const [isFav, setIsFav] = useState(note.isFavorite ?? false);
-  const [selectNotebook, setSelectNotebook] = useState(note.notebookId ?? "__none__");
+  const [selectNotebook, setSelectNotebook] = useState(
+    note.notebookId ?? "__none__",
+  );
   const [selectTags, setSelectTags] = useState(note.tagIds ?? []);
   const path = useCreateNoteContext();
   const { mutateAsync: updateNote } = useUpdateNote(id);
@@ -127,7 +124,7 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
     };
   }, [id, title, content]);
 
-  const { status, lastSaved, isDirty, saveNow } = useAutoSave(
+  const { status, lastSaved, saveNow } = useAutoSave(
     autosaveValue,
     async (payload, signal) => {
       await updateNote({ ...payload, signal });

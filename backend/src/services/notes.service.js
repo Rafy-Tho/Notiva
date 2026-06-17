@@ -1,7 +1,5 @@
 import mongoose from "mongoose";
 import Note from "../models/Note.js";
-import Notebook from "../models/Notebook.js";
-import { Tag } from "../models/Tag.js";
 import { cleanHtml, wordCount, htmlToText } from "../utils/sanitize.js";
 
 export async function listNotes(userId, query = {}) {
