@@ -11,6 +11,7 @@ const BASE_URL = import.meta.env.VITE_BASE_API;
 
 // ── GET (paginated, with search/filter) ─────────────────────────
 export function useNotes(params = {}) {
+  console.log({ params })
   const user = useAuthStore((s) => s.user);
   return useQuery({
     queryKey: ["notes", params],
@@ -23,6 +24,8 @@ export function useNotes(params = {}) {
       if (params.trashed) sp.set("trashed", "true");
       if (params.isArchived) sp.set("isArchived", "true");
       if (params.isFavorite) sp.set("isFavorite", "true");
+      if (params.isPinned) sp.set("isPinned", "true");
+      if (params.includeContent) sp.set("includeContent", "true");
 
       const res = await fetchWithAuth(
         `${BASE_URL}/notes?limit=10000&${sp.toString()}`,
@@ -55,6 +58,8 @@ export function useNotesInfinite(queryParams = {}) {
       if (queryParams.trashed) sp.set("trashed", "true");
       if (queryParams.isArchived) sp.set("isArchived", "true");
       if (queryParams.isFavorite) sp.set("isFavorite", "true");
+      if (queryParams.isPinned) sp.set("isPinned", "true");
+      if (queryParams.includeContent) sp.set("includeContent", "true");
 
       const res = await fetchWithAuth(`${BASE_URL}/notes?${sp.toString()}`);
       if (!res.ok) {

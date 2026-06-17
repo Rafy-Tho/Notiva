@@ -2,12 +2,17 @@ import { Plus } from "lucide-react";
 import { useTags } from "../../hooks/useTags";
 import TagRow from "./TagRow";
 import { Section, SectionHeader } from "./Section";
-import { useNotes } from "../../hooks/useNotes";
+import { useNoteCountsStore } from "../../store/useNoteCountsStore";
+
+function getCount(tagsCounts, tagId) {
+  const entry = tagsCounts.find((t) => t.id === tagId);
+  return entry ? entry.count : 0;
+}
 
 export function TagsSection({ onEdit, onDelete, onCreateClick }) {
   const { data: tags, isLoading } = useTags();
-  const { data: notes, isLoading: notesLoading } = useNotes();
-  if (isLoading || notesLoading) return <div>Loading...</div>;
+  const tagsCounts = useNoteCountsStore((s) => s.tags);
+  if (isLoading) return <div>Loading...</div>;
   return (
     <>
       <SectionHeader
@@ -26,10 +31,7 @@ export function TagsSection({ onEdit, onDelete, onCreateClick }) {
           <TagRow
             key={t.id}
             tag={t}
-            count={
-              notes.filter((n) => n.tagIds.includes(t.id) && !n.deletedAt)
-                .length
-            }
+            count={getCount(tagsCounts, t.id)}
             onEdit={() => onEdit(t)}
             onDelete={() => onDelete(t)}
           />

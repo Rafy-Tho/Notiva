@@ -31,7 +31,7 @@ export function NotesPage({
 
   const [searchInput, setSearchInput] = useState("");
   const [dateFilter, setDateFilter] = useState("");
-  const debouncedSearch = useDebounce(searchInput, 300);
+  const debouncedSearch = useDebounce(searchInput, 1000);
 
   const queryParams = useMemo(() => {
     const p = {};

@@ -1,4 +1,6 @@
 import Note from "../models/Note.js";
+import Notebook from "../models/Notebook.js";
+import { Tag } from "../models/Tag.js";
 import { cleanHtml, wordCount, htmlToText } from "../utils/sanitize.js";
 
 export async function listNotes(userId, query = {}) {
@@ -14,7 +16,9 @@ export async function listNotes(userId, query = {}) {
     tagId,
     isArchived,
     isFavorite,
+    isPinned,
     trashed,
+    includeContent,
   } = query;
 
   const filter = { userId };
@@ -63,6 +67,7 @@ export async function listNotes(userId, query = {}) {
   if (tagId) filter.tagIds = tagId;
   if (isArchived === "true") filter.isArchived = true;
   if (isFavorite === "true") filter.isFavorite = true;
+  if (isPinned === "true") filter.isPinned = true;
   if (trashed === "true") {
     filter.deletedAt = { $ne: null };
   } else {
@@ -85,7 +90,7 @@ export async function listNotes(userId, query = {}) {
     const n = note.toJSON();
     const text = htmlToText(n.content);
     n.contentPreview = text.slice(0, 50);
-    delete n.content;
+    if (includeContent !== "true") delete n.content;
     return n;
   });
 
@@ -174,4 +179,36 @@ export async function toggleField(userId, id, field) {
 
 export async function trashNotes(userId) {
   return await Note.find({ userId, deletedAt: { $ne: null } });
+}
+
+export async function getNoteCounts(userId) {
+  const baseFilter = { userId, deletedAt: null };
+
+  const [all, favorites, archive, trash, notebookCounts, tagCounts] =
+    await Promise.all([
+      Note.countDocuments(baseFilter),
+      Note.countDocuments({ ...baseFilter, isFavorite: true }),
+      Note.countDocuments({ ...baseFilter, isArchived: true }),
+      Note.countDocuments({ userId, deletedAt: { $ne: null } }),
+      Note.aggregate([
+        { $match: { userId, deletedAt: null, notebookId: { $ne: null } } },
+        { $group: { _id: "$notebookId", count: { $sum: 1 } } },
+        { $project: { _id: 0, id: "$_id", count: 1 } },
+      ]),
+      Note.aggregate([
+        { $match: { userId, deletedAt: null } },
+        { $unwind: { path: "$tagIds", preserveNullAndEmptyArrays: false } },
+        { $group: { _id: "$tagIds", count: { $sum: 1 } } },
+        { $project: { _id: 0, id: "$_id", count: 1 } },
+      ]),
+    ]);
+
+  return {
+    all,
+    favorites,
+    archive,
+    trash,
+    notebooks: notebookCounts,
+    tags: tagCounts,
+  };
 }

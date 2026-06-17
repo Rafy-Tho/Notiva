@@ -7,7 +7,6 @@ import {
   CommandList,
 } from "../ui/command";
 import { Dialog, DialogContent } from "../ui/dialog";
-import { htmlToText } from "../../lib/sanitize";
 import {
   Archive,
   BookOpen,
@@ -24,6 +23,7 @@ import { useNavigate } from "react-router-dom";
 import { useNotebooks } from "../../hooks/useNotebooks";
 import { useCreateNote, useNotes } from "../../hooks/useNotes";
 import { useTags } from "../../hooks/useTags";
+import { useDebounce } from "../../hooks/useDebounce";
 import { useUIStore } from "../../store/useUIStore";
 import { toast } from "sonner";
 
@@ -34,18 +34,14 @@ export function CommandPalette() {
   const setCmdk = useUIStore((s) => s.setCmdk);
   const navigate = useNavigate();
   const [q, setQ] = useState("");
-  const { data: notes = [] } = useNotes();
+  const debouncedQ = useDebounce(q, 1000);
+  const params = debouncedQ ? { search: debouncedQ } : {};
+  const { data: notes = [] } = useNotes(params);
   const { data: notebooks = [] } = useNotebooks();
   const { data: tags = [] } = useTags();
   const { mutateAsync: createNote } = useCreateNote();
 
-  const filteredNotes = q
-    ? notes.filter((n) =>
-        (n.title + " " + htmlToText(n.content))
-          .toLowerCase()
-          .includes(q.toLowerCase() && n.deletedAt === null),
-      )
-    : notes.slice(0, 5).filter((n) => n.deletedAt === null);
+  const filteredNotes = q ? notes.slice(0, 8) : notes.slice(0, 5);
 
   const go = (path, term) => {
     if (term) {
@@ -131,7 +127,7 @@ export function CommandPalette() {
                     <FileText className="h-4 w-4 mr-2" />
                     <span className="truncate">{n.title || "Untitled"}</span>
                     <span className="ml-auto text-[10px] text-muted-foreground truncate max-w-[180px]">
-                      {htmlToText(n.content).slice(0, 60)}
+                      {n.contentPreview || ""}
                     </span>
                   </CommandItem>
                 ))}

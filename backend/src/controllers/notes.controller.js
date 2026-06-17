@@ -57,3 +57,8 @@ export const getTrashNotes = async (req, res) => {
   const notes = await svc.trashNotes(req.userId);
   return ok(res, notes, "Get trash notes");
 };
+
+export const getCounts = async (req, res) => {
+  const counts = await svc.getNoteCounts(req.userId);
+  return ok(res, counts, "Get note counts");
+};

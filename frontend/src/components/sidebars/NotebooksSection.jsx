@@ -2,12 +2,17 @@ import { Plus } from "lucide-react";
 import { useNotebooks } from "../../hooks/useNotebooks";
 import NotebookRow from "./NotebookRow";
 import { Section, SectionHeader } from "./Section";
-import { useNotes } from "../../hooks/useNotes";
+import { useNoteCountsStore } from "../../store/useNoteCountsStore";
+
+function getCount(notebooksCounts, notebookId) {
+  const entry = notebooksCounts.find((n) => n.id === notebookId);
+  return entry ? entry.count : 0;
+}
 
 export function NotebooksSection({ onEdit, onDelete, onCreateClick }) {
   const { data: notebooks, isLoading: notebooksLoading } = useNotebooks();
-  const { data: notes, isLoading } = useNotes();
-  if (isLoading || notebooksLoading) return <div>Loading...</div>;
+  const notebooksCounts = useNoteCountsStore((s) => s.notebooks);
+  if (notebooksLoading) return <div>Loading...</div>;
   return (
     <>
       <SectionHeader
@@ -26,9 +31,7 @@ export function NotebooksSection({ onEdit, onDelete, onCreateClick }) {
           <NotebookRow
             key={nb.id}
             notebook={nb}
-            count={
-              notes.filter((n) => n.notebookId === nb.id && !n.deletedAt).length
-            }
+            count={getCount(notebooksCounts, nb.id)}
             onEdit={() => onEdit(nb)}
             onDelete={() => onDelete(nb)}
           />

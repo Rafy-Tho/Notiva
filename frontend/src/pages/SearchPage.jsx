@@ -14,6 +14,7 @@ import { Input } from "../components/ui/input";
 import { useNotebooks } from "../hooks/useNotebooks";
 import { useNotes } from "../hooks/useNotes";
 import { useTags } from "../hooks/useTags";
+import { useDebounce } from "../hooks/useDebounce";
 import { htmlToText } from "../lib/sanitize";
 import { cn } from "../lib/utils";
 
@@ -53,6 +54,20 @@ export function SearchPage() {
   const [to, setTo] = useState(params.get("to") || "");
   const [pinned, setPinned] = useState(params.get("pinned") === "1");
   const [recents, setRecents] = useState([]);
+  const debouncedQ = useDebounce(q, 300);
+
+  const apiParams = useMemo(() => {
+    const p = {};
+    if (debouncedQ) p.search = debouncedQ;
+    if (notebookId) p.notebookId = notebookId;
+    if (tagId) p.tagId = tagId;
+    if (from || to) p.dateFilter = "custom";
+    if (from) p.from = from;
+    if (to) p.to = to;
+    if (pinned) p.isPinned = true;
+    p.includeContent = true;
+    return p;
+  }, [debouncedQ, notebookId, tagId, from, to, pinned]);
 
   useEffect(() => {
     try {
@@ -81,30 +96,9 @@ export function SearchPage() {
     localStorage.setItem(RECENT_KEY, JSON.stringify(next));
   };
 
-  const { data: notes = [] } = useNotes();
+  const { data: notes = [] } = useNotes(apiParams);
   const { data: notebooks = [] } = useNotebooks();
   const { data: tags = [] } = useTags();
-
-  const results = useMemo(() => {
-    let r = notes.slice();
-    if (notebookId)
-      r = r.filter((n) => n.notebookId === notebookId && !n.deletedAt);
-    if (tagId) r = r.filter((n) => n.tagIds.includes(tagId) && !n.deletedAt);
-    if (pinned) r = r.filter((n) => n.isPinned && !n.deletedAt);
-    if (from) r = r.filter((n) => n.updatedAt >= from && !n.deletedAt);
-    if (to)
-      r = r.filter((n) => n.updatedAt <= to + "T23:59:59" && !n.deletedAt);
-    if (q) {
-      const needle = q.toLowerCase();
-      r = r.filter(
-        (n) =>
-          (n.title + " " + htmlToText(n.content))
-            .toLowerCase()
-            .includes(needle) && !n.deletedAt,
-      );
-    }
-    return r.filter((n) => !n.deletedAt);
-  }, [notes, notebookId, tagId, pinned, from, to, q]);
 
   const clear = () => {
     setQ("");
@@ -217,9 +211,9 @@ export function SearchPage() {
 
         <div className="space-y-2">
           <div className="text-xs text-muted-foreground">
-            {results.length} result{results.length === 1 ? "" : "s"}
+            {notes.length} result{notes.length === 1 ? "" : "s"}
           </div>
-          {results.length === 0 ? (
+          {notes.length === 0 ? (
             <div className="panel p-8 text-center text-sm text-muted-foreground">
               {q || hasFilters
                 ? "No matches. Try a different query or clear filters."
@@ -227,7 +221,7 @@ export function SearchPage() {
             </div>
           ) : (
             <ul className="space-y-2">
-              {results.map((n) => {
+              {notes.map((n) => {
                 const nb = notebooks.find((b) => b.id === n.notebookId);
                 return (
                   <li key={n.id}>
