@@ -1,5 +1,7 @@
 import {
   BookOpen,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   Hash,
   Pin,
@@ -53,8 +55,13 @@ export function SearchPage() {
   const [from, setFrom] = useState(params.get("from") || "");
   const [to, setTo] = useState(params.get("to") || "");
   const [pinned, setPinned] = useState(params.get("pinned") === "1");
+  const [page, setPage] = useState(parseInt(params.get("page") || "1", 10));
   const [recents, setRecents] = useState([]);
-  const debouncedQ = useDebounce(q, 300);
+  const debouncedQ = useDebounce(q, 1000);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedQ, notebookId, tagId, from, to, pinned]);
 
   const apiParams = useMemo(() => {
     const p = {};
@@ -65,9 +72,10 @@ export function SearchPage() {
     if (from) p.from = from;
     if (to) p.to = to;
     if (pinned) p.isPinned = true;
+    if (page > 1) p.page = page;
     p.includeContent = true;
     return p;
-  }, [debouncedQ, notebookId, tagId, from, to, pinned]);
+  }, [debouncedQ, notebookId, tagId, from, to, pinned, page]);
 
   useEffect(() => {
     try {
@@ -86,8 +94,9 @@ export function SearchPage() {
     if (from) next.set("from", from);
     if (to) next.set("to", to);
     if (pinned) next.set("pinned", "1");
+    if (page > 1) next.set("page", String(page));
     setParams(next, { replace: true });
-  }, [q, notebookId, tagId, from, to, pinned, setParams]);
+  }, [q, notebookId, tagId, from, to, pinned, page, setParams]);
 
   const saveRecent = (term) => {
     if (!term.trim()) return;
@@ -96,7 +105,10 @@ export function SearchPage() {
     localStorage.setItem(RECENT_KEY, JSON.stringify(next));
   };
 
-  const { data: notes = [] } = useNotes(apiParams);
+  const { data: notesResult = {} } = useNotes(apiParams);
+  const notes = notesResult.notes ?? [];
+  const total = notesResult.total ?? 0;
+  const totalPages = notesResult.totalPages ?? 1;
   const { data: notebooks = [] } = useNotebooks();
   const { data: tags = [] } = useTags();
 
@@ -210,9 +222,12 @@ export function SearchPage() {
         )}
 
         <div className="space-y-2">
-          <div className="text-xs text-muted-foreground">
-            {notes.length} result{notes.length === 1 ? "" : "s"}
-          </div>
+          {total > 0 && (
+            <div className="text-xs text-muted-foreground">
+              Showing {(page - 1) * 10 + 1}–{Math.min(page * 10, total)} of{" "}
+              {total} result{total === 1 ? "" : "s"}
+            </div>
+          )}
           {notes.length === 0 ? (
             <div className="panel p-8 text-center text-sm text-muted-foreground">
               {q || hasFilters
@@ -276,6 +291,32 @@ export function SearchPage() {
                 );
               })}
             </ul>
+          )}
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-2">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              <span className="text-xs text-muted-foreground px-2">
+                Page {page} of {totalPages}
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           )}
         </div>
       </div>

@@ -45,13 +45,8 @@ export function NotesPage({
     return p;
   }, [debouncedSearch, dateFilter, filter]);
 
-  const {
-    data,
-    isLoading,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useNotesInfinite(queryParams);
+  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useNotesInfinite(queryParams);
 
   const notes = useMemo(
     () => data?.pages.flatMap((p) => p.notes) ?? [],

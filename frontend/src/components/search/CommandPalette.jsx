@@ -36,7 +36,8 @@ export function CommandPalette() {
   const [q, setQ] = useState("");
   const debouncedQ = useDebounce(q, 1000);
   const params = debouncedQ ? { search: debouncedQ } : {};
-  const { data: notes = [] } = useNotes(params);
+  const { data } = useNotes(params);
+  const notes = data?.notes ?? [];
   const { data: notebooks = [] } = useNotebooks();
   const { data: tags = [] } = useTags();
   const { mutateAsync: createNote } = useCreateNote();

@@ -26,9 +26,10 @@ export function useNotes(params = {}) {
       if (params.isFavorite) sp.set("isFavorite", "true");
       if (params.isPinned) sp.set("isPinned", "true");
       if (params.includeContent) sp.set("includeContent", "true");
+      if (params.page) sp.set("page", params.page);
 
       const res = await fetchWithAuth(
-        `${BASE_URL}/notes?limit=10000&${sp.toString()}`,
+        `${BASE_URL}/notes?limit=10&${sp.toString()}`,
       );
 
       if (!res.ok) {
@@ -37,7 +38,7 @@ export function useNotes(params = {}) {
       }
 
       const { data } = await res.json();
-      return data.notes;
+      return { notes: data.notes, total: data.total, totalPages: data.totalPages, hasMore: data.hasMore, page: data.page };
     },
     enabled: !!user,
   });
@@ -50,7 +51,7 @@ export function useNotesInfinite(queryParams = {}) {
     queryFn: async ({ pageParam = 1 }) => {
       const sp = new URLSearchParams();
       sp.set("page", pageParam);
-      sp.set("limit", "20");
+      sp.set("limit", "10");
       if (queryParams.search) sp.set("search", queryParams.search);
       if (queryParams.dateFilter) sp.set("dateFilter", queryParams.dateFilter);
       if (queryParams.notebookId) sp.set("notebookId", queryParams.notebookId);
