@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Note from "../models/Note.js";
 import Notebook from "../models/Notebook.js";
 import { Tag } from "../models/Tag.js";
@@ -191,12 +192,12 @@ export async function getNoteCounts(userId) {
       Note.countDocuments({ ...baseFilter, isArchived: true }),
       Note.countDocuments({ userId, deletedAt: { $ne: null } }),
       Note.aggregate([
-        { $match: { userId, deletedAt: null, notebookId: { $ne: null } } },
+        { $match: { userId: new mongoose.Types.ObjectId(userId), deletedAt: null, notebookId: { $ne: null } } },
         { $group: { _id: "$notebookId", count: { $sum: 1 } } },
         { $project: { _id: 0, id: "$_id", count: 1 } },
       ]),
       Note.aggregate([
-        { $match: { userId, deletedAt: null } },
+        { $match: { userId: new mongoose.Types.ObjectId(userId), deletedAt: null } },
         { $unwind: { path: "$tagIds", preserveNullAndEmptyArrays: false } },
         { $group: { _id: "$tagIds", count: { $sum: 1 } } },
         { $project: { _id: 0, id: "$_id", count: 1 } },
