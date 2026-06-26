@@ -119,7 +119,7 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
   const lastSavedTitleRef = useRef(note.title);
 
   const { status, lastSaved, saveNow } = useAutoSave(content, updateNote, {
-    debounceMs: 1000,
+    debounceMs: 5000,
     localKey: `note_${id}`,
   });
 

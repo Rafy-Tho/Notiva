@@ -43,12 +43,9 @@ export function useAutoSave(data, saveFn, options = {}) {
 
       if (!isRetry) setStatus("saving");
       try {
-        const extra =
-          typeof getExtraData === "function" ? getExtraData() : {};
         await saveFnRef.current({
           signal: abortController.signal,
           content: dataToSave,
-          ...extra,
         });
         if (abortController.signal.aborted) return;
 
@@ -75,7 +72,7 @@ export function useAutoSave(data, saveFn, options = {}) {
         retryCountRef.current = 0;
       }
     },
-    [maxRetries, localKey, getExtraData],
+    [maxRetries, localKey],
   );
 
   useEffect(() => {
@@ -94,11 +91,9 @@ export function useAutoSave(data, saveFn, options = {}) {
 
     setStatus("saving");
     try {
-      const extra = typeof getExtraData === "function" ? getExtraData() : {};
       await saveFnRef.current({
         signal: abortController.signal,
         content: currentData,
-        ...extra,
       });
       if (abortController.signal.aborted) return;
 
@@ -118,7 +113,7 @@ export function useAutoSave(data, saveFn, options = {}) {
       if (abortController.signal.aborted) return;
       setStatus("error");
     }
-  }, [localKey, getExtraData]);
+  }, [localKey]);
 
   return { status, lastSaved, saveNow };
 }
