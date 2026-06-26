@@ -19,6 +19,7 @@ export function useAutoSave(data, saveFn, options = {}) {
 
   const [status, setStatus] = useState("idle");
   const [lastSaved, setLastSaved] = useState(null);
+  const [isDirty, setIsDirty] = useState(false);
 
   const dataRef = useRef(data);
   const saveFnRef = useRef(saveFn);
@@ -27,14 +28,24 @@ export function useAutoSave(data, saveFn, options = {}) {
   const retryCountRef = useRef(0);
   const enabledRef = useRef(enabled);
 
-  dataRef.current = data;
-  saveFnRef.current = saveFn;
-  enabledRef.current = enabled;
+  useEffect(() => {
+    dataRef.current = data;
+  }, [data]);
+  useEffect(() => {
+    saveFnRef.current = saveFn;
+  }, [saveFn]);
+  useEffect(() => {
+    enabledRef.current = enabled;
+  }, [enabled]);
+
+  useEffect(() => {
+    setIsDirty(data !== lastSavedDataRef.current);
+  }, [data]);
 
   const debouncedData = useDebounce(data, debounceMs);
 
   const performSave = useCallback(
-    async (dataToSave, isRetry = false) => {
+    async function save(dataToSave, isRetry = false) {
       if (dataToSave === lastSavedDataRef.current) return;
 
       if (abortRef.current) abortRef.current.abort();
@@ -52,6 +63,7 @@ export function useAutoSave(data, saveFn, options = {}) {
         lastSavedDataRef.current = dataToSave;
         setLastSaved(new Date());
         setStatus("saved");
+        setIsDirty(false);
         retryCountRef.current = 0;
 
         if (localKey) {
@@ -66,7 +78,7 @@ export function useAutoSave(data, saveFn, options = {}) {
         if (retryCountRef.current < maxRetries) {
           retryCountRef.current++;
           await new Promise((r) => setTimeout(r, 2000 * retryCountRef.current));
-          return performSave(dataToSave, true);
+          return save(dataToSave, true);
         }
         setStatus("error");
         retryCountRef.current = 0;
@@ -80,6 +92,18 @@ export function useAutoSave(data, saveFn, options = {}) {
     if (debouncedData === lastSavedDataRef.current) return;
     performSave(debouncedData);
   }, [debouncedData, performSave]);
+
+  useEffect(() => {
+    return () => {
+      const currentData = dataRef.current;
+      if (currentData === lastSavedDataRef.current) return;
+      const controller = new AbortController();
+      saveFnRef.current({
+        signal: controller.signal,
+        content: currentData,
+      }).catch(() => {});
+    };
+  }, []);
 
   const saveNow = useCallback(async () => {
     if (!enabledRef.current) return;
@@ -100,6 +124,7 @@ export function useAutoSave(data, saveFn, options = {}) {
       lastSavedDataRef.current = currentData;
       setLastSaved(new Date());
       setStatus("saved");
+      setIsDirty(false);
       retryCountRef.current = 0;
 
       if (localKey) {
@@ -115,5 +140,5 @@ export function useAutoSave(data, saveFn, options = {}) {
     }
   }, [localKey]);
 
-  return { status, lastSaved, saveNow };
+  return { status, lastSaved, saveNow, isDirty };
 }

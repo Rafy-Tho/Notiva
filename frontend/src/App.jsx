@@ -1,7 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useEffect } from "react";
-import { BrowserRouter, Route, Routes, useParams } from "react-router-dom";
+import {
+  createBrowserRouter,
+  RouterProvider,
+  useParams,
+} from "react-router-dom";
 import AppLayout from "./components/layout/AppLayout";
 import { PrivateRoute } from "./components/PrivateRoute";
 import { PublicRoute } from "./components/PublicRoute";
@@ -36,95 +40,119 @@ function Bootstrap({ children }) {
 
   return <>{children}</>;
 }
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <Sonner position="top-right" />
-      <BrowserRouter>
-        <Bootstrap>
-          <Routes>
-            <Route element={<PublicRoute />}>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
-            </Route>
-            <Route
-              element={
-                <PrivateRoute>
-                  <AppLayout></AppLayout>
-                </PrivateRoute>
-              }
-            >
-              <Route path="/" element={<Index />} />
-              <Route path="/notes" element={<NotesPage title="All notes" />}>
-                <Route path=":id" element={<NoteDetailPageWrapper />} />
-              </Route>
-              <Route
-                path="/favorites"
-                element={
-                  <NotesPage
-                    title="Favorites"
-                    filter={{ favorite: true }}
-                    emptyTitle="No favorites"
-                    emptyHint="Star a note to find it here"
-                  />
-                }
-              >
-                <Route path=":id" element={<NoteDetailPageWrapper />} />
-              </Route>
-              <Route
-                path="/archive"
-                element={
-                  <NotesPage
-                    title="Archive"
-                    filter={{ archived: true }}
-                    emptyTitle="No archived notes"
-                    emptyHint="Archived notes appear here"
-                  />
-                }
-              >
-                <Route path=":id" element={<NoteDetailPageWrapper />} />
-              </Route>
-              <Route
-                path="/trash"
-                element={
-                  <NotesPage
-                    title="Trash"
-                    filter={{ trashed: true }}
-                    emptyTitle="Trash is empty"
-                    emptyHint="Deleted notes appear here for 30 days"
-                  />
-                }
-              >
-                <Route path=":id" element={<NoteDetailPageWrapper />} />
-              </Route>
-              <Route path="/notebooks/:notebookId" element={<NotebookRoute />}>
-                <Route path=":id" element={<NoteDetailPageWrapper />} />
-              </Route>
-              <Route path="/tags/:tagId" element={<TagRoute />}>
-                <Route path=":id" element={<NoteDetailPageWrapper />} />
-              </Route>
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/search" element={<SearchPage />} />
-            </Route>
-          </Routes>
-        </Bootstrap>
-      </BrowserRouter>
-      <ReactQueryDevtools initialIsOpen={false} />
-    </QueryClientProvider>
-  );
-}
+
 function NoteDetailPageWrapper() {
   const { id } = useParams();
   return <NoteDetailPage key={id} />;
 }
+
 function NotebookRoute() {
   const { notebookId } = useParams();
   return <NotesPage title="Notebook" filter={{ notebookId }} />;
 }
+
 function TagRoute() {
   const { tagId } = useParams();
   return <NotesPage title="Tag" filter={{ tagId }} />;
 }
+
+const router = createBrowserRouter([
+  {
+    element: <PublicRoute />,
+    children: [
+      { path: "/login", element: <LoginPage /> },
+      { path: "/register", element: <RegisterPage /> },
+      { path: "/forgot-password", element: <ForgotPasswordPage /> },
+      { path: "/reset-password", element: <ResetPasswordPage /> },
+    ],
+  },
+  {
+    element: (
+      <PrivateRoute>
+        <AppLayout />
+      </PrivateRoute>
+    ),
+    children: [
+      { index: true, element: <Index /> },
+      {
+        path: "notes",
+        element: <NotesPage title="All notes" />,
+        children: [
+          { path: ":id", element: <NoteDetailPageWrapper /> },
+        ],
+      },
+      {
+        path: "favorites",
+        element: (
+          <NotesPage
+            title="Favorites"
+            filter={{ favorite: true }}
+            emptyTitle="No favorites"
+            emptyHint="Star a note to find it here"
+          />
+        ),
+        children: [
+          { path: ":id", element: <NoteDetailPageWrapper /> },
+        ],
+      },
+      {
+        path: "archive",
+        element: (
+          <NotesPage
+            title="Archive"
+            filter={{ archived: true }}
+            emptyTitle="No archived notes"
+            emptyHint="Archived notes appear here"
+          />
+        ),
+        children: [
+          { path: ":id", element: <NoteDetailPageWrapper /> },
+        ],
+      },
+      {
+        path: "trash",
+        element: (
+          <NotesPage
+            title="Trash"
+            filter={{ trashed: true }}
+            emptyTitle="Trash is empty"
+            emptyHint="Deleted notes appear here for 30 days"
+          />
+        ),
+        children: [
+          { path: ":id", element: <NoteDetailPageWrapper /> },
+        ],
+      },
+      {
+        path: "notebooks/:notebookId",
+        element: <NotebookRoute />,
+        children: [
+          { path: ":id", element: <NoteDetailPageWrapper /> },
+        ],
+      },
+      {
+        path: "tags/:tagId",
+        element: <TagRoute />,
+        children: [
+          { path: ":id", element: <NoteDetailPageWrapper /> },
+        ],
+      },
+      { path: "settings", element: <SettingsPage /> },
+      { path: "search", element: <SearchPage /> },
+    ],
+  },
+]);
+
+function App() {
+  return (
+    <Bootstrap>
+      <QueryClientProvider client={queryClient}>
+        <Sonner position="top-right" />
+        <RouterProvider router={router} />
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
+    </Bootstrap>
+  );
+}
+
 export default App;

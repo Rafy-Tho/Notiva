@@ -16,8 +16,8 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useCallback, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useBlocker, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -118,10 +118,29 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
 
   const lastSavedTitleRef = useRef(note.title);
 
-  const { status, lastSaved, saveNow } = useAutoSave(content, updateNote, {
-    debounceMs: 5000,
-    localKey: `note_${id}`,
-  });
+  const { status, lastSaved, saveNow, isDirty } = useAutoSave(
+    content,
+    updateNote,
+    {
+      debounceMs: 5000,
+      localKey: `note_${id}`,
+    },
+  );
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const handler = (e) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [isDirty]);
+
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      isDirty && currentLocation.pathname !== nextLocation.pathname,
+  );
 
   const handleTitleBlur = useCallback(async () => {
     const trimmed = title.trim();
@@ -622,6 +641,30 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
           />
         </div>
       </div>
+
+      <AlertDialog
+        open={blocker.state === "blocked"}
+        onOpenChange={(open) => {
+          if (!open) blocker.reset();
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              You have unsaved changes. Are you sure you want to leave?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => blocker.reset()}>
+              Stay
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => blocker.proceed()}>
+              Leave
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
