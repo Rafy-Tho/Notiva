@@ -16,7 +16,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -116,25 +116,24 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
   const { mutateAsync: restore } = useRestore(id);
   const { mutateAsync: purge } = usePurge(id);
 
-  const autosaveValue = useMemo(() => {
-    return {
-      id,
-      title,
-      content,
-    };
-  }, [id, title, content]);
+  const lastSavedTitleRef = useRef(note.title);
 
-  const { status, lastSaved, saveNow } = useAutoSave(
-    autosaveValue,
-    async (payload, signal) => {
-      await updateNote({ ...payload, signal });
-    },
-    {
-      debounceMs: 1000,
-      intervalMs: 10000,
-      saveOnBlur: true,
-    },
-  );
+  const { status, lastSaved, saveNow } = useAutoSave(content, updateNote, {
+    debounceMs: 1000,
+    localKey: `note_${id}`,
+  });
+
+  const handleTitleBlur = useCallback(async () => {
+    const trimmed = title.trim();
+    if (trimmed === lastSavedTitleRef.current) return;
+    try {
+      await updateNote({ title: trimmed });
+      lastSavedTitleRef.current = trimmed;
+    } catch (error) {
+      toast.error(error.message);
+    }
+  }, [title, updateNote]);
+
   const wc = useMemo(() => {
     return wordCount(content);
   }, [content]);
@@ -575,6 +574,7 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          onBlur={handleTitleBlur}
           placeholder="Untitled"
           className="w-full bg-transparent text-3xl font-semibold tracking-tight outline-none placeholder:text-muted-foreground/40"
         />

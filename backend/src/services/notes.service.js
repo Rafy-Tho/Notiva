@@ -129,7 +129,8 @@ export async function createNote(userId, data) {
 }
 
 export async function updateNote(userId, id, data, opts = {}) {
-  const content = cleanHtml(data.content || "");
+  const content = data.content ? cleanHtml(data.content) : undefined;
+  const title = data.title ? data.title : undefined;
   const note = await getNote(userId, id);
   if (
     opts.expectedUpdateAt &&
@@ -141,7 +142,7 @@ export async function updateNote(userId, id, data, opts = {}) {
     throw e;
   }
 
-  Object.assign(note, { ...data, wordCount: wordCount(content) || 0, content });
+  Object.assign(note, { title: title ?? note.title, content: content ?? note.content, wordCount: content ? wordCount(content) : note.wordCount });
   await note.save();
   return note;
 }
