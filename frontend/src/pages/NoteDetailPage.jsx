@@ -284,6 +284,7 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
   };
   return (
     <div className="flex flex-col h-full">
+      <div className="shrink-0">
       {note?.deletedAt && (
         <div className="px-4 sm:px-6 md:px-10 lg:px-12 pt-4 max-w-3xl mx-auto w-full">
           <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-muted/40 px-3 py-2">
@@ -351,7 +352,7 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
 
       <div className="flex flex-wrap items-center justify-between gap-y-2 gap-x-2 px-4 sm:px-6 md:px-10 lg:px-12 pt-6 max-w-3xl mx-auto w-full">
         <div className="flex items-center gap-2">
-          <SaveBadge status={status} lastSavedAt={lastSaved} />
+          <SaveBadge status={status} lastSavedAt={lastSaved} isDirty={isDirty} />
           <Button
             size="sm"
             variant="outline"
@@ -632,14 +633,13 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
           </div>
         )}
       </div>
-      <div className="px-4 sm:px-6 md:px-10 lg:px-12 pt-2 pb-0 max-w-3xl mx-auto w-full">
-        <div className="flex-1 min-h-0 overflow-y-auto">
-          <NoteEditor
-            content={content}
-            onChange={setContent}
-            onCmdS={saveNow}
-          />
-        </div>
+      </div>
+      <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 md:px-10 lg:px-12 pt-2 pb-0 max-w-3xl mx-auto w-full">
+        <NoteEditor
+          content={content}
+          onChange={setContent}
+          onCmdS={saveNow}
+        />
       </div>
 
       <AlertDialog
@@ -669,7 +669,7 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
   );
 }
 
-function SaveBadge({ status, lastSavedAt }) {
+function SaveBadge({ status, lastSavedAt, isDirty }) {
   if (status === "saving")
     return (
       <span className="text-[11px] text-muted-foreground flex items-center gap-1">
@@ -680,6 +680,12 @@ function SaveBadge({ status, lastSavedAt }) {
     return (
       <span className="text-[11px] text-destructive flex items-center gap-1">
         <AlertCircle className="h-3 w-3" /> Save failed
+      </span>
+    );
+  if (isDirty)
+    return (
+      <span className="text-[11px] text-warning flex items-center gap-1">
+        <AlertCircle className="h-3 w-3" /> Unsaved
       </span>
     );
   if (status === "saved" || lastSavedAt)
