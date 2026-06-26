@@ -10,8 +10,12 @@ export function useDebounce(value, delay) {
 }
 
 export function useAutoSave(data, saveFn, options = {}) {
-  const { debounceMs = 1000, enabled = true, maxRetries = 3, localKey } =
-    options;
+  const {
+    debounceMs = 1000,
+    enabled = true,
+    maxRetries = 3,
+    localKey,
+  } = options;
 
   const [status, setStatus] = useState("idle");
   const [lastSaved, setLastSaved] = useState(null);
@@ -23,50 +27,55 @@ export function useAutoSave(data, saveFn, options = {}) {
   const retryCountRef = useRef(0);
   const enabledRef = useRef(enabled);
 
-  useEffect(() => { dataRef.current = data; }, [data]);
-  useEffect(() => { saveFnRef.current = saveFn; }, [saveFn]);
-  useEffect(() => { enabledRef.current = enabled; }, [enabled]);
+  dataRef.current = data;
+  saveFnRef.current = saveFn;
+  enabledRef.current = enabled;
 
   const debouncedData = useDebounce(data, debounceMs);
 
   const performSave = useCallback(
-    async (dataToSave) => {
-      for (let attempt = 0; attempt <= maxRetries; attempt++) {
-        if (dataToSave === lastSavedDataRef.current) return;
+    async (dataToSave, isRetry = false) => {
+      if (dataToSave === lastSavedDataRef.current) return;
 
-        if (abortRef.current) abortRef.current.abort();
-        const abortController = new AbortController();
-        abortRef.current = abortController;
+      if (abortRef.current) abortRef.current.abort();
+      const abortController = new AbortController();
+      abortRef.current = abortController;
 
-        if (attempt === 0) setStatus("saving");
-        try {
-          await saveFnRef.current({
-            signal: abortController.signal,
-            content: dataToSave,
-          });
-          if (abortController.signal.aborted) return;
+      if (!isRetry) setStatus("saving");
+      try {
+        const extra =
+          typeof getExtraData === "function" ? getExtraData() : {};
+        await saveFnRef.current({
+          signal: abortController.signal,
+          content: dataToSave,
+          ...extra,
+        });
+        if (abortController.signal.aborted) return;
 
-          lastSavedDataRef.current = dataToSave;
-          setLastSaved(new Date());
-          setStatus("saved");
-          retryCountRef.current = 0;
+        lastSavedDataRef.current = dataToSave;
+        setLastSaved(new Date());
+        setStatus("saved");
+        retryCountRef.current = 0;
 
-          if (localKey) {
-            try { localStorage.removeItem(localKey); } catch { /* ignore */ }
+        if (localKey) {
+          try {
+            localStorage.removeItem(localKey);
+          } catch {
+            //
           }
-          return;
-        } catch {
-          if (abortController.signal.aborted) return;
-          if (attempt < maxRetries) {
-            await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
-            continue;
-          }
-          setStatus("error");
-          retryCountRef.current = 0;
         }
+      } catch {
+        if (abortController.signal.aborted) return;
+        if (retryCountRef.current < maxRetries) {
+          retryCountRef.current++;
+          await new Promise((r) => setTimeout(r, 2000 * retryCountRef.current));
+          return performSave(dataToSave, true);
+        }
+        setStatus("error");
+        retryCountRef.current = 0;
       }
     },
-    [maxRetries, localKey],
+    [maxRetries, localKey, getExtraData],
   );
 
   useEffect(() => {
@@ -85,9 +94,11 @@ export function useAutoSave(data, saveFn, options = {}) {
 
     setStatus("saving");
     try {
+      const extra = typeof getExtraData === "function" ? getExtraData() : {};
       await saveFnRef.current({
         signal: abortController.signal,
         content: currentData,
+        ...extra,
       });
       if (abortController.signal.aborted) return;
 
@@ -97,13 +108,17 @@ export function useAutoSave(data, saveFn, options = {}) {
       retryCountRef.current = 0;
 
       if (localKey) {
-        try { localStorage.removeItem(localKey); } catch { /* ignore */ }
+        try {
+          localStorage.removeItem(localKey);
+        } catch {
+          //
+        }
       }
     } catch {
       if (abortController.signal.aborted) return;
       setStatus("error");
     }
-  }, [localKey]);
+  }, [localKey, getExtraData]);
 
   return { status, lastSaved, saveNow };
 }
