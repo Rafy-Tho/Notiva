@@ -24,7 +24,7 @@ export function useAutoSave(data, saveFn, options = {}) {
   const dataRef = useRef(data);
   const saveFnRef = useRef(saveFn);
   const abortRef = useRef(null);
-  const lastSavedDataRef = useRef(undefined);
+  const lastSavedDataRef = useRef(data);
   const retryCountRef = useRef(0);
   const enabledRef = useRef(enabled);
 
@@ -89,6 +89,7 @@ export function useAutoSave(data, saveFn, options = {}) {
 
   useEffect(() => {
     if (!enabledRef.current) return;
+    if (dataRef.current === lastSavedDataRef.current) return;
     if (debouncedData === lastSavedDataRef.current) return;
     performSave(debouncedData);
   }, [debouncedData, performSave]);
@@ -101,7 +102,7 @@ export function useAutoSave(data, saveFn, options = {}) {
       saveFnRef.current({
         signal: controller.signal,
         content: currentData,
-      }).catch(() => {});
+      }).catch(() => { });
     };
   }, []);
 

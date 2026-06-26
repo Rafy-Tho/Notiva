@@ -11,7 +11,6 @@ const BASE_URL = import.meta.env.VITE_BASE_API;
 
 // ── GET (paginated, with search/filter) ─────────────────────────
 export function useNotes(params = {}) {
-  console.log({ params })
   const user = useAuthStore((s) => s.user);
   return useQuery({
     queryKey: ["notes", params],
