@@ -26,6 +26,7 @@ function Bootstrap({ children }) {
   const restoreSession = useAuthStore((state) => state.restoreSession);
   const isLoading = useAuthStore((state) => state.isLoading);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
   useEffect(() => {
     restoreSession();
   }, []);
@@ -77,9 +78,7 @@ const router = createBrowserRouter([
       {
         path: "notes",
         element: <NotesPage title="All notes" />,
-        children: [
-          { path: ":id", element: <NoteDetailPageWrapper /> },
-        ],
+        children: [{ path: ":id", element: <NoteDetailPageWrapper /> }],
       },
       {
         path: "favorites",
@@ -91,9 +90,7 @@ const router = createBrowserRouter([
             emptyHint="Star a note to find it here"
           />
         ),
-        children: [
-          { path: ":id", element: <NoteDetailPageWrapper /> },
-        ],
+        children: [{ path: ":id", element: <NoteDetailPageWrapper /> }],
       },
       {
         path: "archive",
@@ -105,9 +102,7 @@ const router = createBrowserRouter([
             emptyHint="Archived notes appear here"
           />
         ),
-        children: [
-          { path: ":id", element: <NoteDetailPageWrapper /> },
-        ],
+        children: [{ path: ":id", element: <NoteDetailPageWrapper /> }],
       },
       {
         path: "trash",
@@ -119,23 +114,17 @@ const router = createBrowserRouter([
             emptyHint="Deleted notes appear here for 30 days"
           />
         ),
-        children: [
-          { path: ":id", element: <NoteDetailPageWrapper /> },
-        ],
+        children: [{ path: ":id", element: <NoteDetailPageWrapper /> }],
       },
       {
         path: "notebooks/:notebookId",
         element: <NotebookRoute />,
-        children: [
-          { path: ":id", element: <NoteDetailPageWrapper /> },
-        ],
+        children: [{ path: ":id", element: <NoteDetailPageWrapper /> }],
       },
       {
         path: "tags/:tagId",
         element: <TagRoute />,
-        children: [
-          { path: ":id", element: <NoteDetailPageWrapper /> },
-        ],
+        children: [{ path: ":id", element: <NoteDetailPageWrapper /> }],
       },
       { path: "settings", element: <SettingsPage /> },
       { path: "search", element: <SearchPage /> },

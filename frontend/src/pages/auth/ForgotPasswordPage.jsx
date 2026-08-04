@@ -6,11 +6,12 @@ import { Label } from "../../components/ui/label";
 import { Logo } from "../../components/Logo";
 import { toast } from "sonner";
 import { useForgetPassword } from "../../hooks/useAuth";
+import { LoaderCircle } from "lucide-react";
 
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
-  const { mutateAsync } = useForgetPassword();
+  const { mutateAsync, isPending } = useForgetPassword();
   const submit = async (e) => {
     e.preventDefault();
     try {
@@ -43,10 +44,14 @@ export function ForgotPasswordPage() {
               />
             </div>
             <Button
-              className="w-full bg-gradient-primary text-primary-foreground"
+              disabled={isPending}
+              className={`w-full bg-gradient-primary text-primary-foreground ${
+                isPending ? "disabled:opacity-50 cursor-not-allowed" : ""
+              }`}
               type="submit"
             >
-              Send reset link
+              {isPending && <LoaderCircle />}
+              {`Send reset link`}
             </Button>
           </form>
         )}

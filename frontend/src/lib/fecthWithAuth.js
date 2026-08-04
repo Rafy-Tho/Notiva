@@ -1,3 +1,5 @@
+import { useAuthStore } from "../store/authStore";
+
 function buildHeaders(options) {
   const headers = { ...options.headers };
 
@@ -25,6 +27,7 @@ export async function fetchWithAuth(url, option = {}) {
   });
 
   if (response.status === 401) {
+    useAuthStore.getState().setUser(null)
     const { message } = await parseError(response);
     throw new Error(message ?? "Session expired");
   }
