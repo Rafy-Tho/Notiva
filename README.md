@@ -184,18 +184,7 @@ User types query → SearchPage filters all notes client-side
 
 ---
 
-## 9. CODE QUALITY & SECURITY
-
-### Ratings
-
-| Dimension       | Score | Key Issues                                                           |
-| --------------- | ----- | -------------------------------------------------------------------- |
-| Architecture    | 7/10  | Clean layers, no pagination, no caching                              |
-| Code Quality    | 7/10  | Consistent patterns, filename typos (`arror.js`, `fecthWithAuth.js`) |
-| Scalability     | 6/10  | No pagination, all notes fetched at once                             |
-| Security        | 7/10  | helmet, validation, bcrypt; missing CSRF, refresh tokens, CSP        |
-| Maintainability | 8/10  | Well-organized, clear responsibilities                               |
-| Performance     | 5/10  | No lazy loading, no bundle analysis, no pagination                   |
+## 9.SECURITY
 
 ### Key Security Measures
 
@@ -207,33 +196,6 @@ User types query → SearchPage filters all notes client-side
 - Helmet security headers
 - CORS restricted to configured origins
 - Password reset token hashed with SHA-256, 1-hour expiry
-
----
-
-## 10. TOP IMPROVEMENTS
-
-### Short-Term
-
-1. Fix typos: `arror.js`→`error.js`, `fecthWithAuth.js`→`fetchWithAuth.js`
-2. Add `staleTime` to TanStack queries (reduce refetches)
-3. Route-level code splitting with `React.lazy()`
-4. Add `React.memo` on `NoteCard`
-
-### Medium-Term
-
-5. Migrate to **TypeScript**
-6. Add **tests** (Vitest/Jest)
-7. Implement **pagination** for notes
-8. **Refresh token rotation** (15min access + 7d refresh)
-9. Switch to **Redis-backed rate limiting** (already installed)
-10. Add **CSRF protection**
-
-### Long-Term
-
-11. Wire up **AI features** (Anthropic API installed but empty)
-12. **Docker + CI/CD** pipeline
-13. **Real-time collaboration** (WebSocket/Yjs)
-14. **Offline support** (Service Worker + IndexedDB)
 
 ---
 
