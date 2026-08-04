@@ -6,12 +6,13 @@ import { Label } from "../../components/ui/label";
 import { Logo } from "../../components/Logo";
 import { toast } from "sonner";
 import { useResetPassword } from "../../hooks/useAuth";
+import { LoaderCircle } from "lucide-react";
 
 export function ResetPasswordPage() {
   const [seachParams] = useSearchParams();
   const nav = useNavigate();
   const [pw, setPw] = useState("");
-  const { mutateAsync } = useResetPassword();
+  const { mutateAsync, isPending } = useResetPassword();
   const submit = async (e) => {
     e.preventDefault();
     const token = seachParams.get("token");
@@ -44,9 +45,13 @@ export function ResetPasswordPage() {
             />
           </div>
           <Button
+            disabled={isPending}
             type="submit"
-            className="w-full bg-gradient-primary text-primary-foreground"
+            className={`w-full bg-gradient-primary text-primary-foreground ${
+              isPending ? "disabled:opacity-50 cursor-not-allowed" : ""
+            }`}
           >
+            {isPending && <LoaderCircle />}
             Update password
           </Button>
         </form>
