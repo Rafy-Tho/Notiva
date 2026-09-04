@@ -54,7 +54,9 @@ export function CreateTagDialog({ open, onOpenChange }) {
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleCreate}>Create</Button>
+          <Button onClick={handleCreate} disabled={createTag.isPending}>
+            {createTag.isPending ? "Creating..." : "Create"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -54,7 +54,9 @@ export function CreateNotebookDialog({ open, onOpenChange }) {
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleCreate}>Create</Button>
+          <Button onClick={handleCreate} disabled={createNotebook.isPending}>
+            {createNotebook.isPending ? "Creating..." : "Create"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

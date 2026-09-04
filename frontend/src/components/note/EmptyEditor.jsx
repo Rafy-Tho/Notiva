@@ -5,7 +5,7 @@ import { useCreateNoteContext } from "../../hooks/useCreateNoteContext";
 import { useCreateNote } from "../../hooks/useNotes";
 import { Button } from "../ui/button";
 export function EmptyEditor() {
-  const { mutateAsync: createNote } = useCreateNote();
+  const { mutateAsync: createNote, isPending: isCreating } = useCreateNote();
   const { defaults, basePath } = useCreateNoteContext();
   const navigate = useNavigate();
   const handleCreate = async () => {
@@ -30,9 +30,10 @@ export function EmptyEditor() {
         </p>
         <Button
           onClick={handleCreate}
+          disabled={isCreating}
           className="bg-gradient-primary text-primary-foreground gap-2"
         >
-          <Plus className="h-4 w-4" /> Create note
+          <Plus className="h-4 w-4" /> {isCreating ? "Creating..." : "Create note"}
         </Button>
       </div>
     </div>

@@ -7,7 +7,7 @@ import NameColorForm from "./NameColorForm";
 function EditNotebookForm({ notebook, onClose }) {
   const [n, setN] = useState(notebook.name);
   const [c, setC] = useState(notebook.color);
-  const { mutateAsync } = useUpdateNotebook();
+  const { mutateAsync, isPending } = useUpdateNotebook();
   const save = async () => {
     try {
       await mutateAsync({ id: notebook.id, name: n, color: c });
@@ -30,7 +30,9 @@ function EditNotebookForm({ notebook, onClose }) {
         <Button variant="ghost" onClick={onClose}>
           Cancel
         </Button>
-        <Button onClick={save}>Save</Button>
+        <Button onClick={save} disabled={isPending}>
+          {isPending ? "Updating..." : "Save"}
+        </Button>
       </DialogFooter>
     </>
   );

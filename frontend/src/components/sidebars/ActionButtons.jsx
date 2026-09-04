@@ -8,7 +8,7 @@ import { useUIStore } from "../../store/useUIStore";
 
 export function ActionButtons() {
   const setCmdk = useUIStore((state) => state.setCmdk);
-  const { mutateAsync: createNote } = useCreateNote();
+  const { mutateAsync: createNote, isPending: isCreating } = useCreateNote();
   const { defaults, basePath } = useCreateNoteContext();
   const navigate = useNavigate();
   const handleCreate = async () => {
@@ -24,10 +24,11 @@ export function ActionButtons() {
     <div className="px-3 pt-3 flex flex-col gap-1.5">
       <Button
         onClick={handleCreate}
+        disabled={isCreating}
         size="sm"
         className="justify-start gap-2 bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow"
       >
-        <Plus className="h-4 w-4" /> New note
+        <Plus className="h-4 w-4" /> {isCreating ? "Creating..." : "New note"}
       </Button>
       <Button
         onClick={() => setCmdk(true)}

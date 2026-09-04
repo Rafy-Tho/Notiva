@@ -40,7 +40,7 @@ export function CommandPalette() {
   const notes = data?.notes ?? [];
   const { data: notebooks = [] } = useNotebooks();
   const { data: tags = [] } = useTags();
-  const { mutateAsync: createNote } = useCreateNote();
+  const { mutateAsync: createNote, isPending: isCreating } = useCreateNote();
 
   const filteredNotes = q ? notes.slice(0, 8) : notes.slice(0, 5);
 
@@ -76,6 +76,7 @@ export function CommandPalette() {
             onValueChange={setQ}
             placeholder="Search notes, notebooks, tags…"
             className="w-full"
+            disabled={isCreating}
           />
           <CommandList className="max-h-[420px]">
             <CommandEmpty>No results.</CommandEmpty>

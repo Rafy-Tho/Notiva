@@ -15,7 +15,7 @@ export function AppHeader() {
   const toggleSidebar = useUIStore((state) => state.toggleSidebar);
   const setCmdk = useUIStore((state) => state.setCmdk);
 
-  const { mutateAsync: createNote } = useCreateNote();
+  const { mutateAsync: createNote, isPending: isCreating } = useCreateNote();
   const { defaults, basePath } = useCreateNoteContext();
   const navigate = useNavigate();
 
@@ -67,11 +67,14 @@ export function AppHeader() {
           variant="ghost"
           size="sm"
           onClick={handleCreate}
+          disabled={isCreating}
           className="h-8 gap-1.5"
           aria-label="New note"
         >
           <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline text-xs">New</span>
+          <span className="hidden sm:inline text-xs">
+            {isCreating ? "Creating..." : "New"}
+          </span>
         </Button>
         <Avatar
           className="h-8 w-8 cursor-pointer"

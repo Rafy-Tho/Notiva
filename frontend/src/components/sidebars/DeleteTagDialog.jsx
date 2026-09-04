@@ -38,8 +38,8 @@ export function DeleteTagDialog({ tag, onClose }) {
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="destructive" onClick={handleDelete}>
-            Delete
+          <Button variant="destructive" onClick={handleDelete} disabled={deleteTag.isPending}>
+            {deleteTag.isPending ? "Deleting..." : "Delete"}
           </Button>
         </DialogFooter>
       </DialogContent>

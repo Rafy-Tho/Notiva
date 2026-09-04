@@ -13,7 +13,7 @@ import { useDeleteNotebook } from "../../hooks/useNotebooks";
 import { toast } from "sonner";
 
 function DeleteNotebookDialog({ notebook, onClose }) {
-  const { mutateAsync } = useDeleteNotebook();
+  const { mutateAsync, isPending } = useDeleteNotebook();
   const [mode, setMode] = useState("move-uncategorized");
   const confirm = async () => {
     if (!notebook) return;
@@ -89,8 +89,9 @@ function DeleteNotebookDialog({ notebook, onClose }) {
           <Button
             variant={mode === "delete-notes" ? "destructive" : "default"}
             onClick={confirm}
+            disabled={isPending}
           >
-            Delete notebook
+            {isPending ? "Deleting..." : "Delete notebook"}
           </Button>
         </DialogFooter>
       </DialogContent>

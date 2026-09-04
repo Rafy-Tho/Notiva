@@ -108,13 +108,14 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
   );
   const [selectTags, setSelectTags] = useState(note.tagIds ?? []);
   const path = useCreateNoteContext();
-  const { mutateAsync: updateNote } = useUpdateNote(id);
-  const { mutateAsync: togglePin } = useTogglePin(id);
-  const { mutateAsync: toggleFav } = useToggleFavorite(id);
-  const { mutateAsync: toggleArchive } = useToggleArchive(id);
-  const { mutateAsync: remove } = useRemove(id);
-  const { mutateAsync: restore } = useRestore(id);
-  const { mutateAsync: purge } = usePurge(id);
+  const { mutateAsync: updateNote, isPending: isUpdating } = useUpdateNote(id);
+  const { mutateAsync: togglePin, isPending: isPinning } = useTogglePin(id);
+  const { mutateAsync: toggleFav, isPending: isFavoriting } = useToggleFavorite(id);
+  const { mutateAsync: toggleArchive, isPending: isArchiving } = useToggleArchive(id);
+  const { mutateAsync: remove, isPending: isRemoving } = useRemove(id);
+  const { mutateAsync: restore, isPending: isRestoring } = useRestore(id);
+  const { mutateAsync: purge, isPending: isPurging } = usePurge(id);
+  const actionPending = isUpdating || isPinning || isFavoriting || isArchiving || isRemoving || isRestoring || isPurging;
 
   const lastSavedTitleRef = useRef(note.title);
 
@@ -352,12 +353,13 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
 
       <div className="flex flex-wrap items-center justify-between gap-y-2 gap-x-2 px-4 sm:px-6 md:px-10 lg:px-12 pt-6 max-w-3xl mx-auto w-full">
         <div className="flex items-center gap-2">
-          <SaveBadge status={status} lastSavedAt={lastSaved} isDirty={isDirty} />
+          <SaveBadge status={actionPending ? "updating" : status} lastSavedAt={lastSaved} isDirty={isDirty} />
           <Button
             size="sm"
             variant="outline"
             className="h-7 gap-1 text-[11px]"
             onClick={saveNow}
+            disabled={actionPending || status === "saving"}
           >
             <Check className="h-3 w-3" /> Save
           </Button>
@@ -449,6 +451,7 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
                   variant="ghost"
                   className="w-full h-7 text-[11px]"
                   onClick={removeCover}
+                  disabled={actionPending}
                 >
                   Remove cover
                 </Button>
@@ -550,6 +553,7 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
             variant="ghost"
             size="icon"
             onClick={handleTogglePin}
+            disabled={actionPending}
             className="h-7 w-7"
             aria-label="Pin"
           >
@@ -561,6 +565,7 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
             variant="ghost"
             size="icon"
             onClick={handleToggleFav}
+            disabled={actionPending}
             className="h-7 w-7"
             aria-label="Favorite"
           >
@@ -575,12 +580,13 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleToggleArchive}>
+              <DropdownMenuItem onClick={handleToggleArchive} disabled={actionPending}>
                 <Archive className="h-3.5 w-3.5 mr-2" /> Archive
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={handleTrash}
+                disabled={actionPending}
                 className="text-destructive"
               >
                 <Trash2 className="h-3.5 w-3.5 mr-2" /> Move to Trash
@@ -670,6 +676,12 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
 }
 
 function SaveBadge({ status, lastSavedAt, isDirty }) {
+  if (status === "updating")
+    return (
+      <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+        <Loader2 className="h-3 w-3 animate-spin" /> Updating…
+      </span>
+    );
   if (status === "saving")
     return (
       <span className="text-[11px] text-muted-foreground flex items-center gap-1">

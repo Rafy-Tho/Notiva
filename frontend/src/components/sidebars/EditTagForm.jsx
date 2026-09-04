@@ -8,7 +8,7 @@ import { Button } from "../ui/button";
 function EditTagForm({ tag, onClose }) {
   const [n, setN] = useState(tag.name);
   const [c, setC] = useState(tag.color);
-  const { mutateAsync } = useUpdateTag();
+  const { mutateAsync, isPending } = useUpdateTag();
   const save = async () => {
     try {
       await mutateAsync({ id: tag.id, name: n, color: c });
@@ -31,7 +31,9 @@ function EditTagForm({ tag, onClose }) {
         <Button variant="ghost" onClick={onClose}>
           Cancel
         </Button>
-        <Button onClick={save}>Save</Button>
+        <Button onClick={save} disabled={isPending}>
+          {isPending ? "Updating..." : "Save"}
+        </Button>
       </DialogFooter>
     </>
   );
