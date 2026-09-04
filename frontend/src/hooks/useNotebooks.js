@@ -38,7 +38,7 @@ export function useCreateNotebook() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["notebooks"]);
+      queryClient.invalidateQueries({ queryKey: ["notebooks"] });
     },
   });
 }
@@ -58,7 +58,7 @@ export function useDeleteNotebook() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["notebooks"]);
+      queryClient.invalidateQueries({ queryKey: ["notebooks"] });
     },
   });
 }
@@ -79,7 +79,7 @@ export function useUpdateNotebook() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["notebooks"]);
+      queryClient.invalidateQueries({ queryKey: ["notebooks"] });
     },
   });
 }

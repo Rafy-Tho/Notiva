@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "node --watch src/server.js"
+    "dev": "node --watch src/server.js",
+    "test": "vitest run --pool=threads --maxWorkers=1"
   },
   "keywords": [],
   "author": "",
@@ -35,6 +36,7 @@
     "@eslint/js": "^10.0.1",
     "eslint": "^10.3.0",
     "globals": "^17.6.0",
-    "morgan": "^1.10.1"
+    "morgan": "^1.10.1",
+    "vitest": "^5.0.0"
   }
 }

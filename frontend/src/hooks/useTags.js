@@ -38,7 +38,7 @@ export function useCreateTag() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["tags"]);
+      queryClient.invalidateQueries({ queryKey: ["tags"] });
     },
   });
 }
@@ -59,7 +59,7 @@ export function useUpdateTag() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["tags"]);
+      queryClient.invalidateQueries({ queryKey: ["tags"] });
     },
   });
 }
@@ -79,7 +79,7 @@ export function useDeleteTag() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["tags"]);
+      queryClient.invalidateQueries({ queryKey: ["tags"] });
     },
   });
 }

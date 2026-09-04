@@ -129,22 +129,59 @@ export async function createNote(userId, data) {
 }
 
 export async function updateNote(userId, id, data, opts = {}) {
-  const content = data.content ? cleanHtml(data.content) : undefined;
-  const title = data.title ? data.title : undefined;
-  const note = await getNote(userId, id);
-  if (
-    opts.expectedUpdateAt &&
-    new Date(opts.expectedUpdateAt).getTime() !==
-    new Date(note.updatedAt).getTime()
-  ) {
-    const e = new Error("Note has been updated since last read");
-    e.status = 409;
+  const updates = {};
+
+  if (Object.hasOwn(data, "title")) updates.title = data.title;
+
+  if (Object.hasOwn(data, "content")) {
+    const content = cleanHtml(data.content || "");
+    updates.content = content;
+    updates.wordCount = wordCount(content);
+  }
+
+  for (const field of [
+    "notebookId",
+    "tagIds",
+    "cover",
+    "isPinned",
+    "isArchived",
+    "isFavorite",
+  ]) {
+    if (Object.hasOwn(data, field)) updates[field] = data[field];
+  }
+
+  if (Object.keys(updates).length === 0) return getNote(userId, id);
+
+  const filter = { _id: id, userId };
+  if (opts.expectedUpdatedAt) {
+    filter.updatedAt = new Date(opts.expectedUpdatedAt);
+  }
+
+  const note = await Note.findOneAndUpdate(
+    filter,
+    { $set: updates },
+    { new: true, runValidators: true },
+  );
+
+  if (note) return note;
+
+  const exists = await Note.exists({ _id: id, userId });
+  if (!exists) {
+    const e = new Error("Note not found");
+    e.status = 404;
     throw e;
   }
 
-  Object.assign(note, { title: title ?? note.title, content: content ?? note.content, wordCount: content ? wordCount(content) : note.wordCount });
-  await note.save();
-  return note;
+  if (opts.expectedUpdatedAt) {
+    const e = new Error("Note has been updated since last read");
+    e.status = 409;
+    e.code = "NOTE_CONFLICT";
+    throw e;
+  }
+
+  const e = new Error("Note could not be updated");
+  e.status = 409;
+  throw e;
 }
 
 export async function softDelete(userId, id) {

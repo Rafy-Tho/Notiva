@@ -158,10 +158,13 @@ Request → helmet → cors → cookieParser → express.json (2MB) → morgan (
 ### Auto-Save
 
 ```
-User types → useAutosave hook detects change → 1s debounce → PATCH /notes/:id
-→ Also saves on 10s interval + visibilitychange (tab blur) + unmount
-→ Optimistic concurrency check (expectedUpdateAt vs server updatedAt)
-→ Retries up to 3 times on failure
+User edits title/content → useAutosave tracks a revisioned draft → 1s debounce
+→ PATCH /notes/:id with expectedUpdatedAt
+→ Only the newest revision may clear the dirty state
+→ Temporary network/server failures retry up to 3 times
+→ Navigation can flush before leaving; pagehide/visibilitychange use a best-effort flush
+→ Unsaved drafts are retained in localStorage and can be restored after reopening
+→ A stale expectedUpdatedAt returns 409 and is shown as a conflict instead of being retried
 ```
 
 ### Session Restore

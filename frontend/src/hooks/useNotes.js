@@ -9,6 +9,20 @@ import { useAuthStore } from "../store/authStore";
 
 const BASE_URL = import.meta.env.VITE_BASE_API;
 
+async function throwResponseError(response, fallback) {
+  let body = null;
+  try {
+    body = await response.json();
+  } catch {
+    // The response may not contain JSON, especially for infrastructure errors.
+  }
+
+  const error = new Error(body?.message ?? fallback);
+  error.status = response.status;
+  error.code = body?.code ?? null;
+  throw error;
+}
+
 // ── GET (paginated, with search/filter) ─────────────────────────
 export function useNotes(params = {}) {
   const user = useAuthStore((s) => s.user);
@@ -32,8 +46,7 @@ export function useNotes(params = {}) {
       );
 
       if (!res.ok) {
-        const { message } = await res.json();
-        throw new Error(message ?? "Something went wrong");
+        await throwResponseError(res, "Something went wrong");
       }
 
       const { data } = await res.json();
@@ -63,8 +76,7 @@ export function useNotesInfinite(queryParams = {}) {
 
       const res = await fetchWithAuth(`${BASE_URL}/notes?${sp.toString()}`);
       if (!res.ok) {
-        const { message } = await res.json();
-        throw new Error(message ?? "Something went wrong");
+        await throwResponseError(res, "Something went wrong");
       }
       const { data } = await res.json();
       return data;
@@ -82,8 +94,7 @@ export function useNote(id) {
     queryFn: async () => {
       const res = await fetchWithAuth(`${BASE_URL}/notes/${id}`);
       if (!res.ok) {
-        const { message } = await res.json();
-        throw new Error(message ?? "Something went wrong");
+        await throwResponseError(res, "Something went wrong");
       }
       const { data } = await res.json();
       return data;
@@ -101,14 +112,13 @@ export function useCreateNote() {
         body: JSON.stringify(note),
       });
       if (!res.ok) {
-        const { message } = await res.json();
-        throw new Error(message ?? "Something went wrong");
+        await throwResponseError(res, "Something went wrong");
       }
       const { data } = await res.json();
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["notes"]);
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
   });
 }
@@ -116,24 +126,23 @@ export function useCreateNote() {
 export function useUpdateNote(id) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ signal, ...note }) => {
-      // ✅ signal extracted here
+    mutationFn: async ({ signal, keepalive, ...note }) => {
       const res = await fetchWithAuth(`${BASE_URL}/notes/${id}`, {
         method: "PATCH",
         body: JSON.stringify(note),
         signal,
+        keepalive,
       });
       if (!res.ok) {
-        const { message } = await res.json();
-        throw new Error(message ?? "Something went wrong");
+        await throwResponseError(res, "Something went wrong");
       }
       const { data } = await res.json();
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["note", id]);
+    onSuccess: (data) => {
+      queryClient.setQueryData(["note", id], data);
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
-    // ✅ removed invalid `enabled`
   });
 }
 
@@ -145,14 +154,14 @@ export function useTogglePin(id) {
         method: "POST",
       });
       if (!res.ok) {
-        const { message } = await res.json();
-        throw new Error(message ?? "Something went wrong");
+        await throwResponseError(res, "Something went wrong");
       }
       const { data } = await res.json();
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["note", id]);
+      queryClient.invalidateQueries({ queryKey: ["note", id] });
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
   });
 }
@@ -165,14 +174,14 @@ export function useToggleFavorite(id) {
         method: "POST",
       });
       if (!res.ok) {
-        const { message } = await res.json();
-        throw new Error(message ?? "Something went wrong");
+        await throwResponseError(res, "Something went wrong");
       }
       const { data } = await res.json();
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["note", id]);
+      queryClient.invalidateQueries({ queryKey: ["note", id] });
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
   });
 }
@@ -185,14 +194,14 @@ export function useToggleArchive(id) {
         method: "POST",
       });
       if (!res.ok) {
-        const { message } = await res.json();
-        throw new Error(message ?? "Something went wrong");
+        await throwResponseError(res, "Something went wrong");
       }
       const { data } = await res.json();
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["note", id]);
+      queryClient.invalidateQueries({ queryKey: ["note", id] });
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
   });
 }
@@ -205,14 +214,13 @@ export function useRemove(id) {
         method: "DELETE",
       });
       if (!res.ok) {
-        const { message } = await res.json();
-        throw new Error(message ?? "Something went wrong");
+        await throwResponseError(res, "Something went wrong");
       }
       const { data } = await res.json();
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["notes"]);
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
   });
 }
@@ -225,14 +233,13 @@ export function usePurge(id) {
         method: "POST",
       });
       if (!res.ok) {
-        const { message } = await res.json();
-        throw new Error(message ?? "Something went wrong");
+        await throwResponseError(res, "Something went wrong");
       }
       const { data } = await res.json();
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["notes"]);
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
   });
 }
@@ -245,14 +252,13 @@ export function useRestore(id) {
         method: "POST",
       });
       if (!res.ok) {
-        const { message } = await res.json();
-        throw new Error(message ?? "Something went wrong");
+        await throwResponseError(res, "Something went wrong");
       }
       const { data } = await res.json();
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(["notes"]);
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
   });
 }

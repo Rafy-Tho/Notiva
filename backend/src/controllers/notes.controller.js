@@ -18,7 +18,7 @@ export const create = async (req, res) => {
 
 export const update = async (req, res) => {
   const note = await svc.updateNote(req.userId, req.params.id, req.body, {
-    expectedUpdateAt: req.body.updatedAt,
+    expectedUpdatedAt: req.body.expectedUpdatedAt,
   });
   return ok(res, note, "Update note");
 };

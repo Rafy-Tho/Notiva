@@ -97,8 +97,10 @@ export function NoteDetailPage() {
 
 function NoteDetailEditor({ id, note, tags, notebooks }) {
   const navigate = useNavigate();
-  const [title, setTitle] = useState(note.title ?? "");
-  const [content, setContent] = useState(note.content ?? "");
+  const [draft, setDraft] = useState({
+    title: note.title ?? "",
+    content: note.content ?? "",
+  });
   const [icon, setIcon] = useState(note.cover?.emoji ?? null);
   const [cover, setCover] = useState(note.cover?.color ?? null);
   const [isPinned, setIsPinned] = useState(note.isPinned ?? false);
@@ -117,16 +119,43 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
   const { mutateAsync: purge, isPending: isPurging } = usePurge(id);
   const actionPending = isUpdating || isPinning || isFavoriting || isArchiving || isRemoving || isRestoring || isPurging;
 
-  const lastSavedTitleRef = useRef(note.title);
+  const serverUpdatedAtRef = useRef(note.updatedAt ?? null);
+  const [isLeaving, setIsLeaving] = useState(false);
 
-  const { status, lastSaved, saveNow, isDirty } = useAutoSave(
-    content,
-    updateNote,
-    {
-      debounceMs: 5000,
-      localKey: `note_${id}`,
-    },
+  const saveDraft = useCallback(
+    ({ signal, keepalive, expectedUpdatedAt, ...data }) =>
+      updateNote({
+        ...data,
+        signal,
+        keepalive,
+        expectedUpdatedAt,
+      }),
+    [updateNote],
   );
+
+  const handleDraftSaved = useCallback((savedNote) => {
+    if (savedNote?.updatedAt) {
+      serverUpdatedAtRef.current = savedNote.updatedAt;
+    }
+  }, []);
+
+  const {
+    status,
+    error: saveError,
+    lastSaved,
+    saveNow,
+    flush,
+    isDirty,
+    localDraft,
+    restoreLocalDraft,
+    discardLocalDraft,
+    setServerUpdatedAt,
+  } = useAutoSave(draft, saveDraft, {
+    debounceMs: 1000,
+    localKey: `note_draft_${id}`,
+    serverUpdatedAt: note.updatedAt,
+    onSaved: handleDraftSaved,
+  });
 
   useEffect(() => {
     if (!isDirty) return;
@@ -143,115 +172,162 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
       isDirty && currentLocation.pathname !== nextLocation.pathname,
   );
 
-  const handleTitleBlur = useCallback(async () => {
-    const trimmed = title.trim();
-    if (trimmed === lastSavedTitleRef.current) return;
-    try {
-      await updateNote({ title: trimmed });
-      lastSavedTitleRef.current = trimmed;
-    } catch (error) {
-      toast.error(error.message);
-    }
-  }, [title, updateNote]);
+  const handleTitleBlur = useCallback(() => {
+    void flush();
+  }, [flush]);
 
   const wc = useMemo(() => {
-    return wordCount(content);
-  }, [content]);
+    return wordCount(draft.content);
+  }, [draft.content]);
+
+  const ensureDraftSaved = useCallback(async () => {
+    const saved = await flush();
+    if (saved) return;
+
+    throw new Error("Save the latest changes before updating this note");
+  }, [flush]);
+
+  const saveMetadata = useCallback(
+    async (patch) => {
+      await ensureDraftSaved();
+      const result = await updateNote({
+        ...patch,
+        expectedUpdatedAt: serverUpdatedAtRef.current,
+      });
+
+      if (result?.updatedAt) {
+        serverUpdatedAtRef.current = result.updatedAt;
+        setServerUpdatedAt(result.updatedAt);
+      }
+
+      return result;
+    },
+    [ensureDraftSaved, setServerUpdatedAt, updateNote],
+  );
 
   const hadndleIcon = async (emoji) => {
+    const previous = icon;
     try {
       setIcon(emoji);
-      await updateNote({ cover: { emoji, color: cover } });
+      await saveMetadata({ cover: { emoji, color: cover } });
     } catch (error) {
+      setIcon(previous);
       toast.error(error.message);
     }
   };
 
   const handleCover = async (color) => {
+    const previous = cover;
     try {
       setCover(color);
-      await updateNote({ cover: { color, emoji: icon } });
+      await saveMetadata({ cover: { color, emoji: icon } });
     } catch (error) {
+      setCover(previous);
       toast.error(error.message);
     }
   };
   const removeIcon = async () => {
+    const previous = icon;
     try {
       setIcon(null);
 
-      await updateNote({
+      await saveMetadata({
         cover: {
           emoji: null,
           color: cover,
         },
       });
     } catch (error) {
+      setIcon(previous);
       toast.error(error.message);
     }
   };
   const removeCover = async () => {
+    const previous = cover;
     try {
       setCover(null);
 
-      await updateNote({
+      await saveMetadata({
         cover: {
           emoji: icon,
           color: null,
         },
       });
     } catch (error) {
+      setCover(previous);
       toast.error(error.message);
     }
   };
   const handleNotebook = async (notebookId) => {
+    const previous = selectNotebook;
+    const normalizedNotebookId = notebookId === "__none__" ? null : notebookId;
     try {
       setSelectNotebook(notebookId);
-      await updateNote({ notebookId });
+      await saveMetadata({ notebookId: normalizedNotebookId });
     } catch (error) {
+      setSelectNotebook(previous);
       toast.error(error.message);
     }
   };
 
   const handleTags = async (tagIds) => {
+    const previous = selectTags;
     try {
       setSelectTags(tagIds);
-      await updateNote({ tagIds });
+      await saveMetadata({ tagIds });
     } catch (error) {
+      setSelectTags(previous);
       toast.error(error.message);
     }
   };
   const toggleTag = async (tagId) => {
-    setSelectTags((prev) => {
-      const exists = prev.includes(tagId);
-      const next = exists
-        ? prev.filter((id) => id !== tagId)
-        : [...prev, tagId];
-      void handleTags(next);
-      return next;
-    });
+    const exists = selectTags.includes(tagId);
+    const next = exists
+      ? selectTags.filter((id) => id !== tagId)
+      : [...selectTags, tagId];
+    void handleTags(next);
   };
   const handleTogglePin = async () => {
+    const previous = isPinned;
     try {
+      await ensureDraftSaved();
       setIsPinned(!isPinned);
-      await togglePin();
+      const result = await togglePin();
+      if (result?.updatedAt) {
+        serverUpdatedAtRef.current = result.updatedAt;
+        setServerUpdatedAt(result.updatedAt);
+      }
     } catch (error) {
+      setIsPinned(previous);
       toast.error(error.message);
     }
   };
 
   const handleToggleFav = async () => {
+    const previous = isFav;
     try {
+      await ensureDraftSaved();
       setIsFav(!isFav);
-      await toggleFav();
+      const result = await toggleFav();
+      if (result?.updatedAt) {
+        serverUpdatedAtRef.current = result.updatedAt;
+        setServerUpdatedAt(result.updatedAt);
+      }
     } catch (error) {
+      setIsFav(previous);
       toast.error(error.message);
     }
   };
 
   const handleToggleArchive = async () => {
     try {
-      await toggleArchive();
-      if (note.isArchived) navigate("/archive");
+      await ensureDraftSaved();
+      const result = await toggleArchive();
+      if (result?.updatedAt) {
+        serverUpdatedAtRef.current = result.updatedAt;
+        setServerUpdatedAt(result.updatedAt);
+      }
+      if (result?.isArchived) navigate("/archive");
     } catch (error) {
       toast.error(error.message);
     }
@@ -259,6 +335,7 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
 
   const handleTrash = async () => {
     try {
+      await ensureDraftSaved();
       await remove();
       navigate(path.basePath);
     } catch (error) {
@@ -268,6 +345,7 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
 
   const handleRestore = async () => {
     try {
+      await ensureDraftSaved();
       await restore();
       navigate(path.basePath);
     } catch (error) {
@@ -277,15 +355,63 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
 
   const handlePurge = async () => {
     try {
+      await ensureDraftSaved();
       await purge();
       navigate("/trash");
     } catch (error) {
       toast.error(error.message);
     }
   };
+
+  const handleSaveAndLeave = async () => {
+    setIsLeaving(true);
+    const saved = await flush();
+    setIsLeaving(false);
+
+    if (saved) {
+      blocker.proceed();
+    } else {
+      toast.error(saveError?.message ?? "The note could not be saved");
+    }
+  };
+
+  const handleRestoreDraft = () => {
+    const restored = restoreLocalDraft();
+    if (restored) {
+      setDraft(restored);
+      toast.success("Unsaved draft restored");
+    }
+  };
   return (
     <div className="flex flex-col h-full">
       <div className="shrink-0">
+      {localDraft && (
+        <div className="px-4 sm:px-6 md:px-10 lg:px-12 pt-4 max-w-3xl mx-auto w-full">
+          <div className="flex items-center justify-between gap-3 rounded-md border border-primary/30 bg-primary/5 px-3 py-2">
+            <span className="text-xs text-muted-foreground">
+              An unsaved draft from an earlier session is available.
+            </span>
+            <div className="flex items-center gap-1.5">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-[11px]"
+                onClick={handleRestoreDraft}
+              >
+                Restore
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 text-[11px]"
+                onClick={discardLocalDraft}
+              >
+                Discard
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
       {note?.deletedAt && (
         <div className="px-4 sm:px-6 md:px-10 lg:px-12 pt-4 max-w-3xl mx-auto w-full">
           <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-muted/40 px-3 py-2">
@@ -363,6 +489,16 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
           >
             <Check className="h-3 w-3" /> Save
           </Button>
+          {status === "conflict" && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 text-[11px]"
+              onClick={() => window.location.reload()}
+            >
+              Reload
+            </Button>
+          )}
         </div>
         <div className="flex items-center gap-1 flex-wrap">
           {/* Emoji picker */}
@@ -371,6 +507,7 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
               <Button
                 variant="ghost"
                 size="sm"
+                disabled={actionPending}
                 className="h-7 px-2 text-[11px] border border-border bg-transparent hover:bg-muted/40 gap-1.5"
               >
                 {icon ? (
@@ -393,6 +530,7 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
                   <Button
                     size="sm"
                     variant="ghost"
+                    disabled={actionPending}
                     className="w-full h-7 text-[11px]"
                     onClick={removeIcon}
                   >
@@ -408,6 +546,7 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
               <Button
                 variant="ghost"
                 size="sm"
+                disabled={actionPending}
                 className="h-7 px-2 text-[11px] border border-border bg-transparent hover:bg-muted/40 gap-1.5"
               >
                 <ImageIcon className="h-3 w-3 text-muted-foreground" />
@@ -432,6 +571,7 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
                       key={c}
                       type="button"
                       onClick={() => handleCover(c)}
+                      disabled={actionPending}
                       className={cn(
                         "h-7 rounded-md border-2",
                         cover === c
@@ -461,6 +601,7 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
           {/* Notebook */}
           <Select
             value={selectNotebook ?? "__none__"}
+            disabled={actionPending}
             onValueChange={(v) => handleNotebook(v)}
           >
             <SelectTrigger className="h-7 gap-1.5 px-2 text-[11px] border-border bg-transparent hover:bg-muted/40 w-auto min-w-0">
@@ -488,6 +629,7 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
               <Button
                 variant="ghost"
                 size="sm"
+                disabled={actionPending}
                 className="h-7 gap-1.5 px-2 text-[11px] border border-border bg-transparent hover:bg-muted/40"
               >
                 <TagIcon className="h-3 w-3 text-muted-foreground" />
@@ -509,9 +651,9 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
                 {selectTags.length > 0 && (
                   <button
                     onClick={() => {
-                      setSelectTags([]);
                       handleTags([]);
                     }}
+                    disabled={actionPending}
                     className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
                   >
                     <X className="h-3 w-3" /> Clear
@@ -529,6 +671,7 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
                     return (
                       <button
                         key={t.id}
+                        disabled={actionPending}
                         onClick={() => toggleTag(t.id)}
                         className="flex w-full items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-xs hover:bg-accent hover:text-accent-foreground"
                       >
@@ -598,8 +741,10 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
 
       <div className="px-4 sm:px-6 md:px-10 lg:px-12 pt-2 pb-0 max-w-3xl mx-auto w-full">
         <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          value={draft.title}
+          onChange={(e) =>
+            setDraft((previous) => ({ ...previous, title: e.target.value }))
+          }
           onBlur={handleTitleBlur}
           placeholder="Untitled"
           className="w-full bg-transparent text-3xl font-semibold tracking-tight outline-none placeholder:text-muted-foreground/40"
@@ -623,10 +768,9 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
                     style={{ backgroundColor: `hsl(${t.color})` }}
                   />
                   {t.name}
-                  <button
-                    onClick={() => {
-                      setSelectTags((prev) => prev.filter((id) => id !== t.id));
-                      handleTags(selectTags.filter((id) => id !== t.id));
+                    <button
+                      onClick={() => {
+                        handleTags(selectTags.filter((id) => id !== t.id));
                     }}
                     className="ml-0.5 rounded-sm hover:bg-background/60 p-0.5"
                     aria-label={`Remove ${t.name}`}
@@ -642,8 +786,10 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 md:px-10 lg:px-12 pt-2 pb-0 max-w-3xl mx-auto w-full">
         <NoteEditor
-          content={content}
-          onChange={setContent}
+          content={draft.content}
+          onChange={(value) =>
+            setDraft((previous) => ({ ...previous, content: value }))
+          }
           onCmdS={saveNow}
         />
       </div>
@@ -665,8 +811,23 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
             <AlertDialogCancel onClick={() => blocker.reset()}>
               Stay
             </AlertDialogCancel>
-            <AlertDialogAction onClick={() => blocker.proceed()}>
-              Leave
+            <AlertDialogAction
+              disabled={isLeaving}
+              onClick={(event) => {
+                event.preventDefault();
+                void handleSaveAndLeave();
+              }}
+            >
+              {isLeaving ? "Saving..." : "Save and leave"}
+            </AlertDialogAction>
+            <AlertDialogAction
+              className="bg-muted text-foreground hover:bg-muted/80"
+              onClick={(event) => {
+                event.preventDefault();
+                blocker.proceed();
+              }}
+            >
+              Leave without saving
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -692,6 +853,12 @@ function SaveBadge({ status, lastSavedAt, isDirty }) {
     return (
       <span className="text-[11px] text-destructive flex items-center gap-1">
         <AlertCircle className="h-3 w-3" /> Save failed
+      </span>
+    );
+  if (status === "conflict")
+    return (
+      <span className="text-[11px] text-destructive flex items-center gap-1">
+        <AlertCircle className="h-3 w-3" /> Conflict - reload required
       </span>
     );
   if (isDirty)

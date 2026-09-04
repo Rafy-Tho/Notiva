@@ -1,4 +1,5 @@
 import { body, param } from "express-validator";
+import { MAX_NOTE_CONTENT_LENGTH } from "../config/limits.js";
 
 export const create = [
   body("title")
@@ -15,8 +16,8 @@ export const create = [
     .isString()
     .withMessage("Content must be a string")
     .bail()
-    .isLength({ max: 100_000_000 })
-    .withMessage("Content must be between 2 and 100 million characters")
+    .isLength({ max: MAX_NOTE_CONTENT_LENGTH })
+    .withMessage("Content is too large")
     .bail(),
 
   body("notebookId")
@@ -51,8 +52,8 @@ export const update = [
     .isString()
     .withMessage("Content must be a string")
     .bail()
-    .isLength({ max: 100_000_000 })
-    .withMessage("Content must be between 2 and 100 million characters")
+    .isLength({ max: MAX_NOTE_CONTENT_LENGTH })
+    .withMessage("Content is too large")
     .bail(),
 
   body("notebookId")
@@ -68,6 +69,28 @@ export const update = [
     .bail(),
 
   body("tagIds.*").optional().isMongoId().withMessage("Invalid tag id").bail(),
+
+  body("cover")
+    .optional({ nullable: true })
+    .isObject()
+    .withMessage("Invalid cover")
+    .bail(),
+
+  body("cover.color")
+    .optional({ nullable: true })
+    .isString()
+    .withMessage("Invalid cover color")
+    .bail()
+    .isLength({ max: 50 })
+    .withMessage("Cover color is too long"),
+
+  body("cover.emoji")
+    .optional({ nullable: true })
+    .isString()
+    .withMessage("Invalid cover emoji")
+    .bail()
+    .isLength({ max: 20 })
+    .withMessage("Cover emoji is too long"),
 
   body("isPinned")
     .optional()
@@ -86,4 +109,9 @@ export const update = [
     .isBoolean()
     .withMessage("isFavourite must be a boolean")
     .bail(),
+
+  body("expectedUpdatedAt")
+    .optional({ nullable: true })
+    .isISO8601()
+    .withMessage("Invalid expected update time"),
 ];
