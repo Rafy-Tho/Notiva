@@ -1,6 +1,7 @@
 import * as svc from "../services/auth.service.js";
 import { me as getUser } from "../services/me.service.js";
 import { sendResetEmail } from "../services/email.service.js";
+import { securityAudit } from "../middleware/securityAudit.js";
 import { ok } from "../utils/response.js";
 
 const COOKIE_NAME = "noteflow_token";
@@ -28,7 +29,7 @@ export async function register(req, res) {
 }
 
 export async function login(req, res) {
-  const user = await svc.login(req.body);
+  const user = await svc.login(req.body, req);
   const { accessToken } = svc.issueToken(user);
   setAuthCookie(res, accessToken);
   return ok(res, { user }, "logged in");
@@ -38,6 +39,7 @@ export async function forgotPassword(req, res) {
   const result = await svc.createResetToken(req.body.email);
 
   if (result) {
+    securityAudit.passwordResetRequested(result.user.email, req.ip);
     const link = `${process.env.FRONTEND_ORIGIN.split(",")[0]
       }/reset-password?token=${result.token}`;
 
@@ -49,6 +51,7 @@ export async function forgotPassword(req, res) {
 
 export async function resetPassword(req, res) {
   await svc.consumeResetToken(req.body.token, req.body.password);
+  securityAudit.passwordResetCompleted(req.body.email, req.ip);
   return ok(res, null, "Password updated");
 }
 

@@ -23,11 +23,7 @@ export async function listNotes(userId, query = {}) {
   const filter = { userId };
 
   if (search) {
-    const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    filter.$or = [
-      { title: { $regex: escaped, $options: "i" } },
-      { content: { $regex: escaped, $options: "i" } },
-    ];
+    filter.$text = { $search: search };
   }
 
   const now = new Date();

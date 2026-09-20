@@ -42,7 +42,7 @@ export function useNotes(params = {}) {
       if (params.page) sp.set("page", params.page);
 
       const res = await fetchWithAuth(
-        `${BASE_URL}/notes?limit=10&${sp.toString()}`,
+        `${BASE_URL}/notes?limit=20&${sp.toString()}`,
       );
 
       if (!res.ok) {
@@ -63,7 +63,7 @@ export function useNotesInfinite(queryParams = {}) {
     queryFn: async ({ pageParam = 1 }) => {
       const sp = new URLSearchParams();
       sp.set("page", pageParam);
-      sp.set("limit", "10");
+      sp.set("limit", "20");
       if (queryParams.search) sp.set("search", queryParams.search);
       if (queryParams.dateFilter) sp.set("dateFilter", queryParams.dateFilter);
       if (queryParams.notebookId) sp.set("notebookId", queryParams.notebookId);

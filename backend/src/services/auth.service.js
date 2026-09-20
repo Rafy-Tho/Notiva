@@ -2,6 +2,7 @@ import { User } from "../models/User.js";
 import crypto from "node:crypto";
 import bcrypt from "bcrypt";
 import { signToken, hashToken } from "../utils/tokens.js";
+import { securityAudit } from "../middleware/securityAudit.js";
 
 export async function register({ name, email, password }) {
   const existing = await User.findOne({ email });
@@ -23,11 +24,19 @@ export async function register({ name, email, password }) {
   return user;
 }
 
-export async function login({ email, password }) {
+export async function login({ email, password }, req) {
   const user = await User.findOne({ email });
 
   if (!user) {
+    if (req) securityAudit.failedLogin(email, req.ip);
     const e = new Error("Invalid credentials");
+    e.status = 401;
+    throw e;
+  }
+
+  if (user.deletedAt) {
+    if (req) securityAudit.failedLogin(email, req.ip);
+    const e = new Error("Account is deleted");
     e.status = 401;
     throw e;
   }
@@ -35,11 +44,13 @@ export async function login({ email, password }) {
   const ok = await bcrypt.compare(password, user.password);
 
   if (!ok) {
+    if (req) securityAudit.failedLogin(email, req.ip);
     const e = new Error("Invalid credentials");
     e.status = 401;
     throw e;
   }
 
+  if (req) securityAudit.successfulLogin(email, req.ip);
   return user;
 }
 

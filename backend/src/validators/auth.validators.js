@@ -50,13 +50,9 @@ export const registerV = [
     .matches(/[0-9]/)
     .withMessage("Password must contain a number")
     .bail()
-    // At least one special character
-    .matches(/[!@#$%^&*]/)
+    // At least one special character (any non-alphanumeric)
+    .matches(/\W/)
     .withMessage("Password must contain a special character")
-    .bail()
-    // Password cannot contain emojis or non-ASCII characters
-    .matches(/^[A-Za-z0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]+$/)
-    .withMessage("Password contains invalid characters"),
 ];
 export const loginV = [
   body("email")
@@ -91,13 +87,9 @@ export const loginV = [
     .matches(/[0-9]/)
     .withMessage("Password must contain a number")
     .bail()
-    // At least one special character
-    .matches(/[!@#$%^&*]/)
+    // At least one special character (any non-alphanumeric)
+    .matches(/\W/)
     .withMessage("Password must contain a special character")
-    .bail()
-    // Password cannot contain emojis or non-ASCII characters
-    .matches(/^[A-Za-z0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]+$/)
-    .withMessage("Password contains invalid characters"),
 ];
 
 export const forgotV = [
@@ -152,11 +144,7 @@ export const resetV = [
     .matches(/[0-9]/)
     .withMessage("Password must contain a number")
     .bail()
-    // At least one special character
-    .matches(/[!@#$%^&*]/)
+    // At least one special character (any non-alphanumeric)
+    .matches(/\W/)
     .withMessage("Password must contain a special character")
-    .bail()
-    // Password cannot contain emojis or non-ASCII characters
-    .matches(/^[A-Za-z0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?`~]+$/)
-    .withMessage("Password contains invalid characters"),
 ];

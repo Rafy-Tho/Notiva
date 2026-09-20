@@ -1,5 +1,6 @@
 import * as svc from "../services/me.service.js";
 import { uploadImage } from "../services/upload.service.js";
+import { securityAudit } from "../middleware/securityAudit.js";
 import { ok } from "../utils/response.js";
 
 export const me = async (req, res) => {
@@ -18,17 +19,21 @@ export const changePassword = async (req, res) => {
 };
 
 export const deleteAccount = async (req, res) => {
+  const user = await svc.me(req.userId);
   await svc.deleteAccount(req.userId);
+  securityAudit.accountDeleted(req.userId, user.email, req.ip);
   return ok(res, null, "Delete account");
 };
 
 export const updateAvatar = async (req, res) => {
   const result = await uploadImage(req.file);
   const user = await svc.updateAvatar(req.userId, result.secure_url);
+  securityAudit.avatarChanged(req.userId, user.email, req.ip);
   return ok(res, user, "Update avatar");
 };
 
 export const removeAvatar = async (req, res) => {
   const user = await svc.updateAvatar(req.userId, "");
+  securityAudit.avatarChanged(req.userId, user.email, req.ip);
   return ok(res, user, "Update avatar");
 };
