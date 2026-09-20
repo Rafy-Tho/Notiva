@@ -1,5 +1,5 @@
 import * as svc from "./note.service.js";
-import { ok, asyncHandler } from "../../common/utils/response.js";
+import { ok } from "../../common/utils/response.js";
 
 export const list = async (req, res) => {
   const notes = await svc.listNotes(req.userId, req.query);

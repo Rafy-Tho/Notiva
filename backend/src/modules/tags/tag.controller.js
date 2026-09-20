@@ -1,5 +1,5 @@
 import * as svc from "./tag.service.js";
-import { ok, asyncHandler } from "../../common/utils/response.js";
+import { ok } from "../../common/utils/response.js";
 
 export const list = async (req, res) => {
   const tags = await svc.list(req.userId);

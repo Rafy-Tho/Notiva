@@ -2,7 +2,7 @@ import * as svc from "./auth.service.js";
 import { me as getUser } from "../users/user.service.js";
 import { sendResetEmail } from "../email/email.service.js";
 import { securityAudit } from "../../common/middleware/securityAudit.js";
-import { ok, asyncHandler } from "../../common/utils/response.js";
+import { ok } from "../../common/utils/response.js";
 
 const COOKIE_NAME = "noteflow_token";
 const COOKIE_OPTS = {
@@ -36,6 +36,13 @@ export async function login(req, res) {
 }
 
 export async function forgotPassword(req, res) {
+  const canProceed = await svc.checkResetRate(req.body.email);
+
+  if (!canProceed) {
+    securityAudit.passwordResetRequested(req.body.email, req.ip);
+    return ok(res, null, "If that email exists, a reset link has been sent");
+  }
+
   const result = await svc.createResetToken(req.body.email);
 
   if (result) {

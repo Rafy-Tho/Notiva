@@ -25,6 +25,15 @@ export class NotFoundError extends Error {
   }
 }
 
+export class TooManyRequestsError extends Error {
+  constructor(message) {
+    super(message ?? "Too many requests");
+    this.name = "TooManyRequestsError";
+    this.status = 429;
+    this.code = "TOO_MANY_REQUESTS";
+  }
+}
+
 export class UnauthorizedError extends Error {
   constructor(message, code) {
     super(message ?? "Unauthorized");

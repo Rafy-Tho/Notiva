@@ -2,8 +2,9 @@ import { User } from "../../models/User.js";
 import crypto from "node:crypto";
 import bcrypt from "bcrypt";
 import { signToken, hashToken } from "../../common/utils/tokens.js";
+import { trackLoginAttempt } from "../../common/utils/rateLimit.js";
 import { securityAudit } from "../../common/middleware/securityAudit.js";
-import { ConflictError, UnauthorizedError, BadRequestError } from "../../common/errors/errors.js";
+import { ConflictError, UnauthorizedError, BadRequestError, TooManyRequestsError } from "../../common/errors/errors.js";
 
 export async function register({ name, email, password }) {
   const existing = await User.findOne({ email });
@@ -24,6 +25,12 @@ export async function register({ name, email, password }) {
 }
 
 export async function login({ email, password }, req) {
+  const rateResult = await trackLoginAttempt(email);
+
+  if (rateResult.locked) {
+    throw new TooManyRequestsError("Account temporarily locked. Please try again later.");
+  }
+
   const user = await User.findOne({ email });
 
   if (!user) {
@@ -42,6 +49,12 @@ export async function login({ email, password }, req) {
     if (req) securityAudit.failedLogin(email, req.ip);
     throw new UnauthorizedError("Invalid credentials");
   }
+
+  const { Redis } = await import("ioredis");
+  const client = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
+  await client.del(`login_attempts:${email}`);
+  await client.del(`login_locked:${email}`);
+  client.quit();
 
   if (req) securityAudit.successfulLogin(email, req.ip);
   return user;
@@ -82,6 +95,11 @@ export async function consumeResetToken(token, newPassword) {
   user.resetTokenExpires = undefined;
 
   await user.save();
+
+  const { Redis } = await import("ioredis");
+  const client = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
+  await client.del(`password_reset:${user.email}`);
+  client.quit();
 
   return user;
 }

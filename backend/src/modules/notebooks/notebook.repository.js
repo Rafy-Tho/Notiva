@@ -24,29 +24,28 @@ export async function create(name, color, userId) {
 }
 
 export async function update(id, name, color, userId) {
-  const notebook = await Notebook.findByIdAndUpdate(
-    { _id: id, userId },
-    { name, color },
-    { new: true },
-  );
+  const notebook = await Notebook.findOne({ _id: id, userId });
+
   if (!notebook) {
     throw new NotFoundError("Notebook not found");
   }
+
+  notebook.name = name;
+  notebook.color = color;
+  await notebook.save();
+
   return notebook;
 }
 
 export async function remove(id, userId) {
-  const notebook = await Notebook.findByIdAndUpdate(
-    { _id: id, userId },
-    {
-      deletedAt: Date.now(),
-    },
-    { new: true },
-  );
+  const notebook = await Notebook.findOne({ _id: id, userId });
 
   if (!notebook) {
     throw new NotFoundError("Notebook not found");
   }
+
+  notebook.deletedAt = Date.now();
+  await notebook.save();
 
   return notebook;
 }

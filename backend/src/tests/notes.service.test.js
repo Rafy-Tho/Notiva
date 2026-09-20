@@ -19,9 +19,7 @@ vi.mock("../modules/notes/note.repository.js", () => ({
 const { updateNote, listNotes, createNote, getNote, softDelete } = await import(
   "../modules/notes/note.service.js"
 );
-const { NotFoundError, ConflictError } = await import(
-  "../common/errors/NotFoundError.js"
-);
+const { NotFoundError } = await import("../common/errors/NotFoundError.js");
 
 describe("updateNote", () => {
   beforeEach(() => {

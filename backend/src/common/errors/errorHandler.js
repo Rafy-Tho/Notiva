@@ -84,20 +84,22 @@ function normalizeError(err) {
 export function errorHandler(err, req, res) {
   const { status, code, message } = normalizeError(err);
 
-  if (status === 500) {
+  if (status === 500 && process.env.NODE_ENV === "development") {
     console.error(
       `[${new Date().toISOString()}] ${req.method} ${req.url}`,
-      err,
+      err.stack || err,
     );
   }
+
+  const responseMessage =
+    process.env.NODE_ENV === "production" && status === 500
+      ? "Internal Server Error"
+      : message;
 
   res.status(status).json({
     success: false,
     data: null,
     code,
-    message:
-      process.env.NODE_ENV === "production" && status === 500
-        ? "Internal Server Error"
-        : message,
+    message: responseMessage,
   });
 }

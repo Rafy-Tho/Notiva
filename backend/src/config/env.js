@@ -30,6 +30,10 @@ export const env = {
 
   // Rate limit
   trustedIps: process.env.TRUSTED_IPS?.split(",")?.map((s) => s.trim()) || [],
+
+  // Security
+  accountLockoutThreshold: parseInt(process.env.ACCOUNT_LOCKOUT_THRESHOLD || "5", 10),
+  accountLockoutDuration: parseInt(process.env.ACCOUNT_LOCKOUT_DURATION || "900000", 10),
 };
 
 export function validateEnv() {
