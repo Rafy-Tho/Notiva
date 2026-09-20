@@ -1,5 +1,5 @@
 import * as svc from "./notebook.service.js";
-import { ok } from "../../common/utils/response.js";
+import { ok, asyncHandler } from "../../common/utils/response.js";
 
 export const list = async (req, res) => {
   const notebooks = await svc.list(req.userId);

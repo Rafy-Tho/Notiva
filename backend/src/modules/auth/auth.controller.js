@@ -2,7 +2,7 @@ import * as svc from "./auth.service.js";
 import { me as getUser } from "../users/user.service.js";
 import { sendResetEmail } from "../email/email.service.js";
 import { securityAudit } from "../../common/middleware/securityAudit.js";
-import { ok } from "../../common/utils/response.js";
+import { ok, asyncHandler } from "../../common/utils/response.js";
 
 const COOKIE_NAME = "noteflow_token";
 const COOKIE_OPTS = {

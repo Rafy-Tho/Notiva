@@ -1,134 +1,119 @@
-# Backend API Design Audit
+# Backend Error Handling Audit
 
-Act as a senior API/backend engineer.
+Act as a senior backend engineer.
 
-Audit the existing API for consistency, correctness, usability, security boundaries, and REST/API design quality.
+Audit the backend's error-handling architecture.
+
+## Objective
+
+Ensure errors are:
+
+- Correctly caught
+- Correctly propagated
+- Consistent
+- Informative
+- Safe
+- Debuggable
 
 ## Inspect
 
-Inventory all endpoints:
-
-```text
-METHOD
-PATH
-AUTHENTICATION
-AUTHORIZATION
-REQUEST
-RESPONSE
-STATUS CODES
-ERRORS
-```
-
-Check route consistency across the entire backend.
-
-## Review
-
-Evaluate:
-
-- Resource naming
-- HTTP methods
-- URL structure
-- Status codes
-- Request validation
-- Response consistency
-- Error format
-- Pagination
-- Filtering
-- Sorting
-- Search
-- Authentication
-- Authorization
-- Rate limiting
-- CORS
-- API versioning
-- Idempotency where applicable
-
-Prefer predictable resource-oriented endpoints.
-
-## Consistency
-
-Identify inconsistent patterns such as:
-
-```text
-/users/:id
-/user/:id
-/users?id=
-```
-
-or inconsistent responses:
-
-```json
-{ "data": {} }
-```
-
-versus:
-
-```json
-{ "user": {} }
-```
-
-Do not change public contracts without checking existing clients and documenting the change.
-
-## Validation
-
-Verify validation for:
-
-- Body
-- Query parameters
-- Path parameters
-- Relevant headers
-
-Never rely solely on frontend validation.
-
-## Errors
-
-Ensure API errors:
-
-- Use appropriate HTTP status codes.
-- Have consistent structure.
-- Do not expose internal implementation details.
-- Provide useful client-facing messages.
-
-## Security Boundary
-
-Verify that protected resources correctly enforce:
-
-- Authentication
-- Authorization
-- Resource ownership
-
-Check for IDOR/BOLA risks.
-
-## Performance
-
 Review:
 
-- Pagination
-- Response size
-- N+1 API behavior
-- Excessive requests
-- Expensive endpoints
+- Controllers
+- Services
+- Repositories
+- Middleware
+- Async operations
+- Database operations
+- External API calls
+- Global error handlers
+- Custom errors
+- API error responses
+
+## Check
+
+Identify:
+
+- Swallowed errors
+- Empty catch blocks
+- Unhandled promises
+- Incorrect status codes
+- Duplicate error handling
+- Leaked stack traces
+- Database errors exposed to clients
+- Inconsistent error responses
+- Generic errors hiding useful information
+- Errors logged multiple times
+- Errors never logged
+
+## Error Architecture
+
+Prefer a consistent flow:
+
+```text
+Repository
+    ↓
+Service
+    ↓
+Controller
+    ↓
+Error Middleware
+    ↓
+HTTP Response
+```
+
+Business code should throw meaningful application errors where appropriate.
+
+The global error handler should convert errors into safe API responses.
+
+## Security
+
+Never expose:
+
+- Stack traces
+- SQL queries
+- Passwords
+- Tokens
+- Secrets
+- Internal filesystem paths
+- Internal infrastructure details
+
+to clients.
+
+## Reliability
+
+Verify failures from:
+
+- Database
+- Network
+- External services
+- Invalid input
+- Authentication
+- Authorization
+
+are handled appropriately.
 
 ## Verification
 
-Run API/integration tests.
+Test:
 
-Test both successful and failure scenarios.
+- Success
+- Validation errors
+- Authentication errors
+- Authorization errors
+- Not found
+- Database failures
+- Unexpected failures
 
 ## Final Report
 
-Provide:
+Report:
 
-- Endpoint issues
-- Naming inconsistencies
-- Status-code issues
-- Validation issues
-- Response inconsistencies
-- Authorization issues
-- Compatibility risks
-- Changes made
-- Tests performed
+- Error-handling problems
+- Errors standardized
+- Security issues
+- Missing handling
+- Tests added
+- Test results
 
-Do not redesign the entire API unnecessarily.
-
-**Inspect → Document → Fix → Test → Report.**
+**Inspect → Trace errors → Standardize → Test → Report.**

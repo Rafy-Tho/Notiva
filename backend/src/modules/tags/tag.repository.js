@@ -1,4 +1,5 @@
 import Tag from "../../models/Tag.js";
+import { NotFoundError, ConflictError } from "../../common/errors/errors.js";
 
 export async function list(userId) {
   return Tag.find({ userId, deletedAt: null });
@@ -8,9 +9,7 @@ export async function create(name, color, userId) {
   const existing = await Tag.findOne({ name, userId });
 
   if (existing) {
-    const e = new Error("Tag already exists");
-    e.status = 409;
-    throw e;
+    throw new ConflictError("Tag already exists");
   }
 
   return Tag.create({ name, color, userId });
@@ -24,9 +23,7 @@ export async function update(id, name, color, userId) {
   );
 
   if (!tag) {
-    const e = new Error("Tag not found");
-    e.status = 404;
-    throw e;
+    throw new NotFoundError("Tag not found");
   }
 
   return tag;
@@ -40,9 +37,7 @@ export async function remove(id, userId) {
   );
 
   if (!tag) {
-    const e = new Error("Tag not found");
-    e.status = 404;
-    throw e;
+    throw new NotFoundError("Tag not found");
   }
 
   return tag;

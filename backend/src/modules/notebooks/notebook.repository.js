@@ -1,4 +1,5 @@
 import Notebook from "../../models/Notebook.js";
+import { NotFoundError, ConflictError } from "../../common/errors/errors.js";
 
 export async function list(userId) {
   const notebooks = await Notebook.find({ userId, deletedAt: null }).sort({
@@ -11,9 +12,7 @@ export async function create(name, color, userId) {
   const existing = await Notebook.findOne({ name, userId });
 
   if (existing) {
-    const e = new Error("Notebook already exists");
-    e.status = 409;
-    throw e;
+    throw new ConflictError("Notebook already exists");
   }
 
   const notebook = await Notebook.create({
@@ -31,9 +30,7 @@ export async function update(id, name, color, userId) {
     { new: true },
   );
   if (!notebook) {
-    const e = new Error("Notebook not found");
-    e.status = 404;
-    throw e;
+    throw new NotFoundError("Notebook not found");
   }
   return notebook;
 }
@@ -48,9 +45,7 @@ export async function remove(id, userId) {
   );
 
   if (!notebook) {
-    const e = new Error("Notebook not found");
-    e.status = 404;
-    throw e;
+    throw new NotFoundError("Notebook not found");
   }
 
   return notebook;

@@ -39,7 +39,7 @@ export async function send({ to, subject, text, html }) {
     const data = await res.json();
 
     if (!res.ok) {
-      throw new Error("Something went wrong");
+      throw new Error(`Email service error: ${res.status} ${res.statusText}`);
     }
 
     console.log("Email sent:", data.messageId);

@@ -1,7 +1,7 @@
 import * as svc from "./user.service.js";
 import { uploadImage } from "../upload/upload.service.js";
 import { securityAudit } from "../../common/middleware/securityAudit.js";
-import { ok } from "../../common/utils/response.js";
+import { ok, asyncHandler } from "../../common/utils/response.js";
 
 export const me = async (req, res) => {
   const user = await svc.me(req.userId);
