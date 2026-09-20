@@ -3,6 +3,7 @@ import Note from "../../models/Note.js";
 
 export async function findMany(userId, filter, options) {
   return Note.find({ userId, ...filter })
+    .lean()
     .sort(options.sort)
     .skip(options.skip)
     .limit(options.limit);
@@ -41,6 +42,7 @@ export async function aggregateNoteCounts(userId) {
     { $match: { userId: new mongoose.Types.ObjectId(userId), deletedAt: null } },
     { $group: { _id: "$notebookId", count: { $sum: 1 } } },
     { $project: { _id: 0, id: "$_id", count: 1 } },
+    { $limit: 100 },
   ]);
 }
 
@@ -50,5 +52,6 @@ export async function aggregateTagCounts(userId) {
     { $unwind: { path: "$tagIds", preserveNullAndEmptyArrays: false } },
     { $group: { _id: "$tagIds", count: { $sum: 1 } } },
     { $project: { _id: 0, id: "$_id", count: 1 } },
+    { $limit: 100 },
   ]);
 }

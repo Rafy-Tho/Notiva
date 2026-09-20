@@ -1,8 +1,8 @@
 import rateLimit from "express-rate-limit";
 import RedisStore from "rate-limit-redis";
-import { Redis } from "ioredis";
+import { getRedisClient } from "../../config/redis.js";
 
-const redis = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
+const redis = getRedisClient();
 
 const sharedOptions = {
   windowMs: 60_000,

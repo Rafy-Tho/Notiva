@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import { signToken, hashToken } from "../../common/utils/tokens.js";
 import { trackLoginAttempt } from "../../common/utils/rateLimit.js";
 import { securityAudit } from "../../common/middleware/securityAudit.js";
+import { getRedisClient } from "../../config/redis.js";
 import { ConflictError, UnauthorizedError, BadRequestError, TooManyRequestsError } from "../../common/errors/errors.js";
 
 export async function register({ name, email, password }) {
@@ -50,11 +51,9 @@ export async function login({ email, password }, req) {
     throw new UnauthorizedError("Invalid credentials");
   }
 
-  const { Redis } = await import("ioredis");
-  const client = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
-  await client.del(`login_attempts:${email}`);
-  await client.del(`login_locked:${email}`);
-  client.quit();
+  const redis = getRedisClient();
+  await redis.del(`login_attempts:${email}`);
+  await redis.del(`login_locked:${email}`);
 
   if (req) securityAudit.successfulLogin(email, req.ip);
   return user;
@@ -96,10 +95,8 @@ export async function consumeResetToken(token, newPassword) {
 
   await user.save();
 
-  const { Redis } = await import("ioredis");
-  const client = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
-  await client.del(`password_reset:${user.email}`);
-  client.quit();
+  const redis = getRedisClient();
+  await redis.del(`password_reset:${user.email}`);
 
   return user;
 }

@@ -1,6 +1,6 @@
-import { Redis } from "ioredis";
+import { getRedisClient } from "../../config/redis.js";
 
-const redis = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
+const redis = getRedisClient();
 
 export async function trackLoginAttempt(email) {
   const key = `login_attempts:${email}`;

@@ -1,119 +1,135 @@
-# Backend Error Handling Audit
+# Backend Performance & Reliability Audit
 
-Act as a senior backend engineer.
+Act as a senior backend performance and reliability engineer.
 
-Audit the backend's error-handling architecture.
+Audit the backend for performance bottlenecks and reliability problems.
 
-## Objective
+Do not optimize blindly. Prefer measurable improvements.
 
-Ensure errors are:
+## Performance
 
-- Correctly caught
-- Correctly propagated
-- Consistent
-- Informative
-- Safe
-- Debuggable
+Inspect:
 
-## Inspect
+- Database queries
+- Indexes
+- N+1 queries
+- Connection pooling
+- Network requests
+- Serialization
+- Memory usage
+- CPU-intensive operations
+- Large responses
+- Pagination
+- Caching
+- Middleware overhead
+- Synchronous/blocking operations
 
-Review:
-
-- Controllers
-- Services
-- Repositories
-- Middleware
-- Async operations
-- Database operations
-- External API calls
-- Global error handlers
-- Custom errors
-- API error responses
-
-## Check
+## Database
 
 Identify:
 
-- Swallowed errors
-- Empty catch blocks
-- Unhandled promises
-- Incorrect status codes
-- Duplicate error handling
-- Leaked stack traces
-- Database errors exposed to clients
-- Inconsistent error responses
-- Generic errors hiding useful information
-- Errors logged multiple times
-- Errors never logged
+- Missing indexes
+- Inefficient queries
+- Repeated queries
+- N+1 patterns
+- Unbounded queries
+- Unnecessary columns
+- Excessive database connections
 
-## Error Architecture
+Do not add indexes without considering actual query patterns and write overhead.
 
-Prefer a consistent flow:
+## Network
 
-```text
-Repository
-    ↓
-Service
-    ↓
-Controller
-    ↓
-Error Middleware
-    ↓
-HTTP Response
-```
+Review:
 
-Business code should throw meaningful application errors where appropriate.
+- Unnecessary external requests
+- Sequential requests that could safely be parallelized
+- Missing timeouts
+- Excessive payload sizes
+- Duplicate requests
 
-The global error handler should convert errors into safe API responses.
+## Memory
 
-## Security
+Look for:
 
-Never expose:
-
-- Stack traces
-- SQL queries
-- Passwords
-- Tokens
-- Secrets
-- Internal filesystem paths
-- Internal infrastructure details
-
-to clients.
+- Large datasets loaded into memory
+- Unbounded caches
+- Memory leaks
+- Large request bodies
+- Unnecessary object duplication
 
 ## Reliability
 
-Verify failures from:
+Review:
 
-- Database
-- Network
-- External services
-- Invalid input
-- Authentication
-- Authorization
+- Database failures
+- External service failures
+- Network timeouts
+- Retry behavior
+- Graceful shutdown
+- Startup validation
+- Health checks
+- Resource limits
+- Connection failures
 
-are handled appropriately.
+## Timeouts
+
+External calls should not wait indefinitely.
+
+Use appropriate timeouts where missing.
+
+## Retries
+
+Only retry operations where it is safe.
+
+Avoid retry storms.
+
+Use backoff when appropriate.
+
+## Concurrency
+
+Identify race conditions and duplicate operations where relevant.
+
+Ensure operations requiring atomicity use appropriate database transactions or concurrency controls.
+
+## Performance Changes
+
+Before significant optimization:
+
+```text
+Measure
+  ↓
+Identify bottleneck
+  ↓
+Change
+  ↓
+Measure again
+```
+
+Do not optimize code solely because it "looks slow."
 
 ## Verification
 
-Test:
+Run:
 
-- Success
-- Validation errors
-- Authentication errors
-- Authorization errors
-- Not found
-- Database failures
-- Unexpected failures
+- Tests
+- Integration tests
+- Relevant benchmarks
+- Database query checks
+- Startup checks
+
+Compare performance before and after when measurable.
 
 ## Final Report
 
 Report:
 
-- Error-handling problems
-- Errors standardized
-- Security issues
-- Missing handling
-- Tests added
-- Test results
+- Bottlenecks found
+- Reliability risks
+- Database improvements
+- Performance changes
+- Measurements where available
+- Remaining bottlenecks
+- Verification results
 
-**Inspect → Trace errors → Standardize → Test → Report.**
+**Measure → Diagnose → Optimize → Measure again → Verify → Report.**

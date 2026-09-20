@@ -56,6 +56,10 @@ const NoteSchema = new Schema(
 );
 
 NoteSchema.index({ title: "text", content: "text" });
+NoteSchema.index({ userId: 1, updatedAt: -1 });
+NoteSchema.index({ userId: 1, notebookId: 1 });
+NoteSchema.index({ userId: 1, isPinned: -1, updatedAt: -1 });
+NoteSchema.index({ deletedAt: 1 });
 
 NoteSchema.set("toJSON", {
   virtuals: true,
