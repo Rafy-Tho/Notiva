@@ -1,5 +1,7 @@
 import * as repo from "./note.repository.js";
 import { cleanHtml, wordCount, htmlToText } from "../../common/utils/html.js";
+import { NotFoundError } from "../../common/errors/NotFoundError.js";
+import { ConflictError } from "../../common/errors/ConflictError.js";
 
 export async function listNotes(userId, query = {}) {
   const {
@@ -53,7 +55,7 @@ export async function listNotes(userId, query = {}) {
     if (from || to) {
       filter.updatedAt = {};
       if (from) filter.updatedAt.$gte = new Date(from);
-      if (to) filter.updatedAt.$lte = new Date(to + "T23:59:59");
+      if (to) filter.updatedAt.$lte = new Date(`${to  }T23:59:59`);
     }
   }
 
@@ -100,11 +102,7 @@ export async function listNotes(userId, query = {}) {
 
 export async function getNote(userId, id) {
   const note = await repo.findById(userId, id);
-  if (!note) {
-    const e = new Error("Note not found");
-    e.status = 404;
-    throw e;
-  }
+  if (!note) throw new NotFoundError();
   return note;
 }
 
@@ -157,22 +155,13 @@ export async function updateNote(userId, id, data, opts = {}) {
   if (note) return note;
 
   const exists = await repo.findById(userId, id);
-  if (!exists) {
-    const e = new Error("Note not found");
-    e.status = 404;
-    throw e;
-  }
+  if (!exists) throw new NotFoundError();
 
   if (opts.expectedUpdatedAt) {
-    const e = new Error("Note has been updated since last read");
-    e.status = 409;
-    e.code = "NOTE_CONFLICT";
-    throw e;
+    throw new ConflictError("Note has been updated since last read", "NOTE_CONFLICT");
   }
 
-  const e = new Error("Note could not be updated");
-  e.status = 409;
-  throw e;
+  throw new ConflictError("Note could not be updated");
 }
 
 export async function softDelete(userId, id) {

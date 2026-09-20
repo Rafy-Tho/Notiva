@@ -107,7 +107,7 @@ export const update = [
   body("isFavorite")
     .optional()
     .isBoolean()
-    .withMessage("isFavourite must be a boolean")
+    .withMessage("isFavorite must be a boolean")
     .bail(),
 
   body("expectedUpdatedAt")

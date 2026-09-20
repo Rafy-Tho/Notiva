@@ -17,9 +17,9 @@ export async function create(name, color, userId) {
   }
 
   const notebook = await Notebook.create({
-    name: name,
-    userId: userId,
-    color: color,
+    name,
+    userId,
+    color,
   });
   return notebook;
 }

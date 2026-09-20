@@ -11,6 +11,12 @@ export default defineConfig([
     rules: {
       "no-unused-vars": "warn",
       "no-console": "off",
+      "prefer-const": "error",
+      "no-var": "error",
+      "no-unused-expressions": "error",
+      "eqeqeq": ["error", "always"],
+      "prefer-template": "error",
+      "object-shorthand": ["error", "always"],
     },
   },
 ]);

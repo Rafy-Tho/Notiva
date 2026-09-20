@@ -30,7 +30,7 @@ export async function send({ to, subject, text, html }) {
           email: process.env.BREVO_FROM_EMAIL,
         },
         to: [{ email: to }],
-        subject: subject,
+        subject,
         textContent: text,
         htmlContent: html || `<p>${text}</p>`,
       }),

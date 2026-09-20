@@ -81,7 +81,7 @@ function normalizeError(err) {
   };
 }
 
-export function errorHandler(err, req, res, _next) {
+export function errorHandler(err, req, res) {
   const { status, code, message } = normalizeError(err);
 
   if (status === 500) {

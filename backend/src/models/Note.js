@@ -60,7 +60,7 @@ NoteSchema.index({ title: "text", content: "text" });
 NoteSchema.set("toJSON", {
   virtuals: true,
   versionKey: false,
-  transform: function (_doc, ret) {
+  transform (_doc, ret) {
     ret.id = ret._id;
     delete ret._id;
     delete ret.__v;
