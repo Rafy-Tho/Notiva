@@ -4,15 +4,25 @@ const { Schema } = mongoose;
 
 const TagSchema = new Schema(
   {
-    name: { type: String, required: true, trim: true },
-    color: { type: String, default: "200 80% 60%" },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    color: {
+      type: String,
+      default: "245 80% 66%",
+    },
     userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
       index: true,
     },
-    deletedAt: { type: Date, default: null },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -32,4 +42,6 @@ TagSchema.set("toJSON", {
   },
 });
 
-export const Tag = mongoose.model("Tag", TagSchema);
+const Tag = mongoose.model("Tag", TagSchema);
+
+export default Tag;

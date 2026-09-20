@@ -12,16 +12,25 @@ A full-stack note-taking web application with rich text editing, notebooks, tags
 note-taking-app-4/
 ├── backend/              # Node.js/Express API
 │   └── src/
-│       ├── app.js        # Express configuration
-│       ├── server.js     # Entry point
-│       ├── config/       # Database, Cloudinary, mailer, limits
-│       ├── controllers/  # Request handlers (auth, me, notes, notebooks, tags)
-│       ├── middleware/   # auth, validate, rateLimit, upload, error
-│       ├── models/       # Mongoose schemas (User, Note, Notebook, Tag)
-│       ├── routes/       # API route definitions
-│       ├── services/     # Business logic
-│       ├── utils/        # Helpers (response, sanitize, tokens)
-│       └── validators/   # Request validators
+│       ├── app/
+│       │   ├── app.js
+│       │   └── routes.js
+│       ├── config/       # Centralized configuration
+│       ├── modules/      # Feature modules (auth, users, notes, notebooks, tags)
+│       │   ├── auth/
+│       │   ├── users/
+│       │   ├── notes/
+│       │   ├── notebooks/
+│       │   ├── tags/
+│       │   └── email/
+│       ├── common/       # Shared infrastructure
+│       │   ├── errors/
+│       │   ├── middleware/
+│       │   ├── utils/
+│       │   └── constants/
+│       ├── models/       # Mongoose schemas
+│       ├── tests/        # Unit and integration tests
+│       └── server.js
 ├── frontend/             # React SPA
 │   └── src/
 │       ├── App.jsx       # Main component with router
@@ -32,7 +41,7 @@ note-taking-app-4/
 │       ├── lib/          # Utils (fetchWithAuth, sanitize, utils)
 │       ├── pages/        # Page components
 │       └── store/        # Zustand state stores
-├── docs/                 # System documentation (15 files)
+├── docs/                 # System documentation
 ├── specs/                # Feature specifications
 ├── reverse-engineering/  # Evidence-based analysis
 └── decisions/            # Architecture decisions
@@ -59,6 +68,8 @@ Controllers
     ↓
 Services (business logic)
     ↓
+Repositories (data access)
+    ↓
 Database (MongoDB via Mongoose)
 ```
 
@@ -66,10 +77,10 @@ Database (MongoDB via Mongoose)
 
 Before making any changes, the agent MUST inspect:
 
-1. **source code** - Implementation details in backend/src/ and frontend/src/
-2. **tests** - backend/src/services/notes.service.test.js (current test coverage)
+1. **source code** - Implementation details in backend/src/modules/, backend/src/common/, backend/src/app/
+2. **tests** - backend/src/tests/notes.service.test.js (current test coverage)
 3. **database** - Mongoose models in backend/src/models/
-4. **docs/** - System documentation in docs/ (especially 04-data-model.md, 05-api.md, 15-known-issues.md)
+4. **docs/** - System documentation in docs/ (especially 03-architecture.md, 04-data-model.md, 05-api.md)
 5. **progress.md** - Current project progress and status
 6. **specs/** - Feature specifications in specs/ (auth/, notes/, notebooks/, tags/, profile/)
 
@@ -86,6 +97,7 @@ The agent MUST:
 - Run relevant tests after changes
 - Update documentation in docs/ when behavior changes
 - Update specs in specs/ when feature behavior changes
+- Update ai in ai/ when behavior changes
 - Update progress.md when implementing changes or resolving issues
 
 ## Safety

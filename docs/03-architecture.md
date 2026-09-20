@@ -84,13 +84,15 @@ Middleware Chain
 ├── morgan (dev logging)
 ├── generalLimiter (100/min)
 └── Route-specific middleware
-    ├── authRequired (protected routes)
+    ├── authenticate (protected routes)
     ├── authLimiter (auth endpoints: 10/min)
     └── validate (express-validator chains)
     ↓
 Controller Layer (request/response handling)
     ↓
 Service Layer (business logic)
+    ↓
+Repository Layer (data access)
     ↓
 Model Layer (Mongoose schemas)
     ↓
@@ -101,11 +103,12 @@ Database (MongoDB Atlas)
 | File | Purpose |
 |------|---------|
 | `backend/src/server.js` | Server entry point |
-| `backend/src/app.js` | Express app configuration |
-| `backend/src/middleware/auth.js` | JWT verification |
-| `backend/src/routes/*.js` | Route definitions |
-| `backend/src/controllers/*.js` | Request handlers |
-| `backend/src/services/*.js` | Business logic |
+| `backend/src/app/app.js` | Express app configuration |
+| `backend/src/common/middleware/authenticate.js` | JWT verification |
+| `backend/src/modules/*/routes.js` | Route definitions |
+| `backend/src/modules/*/controller.js` | Request handlers |
+| `backend/src/modules/*/service.js` | Business logic |
+| `backend/src/modules/*/repository.js` | Data access layer |
 
 ---
 
@@ -270,7 +273,7 @@ me.service.get() fetches user
 ### Key Internal Dependencies
 | Module | Purpose |
 |--------|---------|
-| `middleware/auth.js` | JWT verification |
-| `middleware/rateLimit.js` | Rate limiting |
-| `utils/tokens.js` | JWT generation |
-| `utils/sanitize.js` | HTML sanitization |
+| `common/middleware/authenticate.js` | JWT verification |
+| `common/middleware/rateLimiter.js` | Rate limiting |
+| `common/utils/tokens.js` | JWT generation |
+| `common/utils/html.js` | HTML sanitization |
