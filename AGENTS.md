@@ -68,7 +68,8 @@ Before making any changes, the agent MUST inspect:
 1. **source code** - Implementation details in backend/src/ and frontend/src/
 2. **tests** - backend/src/services/notes.service.test.js (current test coverage)
 3. **database** - Mongoose models in backend/src/models/
-4. **docs/** - System documentation in docs/ (especially 04-data-model.md, 05-api.md)
+4. **docs/** - System documentation in docs/ (especially 04-data-model.md, 05-api.md, 15-known-issues.md)
+5. **progress.md** - Current project progress and status
 5. **specs/** - Feature specifications in specs/ (auth/, notes/, notebooks/, tags/, profile/)
 
 Rules

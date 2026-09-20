@@ -36,39 +36,27 @@ No documented future work was identified.
 
 ## Known Issues
 
-12 known issues documented in `docs/15-known-issues.md`:
-
-| Severity | Issue |
-|----------|-------|
-| HIGH | No documented backup/recovery strategy |
-| MEDIUM | Cookie secure/sameSite flags are environment-dependent |
-| MEDIUM | Password validation uses restricted character set |
-| MEDIUM | No audit logging for security events |
-| LOW | Rate limiting uses memory instead of Redis |
-| LOW | Text indexes defined but regex search used |
-| LOW | Response envelope returns strings instead of null |
-| LOW | Frontend default limit is 10, docs say 20 |
-| LOW | Avatar removal endpoint not documented |
-| LOW | No explicit error code for account already deleted |
-| LOW | No rate limit bypass for trusted IPs |
-| LOW | Missing Content-Type validation for JSON endpoints |
-
-See `docs/15-known-issues.md` for full details.
+All known issues resolved (see `docs/15-known-issues.md` for completion summary).
 
 ## Technical Debt
 
-- Rate limiting configured with Redis packages but using memory-only storage
-- Search uses regex queries despite text indexes being defined
-- API documentation and implementation mismatch on response envelope format
-- Missing security audit logging for login failures, password resets, and account deletions
-- No backup or data recovery automation
 - No session invalidation on logout (JWT not blacklisted)
 
 See `decisions/unresolved-questions.md` for additional unknowns that may represent technical debt.
 
 ## Recent Changes
 
-Repository history was not available for verification.
+**2025-09-20** - Resolved all 12 known issues:
+- Added backup/restore scripts and recovery documentation
+- Implemented security audit logging for auth events
+- Configured Redis for rate limiting
+- Fixed password validation to accept Unicode special characters
+- Migrated text search from regex to `$text` operator
+- Updated API documentation for response envelope and cookie behavior
+- Added account deleted error code
+- Added rate limit bypass for health checks and trusted IPs
+- Changed frontend limit from 10 to 20 to match docs
+- Documented avatar removal endpoint
 
 ## Next Steps
 
