@@ -12,11 +12,11 @@ export const create = async (req, res) => {
 };
 
 export const update = async (req, res) => {
-  const tag = await svc.update(req.params.id, req.body.name, req.body.color);
+  const tag = await svc.update(req.params.id, req.body.name, req.body.color, req.userId);
   return ok(res, tag, "Update tag");
 };
 
 export const remove = async (req, res) => {
-  const tag = await svc.remove(req.params.id);
+  const tag = await svc.remove(req.params.id, req.userId);
   return ok(res, tag, "Remove tag");
 };

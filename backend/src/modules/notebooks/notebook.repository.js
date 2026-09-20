@@ -24,9 +24,9 @@ export async function create(name, color, userId) {
   return notebook;
 }
 
-export async function update(id, name, color) {
+export async function update(id, name, color, userId) {
   const notebook = await Notebook.findByIdAndUpdate(
-    id,
+    { _id: id, userId },
     { name, color },
     { new: true },
   );
@@ -38,9 +38,9 @@ export async function update(id, name, color) {
   return notebook;
 }
 
-export async function remove(id) {
+export async function remove(id, userId) {
   const notebook = await Notebook.findByIdAndUpdate(
-    id,
+    { _id: id, userId },
     {
       deletedAt: Date.now(),
     },

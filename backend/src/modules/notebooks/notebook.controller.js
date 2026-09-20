@@ -16,11 +16,12 @@ export const update = async (req, res) => {
     req.params.id,
     req.body.name,
     req.body.color,
+    req.userId,
   );
   return ok(res, notebook, "Update notebook");
 };
 
 export const remove = async (req, res) => {
-  const notebook = await svc.remove(req.params.id);
+  const notebook = await svc.remove(req.params.id, req.userId);
   return ok(res, notebook, "Remove notebook");
 };

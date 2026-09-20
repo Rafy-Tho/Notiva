@@ -13,7 +13,7 @@ export const get = async (req, res) => {
 
 export const create = async (req, res) => {
   const note = await svc.createNote(req.userId, req.body);
-  return ok(res, note, "Create note");
+  return ok(res, note, "Create note", 201);
 };
 
 export const update = async (req, res) => {

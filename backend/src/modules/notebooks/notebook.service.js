@@ -8,10 +8,10 @@ export const create = async (name, color, userId) => {
   return repo.create(name, color, userId);
 };
 
-export const update = async (id, name, color) => {
-  return repo.update(id, name, color);
+export const update = async (id, name, color, userId) => {
+  return repo.update(id, name, color, userId);
 };
 
-export const remove = async (id) => {
-  return repo.remove(id);
+export const remove = async (id, userId) => {
+  return repo.remove(id, userId);
 };

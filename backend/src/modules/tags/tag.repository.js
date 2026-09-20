@@ -16,9 +16,9 @@ export async function create(name, color, userId) {
   return Tag.create({ name, color, userId });
 }
 
-export async function update(id, name, color) {
+export async function update(id, name, color, userId) {
   const tag = await Tag.findByIdAndUpdate(
-    id,
+    { _id: id, userId },
     { name, color },
     { new: true },
   );
@@ -32,9 +32,9 @@ export async function update(id, name, color) {
   return tag;
 }
 
-export async function remove(id) {
+export async function remove(id, userId) {
   const tag = await Tag.findByIdAndUpdate(
-    id,
+    { _id: id, userId },
     { deletedAt: Date.now() },
     { new: true },
   );

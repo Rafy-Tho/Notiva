@@ -1,156 +1,134 @@
-# Backend Code Style & Naming Audit
+# Backend API Design Audit
 
-You are a senior backend engineer reviewing an existing backend codebase.
+Act as a senior API/backend engineer.
 
-Your task is to audit and improve the backend's **code style, naming consistency, readability, and coding conventions** without changing application behavior.
+Audit the existing API for consistency, correctness, usability, security boundaries, and REST/API design quality.
 
-## Objective
+## Inspect
 
-Improve:
+Inventory all endpoints:
 
-- Code consistency
-- Naming
-- Readability
-- Formatting
-- Developer experience
-- Searchability
-- Maintainability
+```text
+METHOD
+PATH
+AUTHENTICATION
+AUTHORIZATION
+REQUEST
+RESPONSE
+STATUS CODES
+ERRORS
+```
 
-Do not perform unrelated refactoring.
+Check route consistency across the entire backend.
 
-## Inspect First
+## Review
 
-Before changing anything, inspect:
+Evaluate:
 
-- Existing coding style
-- ESLint configuration
-- Prettier configuration, if present
-- Naming conventions
-- File naming
-- Function naming
-- Variable naming
-- Database naming
-- API naming
-- Error-message style
-- Import ordering
-- Export conventions
-- Async/await patterns
-- Existing comments
+- Resource naming
+- HTTP methods
+- URL structure
+- Status codes
+- Request validation
+- Response consistency
+- Error format
+- Pagination
+- Filtering
+- Sorting
+- Search
+- Authentication
+- Authorization
+- Rate limiting
+- CORS
+- API versioning
+- Idempotency where applicable
 
-Determine the conventions already used by the project.
+Prefer predictable resource-oriented endpoints.
 
-## Naming Rules
+## Consistency
+
+Identify inconsistent patterns such as:
+
+```text
+/users/:id
+/user/:id
+/users?id=
+```
+
+or inconsistent responses:
+
+```json
+{ "data": {} }
+```
+
+versus:
+
+```json
+{ "user": {} }
+```
+
+Do not change public contracts without checking existing clients and documenting the change.
+
+## Validation
+
+Verify validation for:
+
+- Body
+- Query parameters
+- Path parameters
+- Relevant headers
+
+Never rely solely on frontend validation.
+
+## Errors
+
+Ensure API errors:
+
+- Use appropriate HTTP status codes.
+- Have consistent structure.
+- Do not expose internal implementation details.
+- Provide useful client-facing messages.
+
+## Security Boundary
+
+Verify that protected resources correctly enforce:
+
+- Authentication
+- Authorization
+- Resource ownership
+
+Check for IDOR/BOLA risks.
+
+## Performance
 
 Review:
 
-- Files
-- Folders
-- Functions
-- Variables
-- Constants
-- Classes
-- Services
-- Controllers
-- Repositories
-- Middleware
-- Routes
-- Database fields
-- API fields
-
-Names should be:
-
-- Clear
-- Consistent
-- Descriptive
-- Domain-oriented
-- Searchable
-
-Avoid vague names such as:
-
-```text
-data
-item
-thing
-helper
-manager
-misc
-temp
-obj
-result
-process
-```
-
-Do not rename something merely for personal preference if the existing name is already clear and consistent.
-
-## Code Style
-
-Check for:
-
-- Inconsistent formatting
-- Inconsistent quote usage
-- Inconsistent semicolons
-- Inconsistent indentation
-- Inconsistent import style
-- Inconsistent async patterns
-- Inconsistent error handling
-- Inconsistent function declarations
-- Unnecessary comments
-- Commented-out code
-- Unused imports
-- Unused variables
-
-Follow the project's existing formatter/linter configuration.
-
-Do not introduce a new formatting system unless required.
-
-## Complexity
-
-Identify:
-
-- Excessive nesting
-- Long functions
-- Complex conditionals
-- Repeated expressions
-- Difficult-to-understand code
-
-Only simplify code when readability improves without changing behavior.
-
-## Spelling
-
-Check spelling in:
-
-- Identifiers
-- Error messages
-- Comments
-- API fields
-- Logs
-- Documentation
-
-Do not rename public API fields or database fields solely for spelling without checking compatibility.
+- Pagination
+- Response size
+- N+1 API behavior
+- Excessive requests
+- Expensive endpoints
 
 ## Verification
 
-Run:
+Run API/integration tests.
 
-```text
-lint
-tests
-```
-
-Verify that behavior has not changed.
+Test both successful and failure scenarios.
 
 ## Final Report
 
-Report:
+Provide:
 
-- Naming problems found
-- Style problems found
+- Endpoint issues
+- Naming inconsistencies
+- Status-code issues
+- Validation issues
+- Response inconsistencies
+- Authorization issues
+- Compatibility risks
 - Changes made
-- Files changed
-- Any intentionally unchanged inconsistent code
-- Lint result
-- Test result
+- Tests performed
 
-Do not mix this task with security, performance, or API redesign.
+Do not redesign the entire API unnecessarily.
 
-**Inspect → Identify → Fix → Verify → Report.**
+**Inspect → Document → Fix → Test → Report.**
