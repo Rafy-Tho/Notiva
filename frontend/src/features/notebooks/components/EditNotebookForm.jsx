@@ -1,0 +1,41 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { DialogFooter } from "@/components/ui/dialog";
+import { useUpdateNotebook } from "@/features/notebooks/hooks/useNotebooks";
+import NameColorForm from "@/features/notebooks/sidebars/NameColorForm";
+function EditNotebookForm({ notebook, onClose }) {
+  const [n, setN] = useState(notebook.name);
+  const [c, setC] = useState(notebook.color);
+  const { mutateAsync, isPending } = useUpdateNotebook();
+  const save = async () => {
+    try {
+      await mutateAsync({ id: notebook.id, name: n, color: c });
+      toast.success("Notebook updated");
+      onClose();
+    } catch (e) {
+      toast.error(e.message);
+    }
+  };
+  return (
+    <>
+      <NameColorForm
+        name={n}
+        setName={setN}
+        color={c}
+        setColor={setC}
+        placeholder="Notebook name"
+      />
+      <DialogFooter>
+        <Button variant="ghost" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button onClick={save} disabled={isPending}>
+          {isPending ? "Updating..." : "Save"}
+        </Button>
+      </DialogFooter>
+    </>
+  );
+}
+
+export default EditNotebookForm;

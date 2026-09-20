@@ -61,7 +61,7 @@ Backend Architecture
 Frontend Architecture
 ---------------------
 **State management:**
-- Zustand stores with localStorage persistence
+- Zustand stores with localStorage persistence (global: authStore, useUIStore)
 - TanStack Query for server state caching
 
 **Routing pattern:**
@@ -69,9 +69,11 @@ Frontend Architecture
 - createBrowserRouter setup in App.jsx
 
 **Component pattern:**
-- Feature-based organization (components/pages/editor/hooks/store)
-- Shadcn-like UI primitives from Radix
-- Custom hooks for reusable logic
+- Feature-based organization (`features/notes/`, `features/notebooks/`, `features/tags/`, `features/auth/`)
+- Each feature contains: components/, hooks/, pages/
+- Shared UI in `components/common/` (shadcn primitives)
+- Shared layout in `components/layout/`
+- Custom hooks in feature hooks/ and shared hooks/
 
 Key Conventions
 ---------------

@@ -1,8 +1,8 @@
 import { Sheet, SheetContent } from "../ui/sheet";
-import { useIsMobile } from "../../hooks/use-mobile";
-import { useUIStore } from "../../store/useUIStore";
-import { cn } from "../../lib/utils";
-import { SidebarInner } from "../sidebars/SidebarInner";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useUIStore } from "@/store/useUIStore";
+import { cn } from "@/lib/utils";
+import { SidebarInner } from "@/features/notes/components/SidebarInner";
 
 export function Sidebar() {
   const isMobile = useIsMobile();

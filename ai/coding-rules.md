@@ -23,10 +23,15 @@ File Organization
 - config/ - Environment configuration
 
 **Frontend:**
-- components/ - Reusable UI
-- pages/ - Page components
-- editor/ - TipTap components
-- hooks/ - Custom React hooks
+- features/ - Feature modules (notes, notebooks, tags, auth)
+-   ├── notes/ - Note components, hooks, pages
+-   ├── notebooks/ - Notebook components, hooks
+-   ├── tags/ - Tag components, hooks
+-   └── auth/ - Auth components, pages
+- components/ - Shared components
+-   ├── common/ - shadcn UI primitives
+-   └── layout/ - AppLayout, Sidebar, AppHeader
+- hooks/ - Shared React hooks
 - lib/ - Utilities
 - store/ - Zustand stores
 

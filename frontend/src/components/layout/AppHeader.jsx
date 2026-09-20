@@ -1,13 +1,13 @@
 import { PanelLeft, Plus, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { useCreateNoteContext } from "../../hooks/useCreateNoteContext";
-import { useCreateNote } from "../../hooks/useNotes";
-import { useUIStore } from "../../store/useUIStore";
-import { Logo } from "../Logo";
-import { Button } from "../ui/button";
-import { AvatarImage, Avatar, AvatarFallback } from "../ui/avatar";
-import { useAuthStore } from "../../store/authStore";
+import { useCreateNoteContext } from "@/hooks/useCreateNoteContext";
+import { useCreateNote } from "@/features/notes/hooks/useNotes";
+import { useUIStore } from "@/store/useUIStore";
+import { Logo } from "@/components/common/Logo";
+import { Button } from "@/components/ui/button";
+import { AvatarImage, Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useAuthStore } from "@/store/authStore";
 
 export function AppHeader() {
   const user = useAuthStore((state) => state.user);

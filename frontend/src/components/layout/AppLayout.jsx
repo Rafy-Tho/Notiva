@@ -1,8 +1,8 @@
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { AppHeader } from "./AppHeader";
-import { useTheme } from "../../hooks/useTheme";
-import { CommandPalette } from "../search/CommandPalette";
+import { useTheme } from "@/hooks/useTheme";
+import { CommandPalette } from "@/features/notes/components/CommandPalette";
 
 function AppLayout() {
   useTheme();

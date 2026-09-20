@@ -50,14 +50,26 @@ Server State (TanStack Query)
 └── User profile queries/mutations
 ```
 
-### Key Files
+### File Organization
+
+**Feature-based organization:**
+| Location | Purpose |
+|----------|---------|
+| `features/notes/` | Note-related pages, components, and hooks |
+| `features/notebooks/` | Notebook UI and hooks |
+| `features/tags/` | Tag UI and hooks |
+| `features/auth/` | Authentication pages and hooks |
+| `components/layout/` | App-level layout components |
+| `components/common/` | Reusable UI primitives (shadcn) |
+
+**Shared resources:**
 | File | Purpose |
 |------|---------|
-| `frontend/src/App.jsx` | Root entry point |
-| `frontend/src/store/authStore.js` | Authentication state |
-| `frontend/src/store/useUIStore.js` | UI settings persistence |
-| `frontend/src/hooks/useNotes.js` | Note CRUD hooks |
-| `frontend/src/hooks/useAutosave.js` | Auto-save logic |
+| `app/App.jsx` | Root entry point with router |
+| `store/authStore.js` | Global authentication state |
+| `store/useUIStore.js` | UI settings persistence |
+| `hooks/useNotes.js` | Note CRUD hooks (in features/notes/) |
+| `hooks/useAutosave.js` | Auto-save logic |
 
 ---
 

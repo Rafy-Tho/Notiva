@@ -43,6 +43,11 @@ HTTP API (/api/v1/*)
 Routes → Controllers → Services → Database (MongoDB/Mongoose)
 ```
 
+**Frontend Structure:**
+- Feature-based organization (`features/notes/`, `features/notebooks/`, `features/tags/`, `features/auth/`)
+- Shared components (`components/layout/`, `components/common/`)
+- Shared hooks (`hooks/`) and stores (`store/`)
+
 Major Features
 --------------
 - **Notes CRUD**: Create, read, update, delete notes with rich text content

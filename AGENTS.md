@@ -33,14 +33,33 @@ note-taking-app-4/
 │       └── server.js
 ├── frontend/             # React SPA
 │   └── src/
-│       ├── App.jsx       # Main component with router
-│       ├── main.jsx      # Entry point
-│       ├── components/   # Reusable UI components
-│       ├── editor/       # TipTap editor components
-│       ├── hooks/        # React hooks
-│       ├── lib/          # Utils (fetchWithAuth, sanitize, utils)
-│       ├── pages/        # Page components
-│       └── store/        # Zustand state stores
+│       ├── app/
+│       │   ├── App.jsx
+│       │   ├── routes.jsx
+│       │   └── providers.jsx
+│       ├── config/
+│       │   └── env.js
+│       ├── features/
+│       │   ├── notes/
+│       │   │   ├── components/
+│       │   │   ├── hooks/
+│       │   │   └── pages/
+│       │   ├── notebooks/
+│       │   │   ├── components/
+│       │   │   └── hooks/
+│       │   ├── tags/
+│       │   │   ├── components/
+│       │   │   └── hooks/
+│       │   └── auth/
+│       │       ├── components/
+│       │       └── pages/
+│       ├── components/
+│       │   ├── common/
+│       │   └── layout/
+│       ├── hooks/
+│       ├── lib/
+│       ├── store/
+│       └── main.jsx
 ├── docs/                 # System documentation
 ├── specs/                # Feature specifications
 ├── reverse-engineering/  # Evidence-based analysis
