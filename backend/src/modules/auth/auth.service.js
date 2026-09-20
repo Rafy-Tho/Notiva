@@ -3,14 +3,13 @@ import crypto from "node:crypto";
 import bcrypt from "bcrypt";
 import { signToken, hashToken } from "../../common/utils/tokens.js";
 import { securityAudit } from "../../common/middleware/securityAudit.js";
+import { ConflictError, UnauthorizedError, BadRequestError } from "../../common/errors/errors.js";
 
 export async function register({ name, email, password }) {
   const existing = await User.findOne({ email });
 
   if (existing) {
-    const e = new Error("User already exists");
-    e.status = 409;
-    throw e;
+    throw new ConflictError("User already exists");
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
@@ -29,25 +28,19 @@ export async function login({ email, password }, req) {
 
   if (!user) {
     if (req) securityAudit.failedLogin(email, req.ip);
-    const e = new Error("Invalid credentials");
-    e.status = 401;
-    throw e;
+    throw new UnauthorizedError("Invalid credentials");
   }
 
   if (user.deletedAt) {
     if (req) securityAudit.failedLogin(email, req.ip);
-    const e = new Error("Account is deleted");
-    e.status = 401;
-    throw e;
+    throw new UnauthorizedError("Account is deleted");
   }
 
   const ok = await bcrypt.compare(password, user.password);
 
   if (!ok) {
     if (req) securityAudit.failedLogin(email, req.ip);
-    const e = new Error("Invalid credentials");
-    e.status = 401;
-    throw e;
+    throw new UnauthorizedError("Invalid credentials");
   }
 
   if (req) securityAudit.successfulLogin(email, req.ip);
@@ -81,9 +74,7 @@ export async function consumeResetToken(token, newPassword) {
   });
 
   if (!user) {
-    const e = new Error("Invalid or expired token");
-    e.status = 400;
-    throw e;
+    throw new BadRequestError("Invalid or expired token");
   }
 
   user.password = await bcrypt.hash(newPassword, 12);

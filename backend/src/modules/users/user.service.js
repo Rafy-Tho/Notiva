@@ -1,38 +1,31 @@
-import { User } from "../../models/User.js";
+import * as repo from "./user.repository.js";
 import bcrypt from "bcrypt";
+import { NotFoundError, UnauthorizedError } from "../../common/errors/errors.js";
 
 export const me = async (id) => {
-  const user = await User.findById(id);
+  const user = await repo.findById(id);
   if (!user) {
-    const e = new Error("User not found");
-    e.status = 404;
-    throw e;
+    throw new NotFoundError();
   }
   return user;
 };
 
 export const update = async (id, name) => {
-  const user = await User.findByIdAndUpdate(id, { name }, { new: true });
+  const user = await repo.update(id, { name });
   if (!user) {
-    const e = new Error("User not found");
-    e.status = 404;
-    throw e;
+    throw new NotFoundError();
   }
   return user;
 };
 
 export const changePassword = async (id, { oldPassword, newPassword }) => {
-  const user = await User.findById(id);
+  const user = await repo.findById(id);
   if (!user) {
-    const e = new Error("User not found");
-    e.status = 404;
-    throw e;
+    throw new NotFoundError();
   }
   const ok = await bcrypt.compare(oldPassword, user.password);
   if (!ok) {
-    const e = new Error("Invalid credentials");
-    e.status = 401;
-    throw e;
+    throw new UnauthorizedError("Invalid credentials");
   }
   user.password = await bcrypt.hash(newPassword, 12);
   await user.save();
@@ -40,15 +33,13 @@ export const changePassword = async (id, { oldPassword, newPassword }) => {
 };
 
 export async function deleteAccount(id) {
-  await User.findByIdAndUpdate(id, { deletedAt: new Date() });
+  await repo.update(id, { deletedAt: new Date() });
 }
 
 export async function updateAvatar(id, url) {
-  const user = await User.findByIdAndUpdate(id, { avatar: url }, { new: true });
+  const user = await repo.update(id, { avatar: url });
   if (!user) {
-    const e = new Error("User not found");
-    e.status = 404;
-    throw e;
+    throw new NotFoundError();
   }
   return user;
 }
