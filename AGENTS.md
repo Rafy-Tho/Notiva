@@ -108,3 +108,30 @@ First determine:
 6. What tests exist?
 
 Then make the smallest appropriate change.
+
+## Progress
+
+### Known Issues Fixed (2025-09-20)
+
+All 12 known issues from `docs/15-known-issues.md` have been resolved:
+
+**HIGH Priority:**
+- ✅ Added backup/restore scripts (`backend/scripts/backup.js`, `restore.js`)
+- ✅ Added backup recovery documentation (`docs/16-backup-recovery.md`)
+
+**MEDIUM Priority:**
+- ✅ Documented environment-dependent cookie behavior in `docs/05-api.md`
+- ✅ Fixed password validation to accept Unicode special characters
+- ✅ Added security audit logging (`backend/src/middleware/securityAudit.js`)
+
+**LOW Priority:**
+- ✅ Configured Redis for rate limiting (`backend/src/middleware/rateLimit.js`)
+- ✅ Fixed text search to use `$text` operator instead of regex
+- ✅ Updated API docs to match response envelope behavior
+- ✅ Changed frontend limit from 10 to 20 (`frontend/src/hooks/useNotes.js`)
+- ✅ Documented `DELETE /me/avatar` endpoint
+- ✅ Added account deleted error code in auth service
+- ✅ Added rate limit bypass for health checks and trusted IPs
+- ✅ Added content-type validator for POST endpoints
+
+See `task.md` for complete implementation details.
