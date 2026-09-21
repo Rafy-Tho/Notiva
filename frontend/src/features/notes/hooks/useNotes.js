@@ -158,7 +158,21 @@ export function useTogglePin(id) {
       const { data } = await res.json();
       return data;
     },
-    onSuccess: () => {
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["note", id] });
+      const previous = queryClient.getQueryData(["note", id]);
+      queryClient.setQueryData(["note", id], (old) => ({
+        ...old,
+        isPinned: !old?.isPinned,
+      }));
+      return { previous };
+    },
+    onError: (err, _, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["note", id], context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["note", id] });
       queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
@@ -178,7 +192,21 @@ export function useToggleFavorite(id) {
       const { data } = await res.json();
       return data;
     },
-    onSuccess: () => {
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["note", id] });
+      const previous = queryClient.getQueryData(["note", id]);
+      queryClient.setQueryData(["note", id], (old) => ({
+        ...old,
+        isFavorite: !old?.isFavorite,
+      }));
+      return { previous };
+    },
+    onError: (err, _, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["note", id], context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["note", id] });
       queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
@@ -198,7 +226,21 @@ export function useToggleArchive(id) {
       const { data } = await res.json();
       return data;
     },
-    onSuccess: () => {
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["note", id] });
+      const previous = queryClient.getQueryData(["note", id]);
+      queryClient.setQueryData(["note", id], (old) => ({
+        ...old,
+        isArchived: !old?.isArchived,
+      }));
+      return { previous };
+    },
+    onError: (err, _, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["note", id], context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["note", id] });
       queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
@@ -218,7 +260,19 @@ export function useRemove(id) {
       const { data } = await res.json();
       return data;
     },
-    onSuccess: () => {
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["note", id] });
+      const previous = queryClient.getQueryData(["note", id]);
+      queryClient.removeQueries({ queryKey: ["note", id] });
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      return { previous };
+    },
+    onError: (err, _, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["note", id], context.previous);
+      }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
   });
@@ -256,7 +310,11 @@ export function useRestore(id) {
       const { data } = await res.json();
       return data;
     },
-    onSuccess: () => {
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["notes"] });
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
   });

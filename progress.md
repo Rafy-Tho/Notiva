@@ -25,6 +25,13 @@ Last analyzed: 2026-09-20
 - Password Change
 - Command Palette
 - Theme Switching
+- Error Boundaries (global + route-level)
+- TanStack Query Retry Configuration
+- Query Error UI (NotesPage + NoteDetailPage)
+- Route Error Handling (404 + generic errors)
+- Optimistic Updates with Rollback (pin, favorite, archive, delete)
+- Server-Side Validation Error Integration
+- Consistent API Client Usage (auth hooks)
 
 ## In Progress
 

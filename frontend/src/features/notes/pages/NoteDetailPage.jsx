@@ -72,7 +72,7 @@ import { wordCount } from "@/lib/sanitize";
 
 export function NoteDetailPage() {
   const { id } = useParams();
-  const { data: note, isLoading: noteLoading } = useNote(id);
+  const { data: note, isLoading: noteLoading, error: noteError } = useNote(id);
   const { data: tags, isLoading: tagsLoading } = useTags();
   const { data: notebooks, isLoading: notebooksLoading } = useNotebooks();
   const navigate = useNavigate();
@@ -85,6 +85,18 @@ export function NoteDetailPage() {
         <Skeleton className="h-8 w-2/3" />
         <Skeleton className="h-4 w-1/3" />
         <Skeleton className="h-40 w-full" />
+      </div>
+    );
+  }
+
+  if (noteError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+        <h3 className="text-lg font-semibold mb-2">Failed to load note</h3>
+        <p className="text-muted-foreground mb-4 text-sm">
+          {noteError.message || "Unable to fetch this note."}
+        </p>
+        <Button onClick={() => navigate("/notes")}>Back to notes</Button>
       </div>
     );
   }

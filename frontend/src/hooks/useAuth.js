@@ -1,9 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 export const useForgetPassword = () => {
   return useMutation({
     mutationFn: async (email) => {
-      const res = await fetch(
+      const res = await fetchWithAuth(
         `${import.meta.env.VITE_BASE_API}/auth/forgot-password`,
         {
           method: "POST",
@@ -13,10 +14,6 @@ export const useForgetPassword = () => {
           body: JSON.stringify({ email }),
         },
       );
-      if (!res.ok) {
-        const { message } = await res.json();
-        throw new Error(message ?? "Something went wrong");
-      }
       const { data } = await res.json();
       return data;
     },
@@ -26,7 +23,7 @@ export const useForgetPassword = () => {
 export const useResetPassword = () => {
   return useMutation({
     mutationFn: async ({ password, token }) => {
-      const res = await fetch(
+      const res = await fetchWithAuth(
         `${import.meta.env.VITE_BASE_API}/auth/reset-password`,
         {
           method: "POST",
@@ -36,10 +33,6 @@ export const useResetPassword = () => {
           body: JSON.stringify({ password, token }),
         },
       );
-      if (!res.ok) {
-        const { message } = await res.json();
-        throw new Error(message ?? "Something went wrong");
-      }
       const { data } = await res.json();
       return data;
     },

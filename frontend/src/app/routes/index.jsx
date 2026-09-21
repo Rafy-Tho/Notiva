@@ -14,6 +14,7 @@ import { NotesPage } from "@/features/notes/pages/NotesPage";
 import { NoteDetailPage } from "@/features/notes/pages/NoteDetailPage";
 import { SearchPage } from "@/features/notes/pages/SearchPage";
 import { SettingsPage } from "@/features/auth/pages/SettingsPage";
+import { ErrorOverlay } from "@/components/common/ErrorOverlay";
 
 function NoteDetailPageWrapper() {
   const { id } = useParams();
@@ -33,6 +34,7 @@ function TagRoute() {
 const router = createBrowserRouter([
   {
     element: <PublicRoute />,
+    errorElement: <ErrorOverlay />,
     children: [
       { path: "/login", element: <LoginPage /> },
       { path: "/register", element: <RegisterPage /> },
@@ -46,6 +48,7 @@ const router = createBrowserRouter([
         <AppLayout />
       </PrivateRoute>
     ),
+    errorElement: <ErrorOverlay />,
     children: [
       { index: true, element: <Index /> },
       {

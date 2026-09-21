@@ -45,13 +45,25 @@ export function NotesPage({
     return p;
   }, [debouncedSearch, dateFilter, filter]);
 
-  const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
+  const { data, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useNotesInfinite(queryParams);
 
   const notes = useMemo(
     () => data?.pages.flatMap((p) => p.notes) ?? [],
     [data],
   );
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+        <h3 className="text-lg font-semibold mb-2">Failed to load notes</h3>
+        <p className="text-muted-foreground mb-4 text-sm">
+          {error.message || "Unable to fetch notes. Please check your connection."}
+        </p>
+        <Button onClick={() => window.location.reload()}>Reload</Button>
+      </div>
+    );
+  }
 
   const totalNotes = data?.pages[0]?.total ?? 0;
 

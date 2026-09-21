@@ -6,6 +6,7 @@ export function useForm(initialValues, schema) {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
+  const [serverErrors, setServerErrors] = useState({});
   const initialValuesRef = useRef(initialValues);
 
   const validate = (field) => {
@@ -31,6 +32,7 @@ export function useForm(initialValues, schema) {
   };
 
   const handleSubmit = async (onSubmit) => {
+    setServerErrors({});
     if (!validate()) {
       setIsSubmitting(false);
       return;
@@ -39,14 +41,29 @@ export function useForm(initialValues, schema) {
     setIsSubmitting(true);
     try {
       await onSubmit(values);
+    } catch (error) {
+      if (error.code && error.code === "VALIDATION_ERROR" && error.errors) {
+        setServerErrors(error.errors);
+      } else {
+        throw error;
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const setServerFieldError = (field, error) => {
+    setServerErrors((prev) => ({ ...prev, [field]: error }));
+  };
+
+  const setServerErrorsFn = (errors) => {
+    setServerErrors(errors);
+  };
+
   const reset = () => {
     setValues(initialValuesRef.current);
     setErrors({});
+    setServerErrors({});
     setIsDirty(false);
   };
 
@@ -58,6 +75,7 @@ export function useForm(initialValues, schema) {
   return {
     values,
     errors,
+    serverErrors,
     isSubmitting,
     isDirty,
     handleChange,
@@ -66,6 +84,8 @@ export function useForm(initialValues, schema) {
     reset,
     setValues,
     setValuesAndValidate,
+    setServerFieldError,
+    setServerErrors: setServerErrorsFn,
   };
 }
 
