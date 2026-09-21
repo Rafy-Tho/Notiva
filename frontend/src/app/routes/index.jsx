@@ -2,33 +2,50 @@ import {
   createBrowserRouter,
   useParams,
 } from "react-router-dom";
-import { LoginPage } from "@/features/auth/pages/LoginPage";
-import { RegisterPage } from "@/features/auth/pages/RegisterPage";
-import { ForgotPasswordPage } from "@/features/auth/pages/ForgotPasswordPage";
-import { ResetPasswordPage } from "@/features/auth/pages/ResetPasswordPage";
+import { lazy, Suspense } from "react";
 import { PublicRoute } from "@/features/auth/components/PublicRoute";
 import { PrivateRoute } from "@/features/auth/components/PrivateRoute";
 import AppLayout from "@/components/layout/AppLayout";
-import Index from "@/features/notes/pages/Index";
-import { NotesPage } from "@/features/notes/pages/NotesPage";
-import { NoteDetailPage } from "@/features/notes/pages/NoteDetailPage";
-import { SearchPage } from "@/features/notes/pages/SearchPage";
-import { SettingsPage } from "@/features/auth/pages/SettingsPage";
 import { ErrorOverlay } from "@/components/common/ErrorOverlay";
+
+const Loading = () => <div className="p-4 text-center text-muted-foreground">Loading...</div>;
+
+const LoginPage = lazy(() => import("@/features/auth/pages/LoginPage"));
+const RegisterPage = lazy(() => import("@/features/auth/pages/RegisterPage"));
+const ForgotPasswordPage = lazy(() => import("@/features/auth/pages/ForgotPasswordPage"));
+const ResetPasswordPage = lazy(() => import("@/features/auth/pages/ResetPasswordPage"));
+const SettingsPage = lazy(() => import("@/features/auth/pages/SettingsPage"));
+
+const Index = lazy(() => import("@/features/notes/pages/Index"));
+const NotesPage = lazy(() => import("@/features/notes/pages/NotesPage"));
+const NoteDetailPage = lazy(() => import("@/features/notes/pages/NoteDetailPage"));
+const SearchPage = lazy(() => import("@/features/notes/pages/SearchPage"));
 
 function NoteDetailPageWrapper() {
   const { id } = useParams();
-  return <NoteDetailPage key={id} />;
+  return (
+    <Suspense fallback={<Loading />}>
+      <NoteDetailPage key={id} />
+    </Suspense>
+  );
 }
 
 function NotebookRoute() {
   const { notebookId } = useParams();
-  return <NotesPage title="Notebook" filter={{ notebookId }} />;
+  return (
+    <Suspense fallback={<Loading />}>
+      <NotesPage title="Notebook" filter={{ notebookId }} />
+    </Suspense>
+  );
 }
 
 function TagRoute() {
   const { tagId } = useParams();
-  return <NotesPage title="Tag" filter={{ tagId }} />;
+  return (
+    <Suspense fallback={<Loading />}>
+      <NotesPage title="Tag" filter={{ tagId }} />
+    </Suspense>
+  );
 }
 
 const router = createBrowserRouter([
@@ -36,10 +53,10 @@ const router = createBrowserRouter([
     element: <PublicRoute />,
     errorElement: <ErrorOverlay />,
     children: [
-      { path: "/login", element: <LoginPage /> },
-      { path: "/register", element: <RegisterPage /> },
-      { path: "/forgot-password", element: <ForgotPasswordPage /> },
-      { path: "/reset-password", element: <ResetPasswordPage /> },
+      { path: "/login", element: <Suspense fallback={<Loading />}><LoginPage /></Suspense> },
+      { path: "/register", element: <Suspense fallback={<Loading />}><RegisterPage /></Suspense> },
+      { path: "/forgot-password", element: <Suspense fallback={<Loading />}><ForgotPasswordPage /></Suspense> },
+      { path: "/reset-password", element: <Suspense fallback={<Loading />}><ResetPasswordPage /></Suspense> },
     ],
   },
   {
@@ -50,45 +67,55 @@ const router = createBrowserRouter([
     ),
     errorElement: <ErrorOverlay />,
     children: [
-      { index: true, element: <Index /> },
+      { index: true, element: <Suspense fallback={<Loading />}><Index /></Suspense> },
       {
         path: "notes",
-        element: <NotesPage title="All notes" />,
+        element: (
+          <Suspense fallback={<Loading />}>
+            <NotesPage title="All notes" />
+          </Suspense>
+        ),
         children: [{ path: ":id", element: <NoteDetailPageWrapper /> }],
       },
       {
         path: "favorites",
         element: (
-          <NotesPage
-            title="Favorites"
-            filter={{ favorite: true }}
-            emptyTitle="No favorites"
-            emptyHint="Star a note to find it here"
-          />
+          <Suspense fallback={<Loading />}>
+            <NotesPage
+              title="Favorites"
+              filter={{ favorite: true }}
+              emptyTitle="No favorites"
+              emptyHint="Star a note to find it here"
+            />
+          </Suspense>
         ),
         children: [{ path: ":id", element: <NoteDetailPageWrapper /> }],
       },
       {
         path: "archive",
         element: (
-          <NotesPage
-            title="Archive"
-            filter={{ archived: true }}
-            emptyTitle="No archived notes"
-            emptyHint="Archived notes appear here"
-          />
+          <Suspense fallback={<Loading />}>
+            <NotesPage
+              title="Archive"
+              filter={{ archived: true }}
+              emptyTitle="No archived notes"
+              emptyHint="Archived notes appear here"
+            />
+          </Suspense>
         ),
         children: [{ path: ":id", element: <NoteDetailPageWrapper /> }],
       },
       {
         path: "trash",
         element: (
-          <NotesPage
-            title="Trash"
-            filter={{ trashed: true }}
-            emptyTitle="Trash is empty"
-            emptyHint="Deleted notes appear here for 30 days"
-          />
+          <Suspense fallback={<Loading />}>
+            <NotesPage
+              title="Trash"
+              filter={{ trashed: true }}
+              emptyTitle="Trash is empty"
+              emptyHint="Deleted notes appear here for 30 days"
+            />
+          </Suspense>
         ),
         children: [{ path: ":id", element: <NoteDetailPageWrapper /> }],
       },
@@ -102,8 +129,8 @@ const router = createBrowserRouter([
         element: <TagRoute />,
         children: [{ path: ":id", element: <NoteDetailPageWrapper /> }],
       },
-      { path: "settings", element: <SettingsPage /> },
-      { path: "search", element: <SearchPage /> },
+      { path: "settings", element: <Suspense fallback={<Loading />}><SettingsPage /></Suspense> },
+      { path: "search", element: <Suspense fallback={<Loading />}><SearchPage /></Suspense> },
     ],
   },
 ]);

@@ -1,151 +1,132 @@
-# React Frontend Refactoring — 03: API, State & Data Handling
+# React Frontend Refactoring — 06: Performance & Scalability
 
-Act as a senior React engineer auditing API communication, client-side state, forms, caching, and data handling.
+Act as a senior React performance engineer.
 
-Inspect the existing implementation before changing it.
+Inspect the existing application before optimizing.
 
-## API Review
+Do not optimize based on assumptions. Identify measurable or structurally obvious bottlenecks first.
 
-Check:
-
-- API client architecture
-- Centralized HTTP configuration
-- Base URL handling
-- Authentication credentials
-- Request headers
-- Response parsing
-- Error handling
-- Request cancellation
-- Timeout behavior
-- Retry behavior
-- Duplicate requests
-- API response validation
-- API versioning
-- Consistent API types/shapes
-- Environment configuration
-
-Avoid scattering raw API calls across components.
-
-Prefer:
-
-```text
-Component
-   ↓
-Hook
-   ↓
-Service/API client
-   ↓
-Backend
-```
-
-## State Review
-
-Identify:
-
-- Local UI state
-- Server state
-- Global application state
-- Derived state
-- Form state
-- URL state
-
-Do not put everything into global state.
-
-Check for:
-
-- duplicated state
-- stale state
-- unnecessary global state
-- derived state stored unnecessarily
-- state synchronization problems
-- cache invalidation problems
-
-## Loading States
-
-Every asynchronous operation should have an appropriate state where necessary:
-
-```text
-idle
-loading
-success
-error
-```
+## React Rendering
 
 Check:
 
-- initial loading
-- refetching
-- submitting
-- saving
-- deleting
-- background updates
+- unnecessary re-renders
+- unstable props
+- unnecessary context updates
+- large component trees
+- expensive calculations
+- unnecessary state updates
+- incorrect dependency arrays
+- excessive effects
+- expensive rendering inside lists
 
-## Data Edge Cases
+Review:
 
-Handle:
+- `React.memo`
+- `useMemo`
+- `useCallback`
 
-- `null`
-- `undefined`
-- empty response
-- empty list
-- malformed response
-- missing fields
-- unexpected fields
-- expired authentication
-- unauthorized response
-- forbidden response
-- not found
-- validation errors
-- server errors
-- network failure
-- timeout
-- offline browser
-- slow network
-- duplicate submission
+Use them only when they solve an actual rendering or computation problem.
+
+## Network Performance
+
+Check:
+
+- duplicate requests
+- sequential requests that could be parallel
+- unnecessary requests
+- request waterfalls
+- missing caching
+- excessive polling
+- large responses
+- unnecessary refetching
 - request cancellation
-- stale response arriving after a newer request
-- pagination boundaries
-- deleted item that is still visible in UI
 
-## Forms
+## Bundle Performance
 
 Check:
 
-- validation
-- server validation errors
-- required fields
-- whitespace-only input
-- maximum lengths
-- invalid formats
-- duplicate submission
-- disabled submit state
-- reset behavior
-- dirty state
-- unsaved changes
-- keyboard submission
-- accessibility
+- bundle size
+- unused dependencies
+- large dependencies
+- code splitting
+- lazy routes
+- dynamic imports
+- unnecessary libraries
+- large assets
 
-## Refactoring Rules
+## Rendering Large Data
 
-- Preserve backend contracts.
-- Do not silently change request/response formats.
-- Centralize repeated API behavior.
-- Keep server state separate from UI state where appropriate.
-- Avoid unnecessary client-side duplication of backend truth.
+Check:
 
-## Verification
+- long note lists
+- large search results
+- large tables/lists
+- rich-text content
+- images
+- expensive filtering/sorting
+
+Consider virtualization when genuinely necessary.
+
+## User Experience
+
+Check:
+
+- initial page load
+- loading states
+- perceived performance
+- slow network
+- mobile performance
+- interaction latency
+- typing performance
+- autosave performance
+
+For autosave specifically check:
+
+- debounce
+- duplicate saves
+- save race conditions
+- stale saves overwriting newer data
+- failed saves
+- retry behavior
+- navigation during save
+
+## Edge Cases
 
 Test:
 
-- successful request
-- failed request
-- timeout
-- unauthorized request
-- empty result
-- malformed result
-- rapid repeated requests
-- cancellation
-- refresh
-- retry
-- form submission
-- delete/update/create flows
+- 0 records
+- 1 record
+- hundreds/thousands of records
+- very large note
+- rapid typing
+- rapid navigation
+- slow network
+- offline mode
+- repeated actions
+- multiple simultaneous requests
+- low-end device behavior where measurable
+
+## Rules
+
+Do not:
+
+- add memoization everywhere
+- add caching without invalidation strategy
+- introduce complexity for negligible gains
+- sacrifice correctness for speed
+
+Every optimization should have a reason.
+
+## Verification
+
+Compare before/after where practical.
+
+Report:
+
+- bottleneck
+- root cause
+- optimization
+- expected impact
+- tradeoffs
+- verification

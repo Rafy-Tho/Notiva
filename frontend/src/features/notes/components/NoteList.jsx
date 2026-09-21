@@ -3,6 +3,7 @@ import { FileQuestion, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NoteCard } from "./NoteCard";
 import { useParams } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 export function NoteList({
   notes,
@@ -14,7 +15,11 @@ export function NoteList({
   isFetchingNextPage,
 }) {
   const { id } = useParams();
+  const location = useLocation();
   const sentinelRef = useRef(null);
+
+  // Pre-compute base path once per location change
+  const basePath = getBasePath(location.pathname);
 
   useEffect(() => {
     if (!fetchNextPage || !hasNextPage) return;
@@ -61,7 +66,7 @@ export function NoteList({
   return (
     <div className="overflow-y-auto h-full">
       {notes.map((n) => (
-        <NoteCard key={n.id} note={n} active={n.id === id} />
+        <NoteCard key={n.id} note={n} active={n.id === id} basePath={basePath} />
       ))}
       {hasNextPage && (
         <div ref={sentinelRef} className="flex justify-center py-4">
@@ -72,4 +77,19 @@ export function NoteList({
       )}
     </div>
   );
+}
+
+function getBasePath(path) {
+  const segments = path.split("/").filter(Boolean);
+  if (segments.length === 0) return "/notes";
+  const first = segments[0];
+  if (first === "notebooks" || first === "tags") {
+    return segments.length >= 2
+      ? `/${segments[0]}/${segments[1]}`
+      : `/${first}`;
+  }
+  if (["favorites", "archive", "trash", "notes"].includes(first)) {
+    return `/${first}`;
+  }
+  return "/notes";
 }

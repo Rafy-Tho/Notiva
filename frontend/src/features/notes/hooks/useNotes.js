@@ -52,6 +52,9 @@ export function useNotes(params = {}) {
       return { notes: data.notes, total: data.total, totalPages: data.totalPages, hasMore: data.hasMore, page: data.page };
     },
     enabled: !!user,
+    staleTime: 2 * 60 * 1000,
+    cacheTime: 5 * 60 * 1000,
+    gcTime: 5 * 60 * 1000,
   });
 }
 
@@ -83,6 +86,8 @@ export function useNotesInfinite(queryParams = {}) {
     getNextPageParam: (lastPage) =>
       lastPage.hasMore ? lastPage.page + 1 : undefined,
     enabled: !!user,
+    staleTime: 2 * 60 * 1000,
+    cacheTime: 5 * 60 * 1000,
   });
 }
 
@@ -99,6 +104,8 @@ export function useNote(id) {
       return data;
     },
     enabled: !!user,
+    staleTime: 2 * 60 * 1000,
+    cacheTime: 5 * 60 * 1000,
   });
 }
 

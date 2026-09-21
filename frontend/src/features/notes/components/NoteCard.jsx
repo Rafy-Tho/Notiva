@@ -1,34 +1,13 @@
 import { formatDistanceToNow } from "date-fns";
 import { Pin, Star } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { htmlToText } from "@/lib/sanitize";
 import { cn } from "@/lib/utils";
 
-export function NoteCard({ note, active, onClick }) {
+export const NoteCard = ({ note, active, onClick, basePath = "/notes" }) => {
   const preview =
-    note.contentPreview || htmlToText(note.content || "").slice(0, 10);
-  const location = useLocation();
-
-  // Derive the section base path so opening a note keeps the user in the
-  // current section (trash, archive, favorites, notebooks, tags) instead of
-  // jumping to /notes/:id.
-  const getBasePath = () => {
-    const path = location.pathname;
-    const segments = path.split("/").filter(Boolean);
-    if (segments.length === 0) return "/notes";
-    const first = segments[0];
-    if (first === "notebooks" || first === "tags") {
-      // /notebooks/:notebookId or /tags/:tagId — keep first two segments
-      return segments.length >= 2
-        ? `/${segments[0]}/${segments[1]}`
-        : `/${first}`;
-    }
-    if (["favorites", "archive", "trash", "notes"].includes(first)) {
-      return `/${first}`;
-    }
-    return "/notes";
-  };
-  const to = `${getBasePath()}/${note.id}`;
+    note.contentPreview || htmlToText(note.content || "").slice(0, 100);
+  const to = `${basePath}/${note.id}`;
 
   return (
     <Link
@@ -71,5 +50,4 @@ export function NoteCard({ note, active, onClick }) {
       </div>
     </Link>
   );
-}
-
+};

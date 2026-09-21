@@ -8,7 +8,7 @@ import {
   Search as SearchIcon,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, memo, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils";
 
 const RECENT_KEY = "noteflow_recent_searches";
 
-function highlight(text, q) {
+const highlight = memo(({ text, q }) => {
   if (!q) return text;
   const idx = text.toLowerCase().indexOf(q.toLowerCase());
   if (idx < 0) return text;
@@ -35,16 +35,16 @@ function highlight(text, q) {
       {text.slice(idx + q.length)}
     </>
   );
-}
+});
 
-function snippet(html, q) {
+const snippet = memo(({ html, q }) => {
   const text = htmlToText(html);
   if (!q) return text.slice(0, 200);
   const i = text.toLowerCase().indexOf(q.toLowerCase());
   if (i < 0) return text.slice(0, 200);
   const start = Math.max(0, i - 60);
   return (start > 0 ? "… " : "") + text.slice(start, i + q.length + 140) + "…";
-}
+});
 
 export function SearchPage() {
   const [params, setParams] = useSearchParams();
@@ -59,8 +59,6 @@ export function SearchPage() {
   const [recents, setRecents] = useState([]);
   const debouncedQ = useDebounce(q, 1000);
 
-
-
   const apiParams = useMemo(() => {
     const p = {};
     if (debouncedQ) p.search = debouncedQ;
@@ -74,8 +72,6 @@ export function SearchPage() {
     p.includeContent = true;
     return p;
   }, [debouncedQ, notebookId, tagId, from, to, pinned, page]);
-
-
 
   // Sync params for shareable URLs
   useEffect(() => {
@@ -98,7 +94,7 @@ export function SearchPage() {
   };
 
   const { data: notesResult = {} } = useNotes(apiParams);
-  const notes = notesResult.notes ?? [];
+  const notes = useMemo(() => notesResult.notes ?? [], [notesResult.notes]);
   const total = notesResult.total ?? 0;
   const totalPages = notesResult.totalPages ?? 1;
   const { data: notebooks = [] } = useNotebooks();
@@ -113,6 +109,32 @@ export function SearchPage() {
     setPinned(false);
   };
   const hasFilters = !!(notebookId || tagId || from || to || pinned);
+
+  const memoizedNotebooks = useMemo(() => {
+    const map = new Map();
+    notebooks.forEach((nb) => map.set(nb.id, nb));
+    return map;
+  }, [notebooks]);
+
+  const memoizedTags = useMemo(() => {
+    const map = new Map();
+    tags.forEach((t) => map.set(t.id, t));
+    return map;
+  }, [tags]);
+
+  const searchResults = useMemo(() => {
+    return notes.map((n) => {
+      const nb = memoizedNotebooks.get(n.notebookId);
+      const tags = n.tagIds
+        .map((tid) => memoizedTags.get(tid))
+        .filter(Boolean);
+      return {
+        ...n,
+        nb,
+        tags,
+      };
+    });
+  }, [notes, memoizedNotebooks, memoizedTags]);
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -228,60 +250,53 @@ export function SearchPage() {
             </div>
           ) : (
             <ul className="space-y-2">
-              {notes.map((n) => {
-                const nb = notebooks.find((b) => b.id === n.notebookId);
-                return (
-                  <li key={n.id}>
-                    <button
-                      onClick={() => {
-                        saveRecent(q);
-                        navigate(`/notes/${n.id}`);
-                      }}
-                      className={cn(
-                        "panel w-full text-left p-3 hover:border-primary/60 hover:bg-accent/30 transition-colors",
+              {searchResults.map((n) => (
+                <li key={n.id}>
+                  <button
+                    onClick={() => {
+                      saveRecent(q);
+                      navigate(`/notes/${n.id}`);
+                    }}
+                    className={cn(
+                      "panel w-full text-left p-3 hover:border-primary/60 hover:bg-accent/30 transition-colors",
+                    )}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      {n.isPinned && (
+                        <Pin className="h-3.5 w-3.5 text-primary shrink-0" />
                       )}
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        {n.isPinned && (
-                          <Pin className="h-3.5 w-3.5 text-primary shrink-0" />
-                        )}
-                        <div className="font-medium truncate">
-                          {highlight(n.title || "Untitled", q)}
-                        </div>
+                      <div className="font-medium truncate">
+                        {highlight({ text: n.title || "Untitled", q })}
                       </div>
-                      <div className="mt-1 text-xs text-muted-foreground line-clamp-2">
-                        {highlight(snippet(n.content, q), q)}
-                      </div>
-                      <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                        {nb && (
-                          <span className="inline-flex items-center gap-1">
-                            <BookOpen
-                              className="h-3 w-3"
-                              style={{ color: `hsl(${nb.color})` }}
-                            />
-                            {nb.name}
-                          </span>
-                        )}
-                        {n.tagIds.map((tid) => {
-                          const t = tags.find((x) => x.id === tid);
-                          if (!t) return null;
-                          return (
-                            <span
-                              key={tid}
-                              className="inline-flex items-center gap-0.5"
-                            >
-                              <Hash className="h-3 w-3" /> {t.name}
-                            </span>
-                          );
-                        })}
-                        <span className="ml-auto">
-                          {new Date(n.updatedAt).toLocaleDateString()}
+                    </div>
+                    <div className="mt-1 text-xs text-muted-foreground line-clamp-2">
+                      {highlight({ text: snippet({ html: n.content, q }), q })}
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
+                      {n.nb && (
+                        <span className="inline-flex items-center gap-1">
+                          <BookOpen
+                            className="h-3 w-3"
+                            style={{ color: `hsl(${n.nb.color})` }}
+                          />
+                          {n.nb.name}
                         </span>
-                      </div>
-                    </button>
-                  </li>
-                );
-              })}
+                      )}
+                      {n.tags.map((t) => (
+                        <span
+                          key={t.id}
+                          className="inline-flex items-center gap-0.5"
+                        >
+                          <Hash className="h-3 w-3" /> {t.name}
+                        </span>
+                      ))}
+                      <span className="ml-auto">
+                        {new Date(n.updatedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </button>
+                </li>
+              ))}
             </ul>
           )}
 

@@ -1,16 +1,6 @@
 import equal from "fast-deep-equal";
 import { useCallback, useEffect, useRef, useState } from "react";
-
-export function useDebounce(value, delay) {
-  const [debounced, setDebounced] = useState(value);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(timer);
-  }, [value, delay]);
-
-  return debounced;
-}
+import { useDebounce } from "@/hooks/useDebounce";
 
 function isRetryableError(error) {
   if (!error || error.name === "AbortError") return false;
@@ -94,22 +84,6 @@ export function useAutoSave(data, saveFn, options = {}) {
   const retryAttemptRef = useRef(0);
   const lastSavedDataRef = useRef(data);
   const expectedUpdatedAtRef = useRef(serverUpdatedAt);
-
-  useEffect(() => {
-    dataRef.current = data;
-  }, [data]);
-
-  useEffect(() => {
-    saveFnRef.current = saveFn;
-  }, [saveFn]);
-
-  useEffect(() => {
-    onSavedRef.current = onSaved;
-  }, [onSaved]);
-
-  useEffect(() => {
-    enabledRef.current = enabled;
-  }, [enabled]);
 
   const clearRetryTimer = useCallback(() => {
     if (retryTimerRef.current) {
@@ -321,7 +295,7 @@ export function useAutoSave(data, saveFn, options = {}) {
     } else {
       removeLocalDraft();
     }
-  }, [clearRetryTimer, data, removeLocalDraft, writeLocalDraft]);
+  }, [data, writeLocalDraft, removeLocalDraft, clearRetryTimer]);
 
   const debouncedData = useDebounce(data, debounceMs);
 
@@ -354,6 +328,22 @@ export function useAutoSave(data, saveFn, options = {}) {
   }, [isDirty]);
 
   useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      clearRetryTimer();
+      abortRef.current?.abort();
+    };
+  }, [clearRetryTimer]);
+
+  const restoreLocalDraft = useCallback(() => {
+    if (!localDraft) return null;
+    const restored = localDraft.data;
+    removeLocalDraft();
+    return restored;
+  }, [localDraft, removeLocalDraft]);
+
+  useEffect(() => {
     const flushWhenHidden = () => {
       if (document.visibilityState === "hidden" && isDirtyRef.current) {
         void flush({ keepalive: true });
@@ -381,13 +371,6 @@ export function useAutoSave(data, saveFn, options = {}) {
       abortRef.current?.abort();
     };
   }, [clearRetryTimer]);
-
-  const restoreLocalDraft = useCallback(() => {
-    if (!localDraft) return null;
-    const restored = localDraft.data;
-    removeLocalDraft();
-    return restored;
-  }, [localDraft, removeLocalDraft]);
 
   return {
     status,
