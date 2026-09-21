@@ -1,10 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
-const BASE_URL = import.meta.env.VITE_BASE_API;
+import { getApiUrl } from "@/config/api";
 export const useUpdateUser = () => {
   return useMutation({
     mutationFn: async (name) => {
-      const res = await fetchWithAuth(`${BASE_URL}/me`, {
+      const res = await fetchWithAuth(getApiUrl("/me"), {
         method: "PATCH",
         body: JSON.stringify({ name }),
       });
@@ -21,7 +21,7 @@ export const useUpdateUser = () => {
 export const useUpdateAvatar = () => {
   return useMutation({
     mutationFn: async (avatar) => {
-      const res = await fetchWithAuth(`${BASE_URL}/me/avatar`, {
+      const res = await fetchWithAuth(getApiUrl("/me/avatar"), {
         method: "POST",
         body: avatar,
       });
@@ -38,7 +38,7 @@ export const useUpdateAvatar = () => {
 export const useChangePassword = () => {
   return useMutation({
     mutationFn: async (passwords) => {
-      const res = await fetchWithAuth(`${BASE_URL}/me/password`, {
+      const res = await fetchWithAuth(getApiUrl("/me/password"), {
         method: "POST",
         body: JSON.stringify(passwords),
       });
@@ -55,7 +55,7 @@ export const useChangePassword = () => {
 export const useRemoveAvatar = () => {
   return useMutation({
     mutationFn: async () => {
-      const res = await fetchWithAuth(`${BASE_URL}/me/avatar`, {
+      const res = await fetchWithAuth(getApiUrl("/me/avatar"), {
         method: "DELETE",
       });
       if (!res.ok) {

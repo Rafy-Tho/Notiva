@@ -9,6 +9,7 @@ import { Logo } from "@/components/common/Logo";
 import { Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { toast } from "@/components/ui/sonner";
+import { loginSchema } from "@/lib/validation";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -19,8 +20,21 @@ export function LoginPage() {
   const [remember, setRemember] = useState(true);
   const [loading, setLoading] = useState(false);
 
+  const validate = () => {
+    const result = loginSchema.safeParse({ email, password });
+    if (!result.success) {
+      const fieldErrors = {};
+      for (const issue of result.error.issues) {
+        fieldErrors[issue.path[0]] = issue.message;
+      }
+      return false;
+    }
+    return true;
+  };
+
   const submit = async (e) => {
     e.preventDefault();
+    if (!validate()) return;
     setLoading(true);
     try {
       await login(email, password);

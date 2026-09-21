@@ -1,8 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { useAuthStore } from "@/store/authStore";
-
-const BASE_URL = import.meta.env.VITE_BASE_API;
+import { getApiUrl } from "@/config/api";
 
 // ── GET ──────────────────────────────────────────────────────────
 export function useTags() {
@@ -10,7 +9,7 @@ export function useTags() {
   return useQuery({
     queryKey: ["tags"],
     queryFn: async () => {
-      const res = await fetchWithAuth(`${BASE_URL}/tags`);
+       const res = await fetchWithAuth(getApiUrl("/tags"));
       if (!res.ok) {
         const { message } = await res.json();
         throw new Error(message ?? "Something went wrong");
@@ -26,7 +25,7 @@ export function useCreateTag() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ name, color }) => {
-      const res = await fetchWithAuth(`${BASE_URL}/tags`, {
+       const res = await fetchWithAuth(getApiUrl("/tags"), {
         method: "POST",
         body: JSON.stringify({ name, color }),
       });
@@ -47,7 +46,7 @@ export function useUpdateTag() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, name, color }) => {
-      const res = await fetchWithAuth(`${BASE_URL}/tags/${id}`, {
+       const res = await fetchWithAuth(getApiUrl(`/tags/${id}`), {
         method: "PATCH",
         body: JSON.stringify({ name, color }),
       });
@@ -68,7 +67,7 @@ export function useDeleteTag() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id) => {
-      const res = await fetchWithAuth(`${BASE_URL}/tags/${id}`, {
+       const res = await fetchWithAuth(getApiUrl(`/tags/${id}`), {
         method: "DELETE",
       });
       if (!res.ok) {

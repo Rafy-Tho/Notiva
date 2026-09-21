@@ -7,6 +7,7 @@ import { Logo } from "@/components/common/Logo";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
+import { registerSchema } from "@/lib/validation";
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -16,10 +17,21 @@ export function RegisterPage() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const validate = () => {
+    const result = registerSchema.safeParse({ name, email, password });
+    if (!result.success) {
+      const fieldErrors = {};
+      for (const issue of result.error.issues) {
+        fieldErrors[issue.path[0]] = issue.message;
+      }
+      return false;
+    }
+    return true;
+  };
+
   const submit = async (e) => {
     e.preventDefault();
-    if (password.length < 8)
-      return toast.error("Password must be at least 8 characters");
+    if (!validate()) return;
     setLoading(true);
     try {
       await register(name, email, password);

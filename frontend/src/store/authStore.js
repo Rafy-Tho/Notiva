@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
-
-const BASE_URL = import.meta.env.VITE_BASE_API;
+import { getApiUrl } from "@/config/api";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
 function getAuth() {
   try {
@@ -31,7 +31,7 @@ async function fetchJson(url, opts = {}) {
   if (!(opts.body instanceof FormData)) {
     headers["Content-Type"] = "application/json";
   }
-  const res = await fetch(url, { ...opts, headers, credentials: "include" });
+  const res = await fetchWithAuth(url, { ...opts, headers });
   if (!res.ok) {
     const { message } = await res.json();
     throw new Error(message ?? "Something went wrong");
@@ -58,7 +58,7 @@ export const useAuthStore = create(
       register: async (name, email, password) => {
         set({ isLoading: false, error: null }, false, "auth/register/pending");
         try {
-          const data = await fetchJson(`${BASE_URL}/auth/register`, {
+           const data = await fetchJson(getApiUrl("/auth/register"), {
             method: "POST",
             body: JSON.stringify({ name, email, password }),
           });
@@ -81,7 +81,7 @@ export const useAuthStore = create(
       login: async (email, password) => {
         set({ isLoading: false, error: null }, false, "auth/login/pending");
         try {
-          const data = await fetchJson(`${BASE_URL}/auth/login`, {
+           const data = await fetchJson(getApiUrl("/auth/login"), {
             method: "POST",
             body: JSON.stringify({ email, password }),
           });
@@ -103,7 +103,7 @@ export const useAuthStore = create(
 
       logout: async () => {
         try {
-          await fetchJson(`${BASE_URL}/auth/logout`, { method: "POST" });
+           await fetchJson(getApiUrl("/auth/logout"), { method: "POST" });
         } finally {
           saveAuth(null);
           set({ user: null }, false, "auth/logout");
@@ -113,7 +113,7 @@ export const useAuthStore = create(
       restoreSession: async () => {
         if (get().isAuthenticated && !!get().user)
           try {
-            const data = await fetchJson(`${BASE_URL}/auth/verify`);
+             const data = await fetchJson(getApiUrl("/auth/verify"));
             saveAuth(data.user);
             set({ user: data.user }, false, "auth/verify/fulfilled");
           } catch {
@@ -125,7 +125,7 @@ export const useAuthStore = create(
       },
 
       delete: async () => {
-        await fetchJson(`${BASE_URL}/me`, { method: "DELETE" });
+         await fetchJson(getApiUrl("/me"), { method: "DELETE" });
         saveAuth(null);
         set({ user: null }, false, "auth/deleteAccount");
       },

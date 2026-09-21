@@ -6,8 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { useAuthStore } from "@/store/authStore";
-
-const BASE_URL = import.meta.env.VITE_BASE_API;
+import { getApiUrl } from "@/config/api";
 
 async function throwResponseError(response, fallback) {
   let body = null;
@@ -42,7 +41,7 @@ export function useNotes(params = {}) {
       if (params.page) sp.set("page", params.page);
 
       const res = await fetchWithAuth(
-        `${BASE_URL}/notes?limit=20&${sp.toString()}`,
+        getApiUrl(`/notes?limit=20&${sp.toString()}`),
       );
 
       if (!res.ok) {
@@ -74,7 +73,7 @@ export function useNotesInfinite(queryParams = {}) {
       if (queryParams.isPinned) sp.set("isPinned", "true");
       if (queryParams.includeContent) sp.set("includeContent", "true");
 
-      const res = await fetchWithAuth(`${BASE_URL}/notes?${sp.toString()}`);
+      const res = await fetchWithAuth(`${getApiUrl(`/notes?${sp.toString()}`)}`);
       if (!res.ok) {
         await throwResponseError(res, "Something went wrong");
       }
@@ -92,7 +91,7 @@ export function useNote(id) {
   return useQuery({
     queryKey: ["note", id],
     queryFn: async () => {
-      const res = await fetchWithAuth(`${BASE_URL}/notes/${id}`);
+      const res = await fetchWithAuth(getApiUrl(`/notes/${id}`));
       if (!res.ok) {
         await throwResponseError(res, "Something went wrong");
       }
@@ -107,7 +106,7 @@ export function useCreateNote() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (note) => {
-      const res = await fetchWithAuth(`${BASE_URL}/notes`, {
+      const res = await fetchWithAuth(getApiUrl("/notes"), {
         method: "POST",
         body: JSON.stringify(note),
       });
@@ -127,7 +126,7 @@ export function useUpdateNote(id) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ signal, keepalive, ...note }) => {
-      const res = await fetchWithAuth(`${BASE_URL}/notes/${id}`, {
+      const res = await fetchWithAuth(`${getApiUrl(`/notes/${id}`)}`, {
         method: "PATCH",
         body: JSON.stringify(note),
         signal,
@@ -150,7 +149,7 @@ export function useTogglePin(id) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const res = await fetchWithAuth(`${BASE_URL}/notes/${id}/pin`, {
+      const res = await fetchWithAuth(getApiUrl(`/notes/${id}/pin`), {
         method: "POST",
       });
       if (!res.ok) {
@@ -170,7 +169,7 @@ export function useToggleFavorite(id) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const res = await fetchWithAuth(`${BASE_URL}/notes/${id}/favorite`, {
+      const res = await fetchWithAuth(getApiUrl(`/notes/${id}/favorite`), {
         method: "POST",
       });
       if (!res.ok) {
@@ -190,7 +189,7 @@ export function useToggleArchive(id) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const res = await fetchWithAuth(`${BASE_URL}/notes/${id}/archive`, {
+      const res = await fetchWithAuth(getApiUrl(`/notes/${id}/archive`), {
         method: "POST",
       });
       if (!res.ok) {
@@ -210,7 +209,7 @@ export function useRemove(id) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const res = await fetchWithAuth(`${BASE_URL}/notes/${id}`, {
+      const res = await fetchWithAuth(getApiUrl(`/notes/${id}`), {
         method: "DELETE",
       });
       if (!res.ok) {
@@ -229,7 +228,7 @@ export function usePurge(id) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const res = await fetchWithAuth(`${BASE_URL}/notes/${id}/purge`, {
+      const res = await fetchWithAuth(getApiUrl(`/notes/${id}/purge`), {
         method: "POST",
       });
       if (!res.ok) {
@@ -248,7 +247,7 @@ export function useRestore(id) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const res = await fetchWithAuth(`${BASE_URL}/notes/${id}/restore`, {
+      const res = await fetchWithAuth(getApiUrl(`/notes/${id}/restore`), {
         method: "POST",
       });
       if (!res.ok) {

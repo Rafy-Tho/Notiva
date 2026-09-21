@@ -1,133 +1,151 @@
-# React Frontend Refactoring — 02: Code Quality & Maintainability
+# React Frontend Refactoring — 03: API, State & Data Handling
 
-Act as a senior React engineer reviewing the existing frontend for code quality, maintainability, readability, and long-term scalability.
+Act as a senior React engineer auditing API communication, client-side state, forms, caching, and data handling.
 
-Inspect before modifying anything.
+Inspect the existing implementation before changing it.
 
-## Review
+## API Review
 
 Check:
 
-- Component size and responsibility
-- Component composition
-- Props design
-- Prop drilling
-- Custom hooks
-- State management
-- Effects
-- Event handlers
-- Conditional rendering
-- Reusable components
-- Utility functions
-- Duplication
-- Naming
-- File naming
-- Import organization
-- Dead code
-- Unused variables
-- Unused dependencies
-- Magic values
-- Hardcoded configuration
-- Complex expressions
-- Complex conditionals
-- Business logic inside JSX
-- Repeated API logic
-- Repeated validation
-- Repeated error handling
-
-## React-Specific Checks
-
-Review every `useEffect` for:
-
-- Incorrect dependencies
-- Missing dependencies
-- Unnecessary dependencies
-- Effects doing work that could happen during render
-- Effects used for derived state
-- Infinite loops
+- API client architecture
+- Centralized HTTP configuration
+- Base URL handling
+- Authentication credentials
+- Request headers
+- Response parsing
+- Error handling
+- Request cancellation
+- Timeout behavior
+- Retry behavior
 - Duplicate requests
-- Cleanup problems
-- Race conditions
-- State updates after unmount where applicable
+- API response validation
+- API versioning
+- Consistent API types/shapes
+- Environment configuration
 
-Review:
-
-- `useMemo`
-- `useCallback`
-- `React.memo`
-- `useRef`
-- `useReducer`
-- Context
-- Custom hooks
-
-Remove unnecessary optimization as well as missing optimization.
-
-## Maintainability Rules
+Avoid scattering raw API calls across components.
 
 Prefer:
 
 ```text
-small responsibility
-clear naming
-predictable data flow
-simple state
-explicit dependencies
-reusable domain logic
+Component
+   ↓
+Hook
+   ↓
+Service/API client
+   ↓
+Backend
 ```
 
-Avoid:
+## State Review
+
+Identify:
+
+- Local UI state
+- Server state
+- Global application state
+- Derived state
+- Form state
+- URL state
+
+Do not put everything into global state.
+
+Check for:
+
+- duplicated state
+- stale state
+- unnecessary global state
+- derived state stored unnecessarily
+- state synchronization problems
+- cache invalidation problems
+
+## Loading States
+
+Every asynchronous operation should have an appropriate state where necessary:
 
 ```text
-giant components
-god hooks
-god contexts
-deep prop drilling
-duplicated logic
-clever abstractions
-unnecessary memoization
-business logic inside JSX
+idle
+loading
+success
+error
 ```
-
-## Edge Cases
 
 Check:
 
+- initial loading
+- refetching
+- submitting
+- saving
+- deleting
+- background updates
+
+## Data Edge Cases
+
+Handle:
+
 - `null`
 - `undefined`
-- empty arrays
-- empty strings
-- zero values
-- false values
-- missing props
-- invalid user input
-- rapid repeated clicks
-- double submission
-- component unmount during async work
-- stale closures
-- stale state
-- rapid state changes
-- unexpected API data
-- very long text
-- very large lists
-- missing images/assets
+- empty response
+- empty list
+- malformed response
+- missing fields
+- unexpected fields
+- expired authentication
+- unauthorized response
+- forbidden response
+- not found
+- validation errors
+- server errors
+- network failure
+- timeout
+- offline browser
+- slow network
+- duplicate submission
+- request cancellation
+- stale response arriving after a newer request
+- pagination boundaries
+- deleted item that is still visible in UI
+
+## Forms
+
+Check:
+
+- validation
+- server validation errors
+- required fields
+- whitespace-only input
+- maximum lengths
+- invalid formats
+- duplicate submission
+- disabled submit state
+- reset behavior
+- dirty state
+- unsaved changes
+- keyboard submission
+- accessibility
 
 ## Refactoring Rules
 
-- Preserve behavior.
-- Avoid unnecessary rewrites.
-- Prefer simple solutions.
-- Do not create abstractions without repeated or meaningful responsibility.
-- Keep components testable.
-- Keep feature logic inside its feature where appropriate.
-- Keep shared UI generic.
+- Preserve backend contracts.
+- Do not silently change request/response formats.
+- Centralize repeated API behavior.
+- Keep server state separate from UI state where appropriate.
+- Avoid unnecessary client-side duplication of backend truth.
 
 ## Verification
 
-Run:
+Test:
 
-- lint
-- tests
-- production build
-- major user flows
-
-Report all significant changes and remaining issues.
+- successful request
+- failed request
+- timeout
+- unauthorized request
+- empty result
+- malformed result
+- rapid repeated requests
+- cancellation
+- refresh
+- retry
+- form submission
+- delete/update/create flows
