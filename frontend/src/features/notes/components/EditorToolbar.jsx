@@ -33,6 +33,7 @@ const Btn = ({ on, active, children, label }) => (
     {children}
   </button>
 );
+
 export function EditorToolbar({ editor }) {
   if (!editor) return null;
 

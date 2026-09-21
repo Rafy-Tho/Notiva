@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
-import { fetchWithAuth } from "@/lib/fecthWithAuth";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 const BASE_URL = import.meta.env.VITE_BASE_API;
 export const useUpdateUser = () => {
   return useMutation({

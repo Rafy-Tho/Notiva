@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { fetchWithAuth } from "../lib/fecthWithAuth";
+import { fetchWithAuth } from "../lib/fetchWithAuth";
 
 const BASE_URL = import.meta.env.VITE_BASE_API;
 

@@ -1,12 +1,10 @@
+/* eslint-disable no-unused-vars */
 import EmojiPicker, { Theme as EmojiTheme } from "emoji-picker-react";
 import {
-  AlertCircle,
   Archive,
   BookOpen,
   Check,
-  CheckCircle2,
   Image as ImageIcon,
-  Loader2,
   MoreHorizontal,
   Pin,
   RotateCcw,
@@ -16,6 +14,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useBlocker, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -53,6 +52,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NoteEditor } from "../components/NoteEditor";
+import { SaveBadge } from "../components/SaveBadge";
 import { useAutoSave } from "@/hooks/useAutosave";
 import { useCreateNoteContext } from "@/hooks/useCreateNoteContext";
 import { useNotebooks } from "@/features/notebooks/hooks/useNotebooks";
@@ -67,16 +67,15 @@ import {
   useUpdateNote,
 } from "../hooks/useNotes";
 import { useTags } from "@/features/tags/hooks/useTags";
-import { readingTime, wordCount } from "@/lib/sanitize";
-import { cn } from "@/lib/utils";
-
-// ── Fake API call — replace with your real endpoint ──────────────────────────
+import { useNoteActions } from "../hooks/useNoteActions";
+import { wordCount } from "@/lib/sanitize";
 
 export function NoteDetailPage() {
   const { id } = useParams();
   const { data: note, isLoading: noteLoading } = useNote(id);
   const { data: tags, isLoading: tagsLoading } = useTags();
   const { data: notebooks, isLoading: notebooksLoading } = useNotebooks();
+  const navigate = useNavigate();
 
   if (!id) return null;
 
@@ -91,36 +90,57 @@ export function NoteDetailPage() {
   }
 
   return (
-    <NoteDetailEditor id={id} note={note} tags={tags} notebooks={notebooks} />
+    <NoteDetailEditor
+      id={id}
+      note={note}
+      tags={tags}
+      notebooks={notebooks}
+      navigate={navigate}
+    />
   );
 }
 
-function NoteDetailEditor({ id, note, tags, notebooks }) {
-  const navigate = useNavigate();
+function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
   const [draft, setDraft] = useState({
     title: note.title ?? "",
     content: note.content ?? "",
   });
   const [icon, setIcon] = useState(note.cover?.emoji ?? null);
   const [cover, setCover] = useState(note.cover?.color ?? null);
-  const [isPinned, setIsPinned] = useState(note.isPinned ?? false);
-  const [isFav, setIsFav] = useState(note.isFavorite ?? false);
+  const [isLeaving, setIsLeaving] = useState(false);
   const [selectNotebook, setSelectNotebook] = useState(
     note.notebookId ?? "__none__",
   );
   const [selectTags, setSelectTags] = useState(note.tagIds ?? []);
+  const [isPinned, setIsPinned] = useState(note.isPinned ?? false);
+  const [isFav, setIsFav] = useState(note.isFavorite ?? false);
+
   const path = useCreateNoteContext();
+
   const { mutateAsync: updateNote, isPending: isUpdating } = useUpdateNote(id);
   const { mutateAsync: togglePin, isPending: isPinning } = useTogglePin(id);
-  const { mutateAsync: toggleFav, isPending: isFavoriting } = useToggleFavorite(id);
-  const { mutateAsync: toggleArchive, isPending: isArchiving } = useToggleArchive(id);
+  const {
+    mutateAsync: toggleFav,
+    isPending: isFavoriting,
+  } = useToggleFavorite(id);
+  const {
+    mutateAsync: toggleArchive,
+    isPending: isArchiving,
+  } = useToggleArchive(id);
   const { mutateAsync: remove, isPending: isRemoving } = useRemove(id);
   const { mutateAsync: restore, isPending: isRestoring } = useRestore(id);
   const { mutateAsync: purge, isPending: isPurging } = usePurge(id);
-  const actionPending = isUpdating || isPinning || isFavoriting || isArchiving || isRemoving || isRestoring || isPurging;
+
+  const actionPending =
+    isUpdating ||
+    isPinning ||
+    isFavoriting ||
+    isArchiving ||
+    isRemoving ||
+    isRestoring ||
+    isPurging;
 
   const serverUpdatedAtRef = useRef(note.updatedAt ?? null);
-  const [isLeaving, setIsLeaving] = useState(false);
 
   const saveDraft = useCallback(
     ({ signal, keepalive, expectedUpdatedAt, ...data }) =>
@@ -183,7 +203,6 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
   const ensureDraftSaved = useCallback(async () => {
     const saved = await flush();
     if (saved) return;
-
     throw new Error("Save the latest changes before updating this note");
   }, [flush]);
 
@@ -205,165 +224,41 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
     [ensureDraftSaved, setServerUpdatedAt, updateNote],
   );
 
-  const hadndleIcon = async (emoji) => {
-    const previous = icon;
-    try {
-      setIcon(emoji);
-      await saveMetadata({ cover: { emoji, color: cover } });
-    } catch (error) {
-      setIcon(previous);
-      toast.error(error.message);
-    }
-  };
+  const {
+    handleIcon,
+    handleCover,
+    handleNotebook,
+    handleTags,
+    handleTogglePin,
+    handleToggleFav,
+    handleToggleArchive,
+    handleTrash,
+    handleRestore,
+    handlePurge,
+  } = useNoteActions({
+    saveMetadata,
+    togglePin: () => togglePin(),
+    toggleFavorite: () => toggleFav(),
+    toggleArchive: () => toggleArchive(),
+    remove: () => remove(),
+    restore: () => restore(),
+    purge: () => purge(),
+    navigate,
+    basePath: path.basePath,
+  });
 
-  const handleCover = async (color) => {
-    const previous = cover;
-    try {
-      setCover(color);
-      await saveMetadata({ cover: { color, emoji: icon } });
-    } catch (error) {
-      setCover(previous);
-      toast.error(error.message);
-    }
-  };
-  const removeIcon = async () => {
-    const previous = icon;
-    try {
-      setIcon(null);
+  const toggleTag = useCallback(
+    async (tagId) => {
+      const exists = selectTags.includes(tagId);
+      const next = exists
+        ? selectTags.filter((id) => id !== tagId)
+        : [...selectTags, tagId];
+      void handleTags(next);
+    },
+    [selectTags, handleTags],
+  );
 
-      await saveMetadata({
-        cover: {
-          emoji: null,
-          color: cover,
-        },
-      });
-    } catch (error) {
-      setIcon(previous);
-      toast.error(error.message);
-    }
-  };
-  const removeCover = async () => {
-    const previous = cover;
-    try {
-      setCover(null);
-
-      await saveMetadata({
-        cover: {
-          emoji: icon,
-          color: null,
-        },
-      });
-    } catch (error) {
-      setCover(previous);
-      toast.error(error.message);
-    }
-  };
-  const handleNotebook = async (notebookId) => {
-    const previous = selectNotebook;
-    const normalizedNotebookId = notebookId === "__none__" ? null : notebookId;
-    try {
-      setSelectNotebook(notebookId);
-      await saveMetadata({ notebookId: normalizedNotebookId });
-    } catch (error) {
-      setSelectNotebook(previous);
-      toast.error(error.message);
-    }
-  };
-
-  const handleTags = async (tagIds) => {
-    const previous = selectTags;
-    try {
-      setSelectTags(tagIds);
-      await saveMetadata({ tagIds });
-    } catch (error) {
-      setSelectTags(previous);
-      toast.error(error.message);
-    }
-  };
-  const toggleTag = async (tagId) => {
-    const exists = selectTags.includes(tagId);
-    const next = exists
-      ? selectTags.filter((id) => id !== tagId)
-      : [...selectTags, tagId];
-    void handleTags(next);
-  };
-  const handleTogglePin = async () => {
-    const previous = isPinned;
-    try {
-      await ensureDraftSaved();
-      setIsPinned(!isPinned);
-      const result = await togglePin();
-      if (result?.updatedAt) {
-        serverUpdatedAtRef.current = result.updatedAt;
-        setServerUpdatedAt(result.updatedAt);
-      }
-    } catch (error) {
-      setIsPinned(previous);
-      toast.error(error.message);
-    }
-  };
-
-  const handleToggleFav = async () => {
-    const previous = isFav;
-    try {
-      await ensureDraftSaved();
-      setIsFav(!isFav);
-      const result = await toggleFav();
-      if (result?.updatedAt) {
-        serverUpdatedAtRef.current = result.updatedAt;
-        setServerUpdatedAt(result.updatedAt);
-      }
-    } catch (error) {
-      setIsFav(previous);
-      toast.error(error.message);
-    }
-  };
-
-  const handleToggleArchive = async () => {
-    try {
-      await ensureDraftSaved();
-      const result = await toggleArchive();
-      if (result?.updatedAt) {
-        serverUpdatedAtRef.current = result.updatedAt;
-        setServerUpdatedAt(result.updatedAt);
-      }
-      if (result?.isArchived) navigate("/archive");
-    } catch (error) {
-      toast.error(error.message);
-    }
-  };
-
-  const handleTrash = async () => {
-    try {
-      await ensureDraftSaved();
-      await remove();
-      navigate(path.basePath);
-    } catch (error) {
-      toast.error(error.message);
-    }
-  };
-
-  const handleRestore = async () => {
-    try {
-      await ensureDraftSaved();
-      await restore();
-      navigate(path.basePath);
-    } catch (error) {
-      toast.error(error.message);
-    }
-  };
-
-  const handlePurge = async () => {
-    try {
-      await ensureDraftSaved();
-      await purge();
-      navigate("/trash");
-    } catch (error) {
-      toast.error(error.message);
-    }
-  };
-
-  const handleSaveAndLeave = async () => {
+  const handleSaveAndLeave = useCallback(async () => {
     setIsLeaving(true);
     const saved = await flush();
     setIsLeaving(false);
@@ -373,416 +268,416 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
     } else {
       toast.error(saveError?.message ?? "The note could not be saved");
     }
-  };
+  }, [flush, blocker, saveError]);
 
-  const handleRestoreDraft = () => {
+  const handleRestoreDraft = useCallback(() => {
     const restored = restoreLocalDraft();
     if (restored) {
       setDraft(restored);
       toast.success("Unsaved draft restored");
     }
-  };
+  }, [restoreLocalDraft]);
+
   return (
     <div className="flex flex-col h-full">
       <div className="shrink-0">
-      {localDraft && (
-        <div className="px-4 sm:px-6 md:px-10 lg:px-12 pt-4 max-w-3xl mx-auto w-full">
-          <div className="flex items-center justify-between gap-3 rounded-md border border-primary/30 bg-primary/5 px-3 py-2">
-            <span className="text-xs text-muted-foreground">
-              An unsaved draft from an earlier session is available.
-            </span>
-            <div className="flex items-center gap-1.5">
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7 text-[11px]"
-                onClick={handleRestoreDraft}
-              >
-                Restore
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-7 text-[11px]"
-                onClick={discardLocalDraft}
-              >
-                Discard
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-      {note?.deletedAt && (
-        <div className="px-4 sm:px-6 md:px-10 lg:px-12 pt-4 max-w-3xl mx-auto w-full">
-          <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-muted/40 px-3 py-2">
-            <div className="text-xs text-muted-foreground flex items-center gap-2">
-              <Trash2 className="h-3.5 w-3.5" />
-              This note is in Trash. Restore it to keep editing.
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7 gap-1 text-[11px]"
-                onClick={handleRestore}
-              >
-                <RotateCcw className="h-3 w-3" /> Restore
-              </Button>
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 gap-1 text-[11px] text-destructive hover:text-destructive"
-                  >
-                    <Trash2 className="h-3 w-3" /> Delete forever
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>
-                      Delete note permanently?
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will permanently remove "{note.title || "Untitled"}"
-                      and all of its version history. This action cannot be
-                      undone.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={handlePurge}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      Delete forever
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Cover */}
-      {cover && (
-        <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 md:px-10 lg:px-12 pt-4">
-          <div
-            className="h-32 w-full rounded-lg border border-border bg-cover bg-center"
-            style={{
-              backgroundColor: cover ? `hsl(${cover})` : undefined,
-            }}
-          />
-        </div>
-      )}
-
-      <div className="flex flex-wrap items-center justify-between gap-y-2 gap-x-2 px-4 sm:px-6 md:px-10 lg:px-12 pt-6 max-w-3xl mx-auto w-full">
-        <div className="flex items-center gap-2">
-          <SaveBadge status={actionPending ? "updating" : status} lastSavedAt={lastSaved} isDirty={isDirty} />
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 gap-1 text-[11px]"
-            onClick={saveNow}
-            disabled={actionPending || status === "saving"}
-          >
-            <Check className="h-3 w-3" /> Save
-          </Button>
-          {status === "conflict" && (
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-7 text-[11px]"
-              onClick={() => window.location.reload()}
-            >
-              Reload
-            </Button>
-          )}
-        </div>
-        <div className="flex items-center gap-1 flex-wrap">
-          {/* Emoji picker */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={actionPending}
-                className="h-7 px-2 text-[11px] border border-border bg-transparent hover:bg-muted/40 gap-1.5"
-              >
-                {icon ? (
-                  <span className="text-sm leading-none">{icon}</span>
-                ) : (
-                  <Smile className="h-3 w-3 text-muted-foreground" />
-                )}
-                <span className="text-muted-foreground">Icon</span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="p-0 w-auto border-border">
-              <EmojiPicker
-                theme={EmojiTheme.AUTO}
-                onEmojiClick={(d) => hadndleIcon(d.emoji)}
-                width={320}
-                height={360}
-              />
-              {icon && (
-                <div className="border-t border-border p-2">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    disabled={actionPending}
-                    className="w-full h-7 text-[11px]"
-                    onClick={removeIcon}
-                  >
-                    Remove icon
-                  </Button>
-                </div>
-              )}
-            </PopoverContent>
-          </Popover>
-          {/* Cover picker */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={actionPending}
-                className="h-7 px-2 text-[11px] border border-border bg-transparent hover:bg-muted/40 gap-1.5"
-              >
-                <ImageIcon className="h-3 w-3 text-muted-foreground" />
-                <span className="text-muted-foreground">Cover</span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-64 p-3 space-y-3">
-              <div>
-                <div className="text-[11px] font-medium text-muted-foreground mb-1.5">
-                  Color
-                </div>
-                <div className="grid grid-cols-6 gap-1.5">
-                  {[
-                    "245 80% 66%",
-                    "200 80% 60%",
-                    "38 92% 60%",
-                    "142 65% 50%",
-                    "0 70% 60%",
-                    "280 70% 65%",
-                  ].map((c) => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => handleCover(c)}
-                      disabled={actionPending}
-                      className={cn(
-                        "h-7 rounded-md border-2",
-                        cover === c
-                          ? "border-foreground"
-                          : "border-transparent",
-                      )}
-                      style={{ backgroundColor: `hsl(${c})` }}
-                      aria-label={`color ${c}`}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              {cover && (
+        {localDraft && (
+          <div className="px-4 sm:px-6 md:px-10 lg:px-12 pt-4 max-w-3xl mx-auto w-full">
+            <div className="flex items-center justify-between gap-3 rounded-md border border-primary/30 bg-primary/5 px-3 py-2">
+              <span className="text-xs text-muted-foreground">
+                An unsaved draft from an earlier session is available.
+              </span>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-[11px]"
+                  onClick={handleRestoreDraft}
+                >
+                  Restore
+                </Button>
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="w-full h-7 text-[11px]"
-                  onClick={removeCover}
+                  className="h-7 text-[11px]"
+                  onClick={discardLocalDraft}
+                >
+                  Discard
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+        {note?.deletedAt && (
+          <div className="px-4 sm:px-6 md:px-10 lg:px-12 pt-4 max-w-3xl mx-auto w-full">
+            <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-muted/40 px-3 py-2">
+              <div className="text-xs text-muted-foreground flex items-center gap-2">
+                <Trash2 className="h-3.5 w-3.5" />
+                This note is in Trash. Restore it to keep editing.
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 gap-1 text-[11px]"
+                  onClick={handleRestore}
+                >
+                  <RotateCcw className="h-3 w-3" /> Restore
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 gap-1 text-[11px] text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-3 w-3" /> Delete forever
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        Delete note permanently?
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently remove "{note.title || "Untitled"}"
+                        and all of its version history. This action cannot be
+                        undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handlePurge}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        Delete forever
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {cover && (
+          <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 md:px-10 lg:px-12 pt-4">
+            <div
+              className="h-32 w-full rounded-lg border border-border bg-cover bg-center"
+              style={{
+                backgroundColor: cover ? `hsl(${cover})` : undefined,
+              }}
+            />
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center justify-between gap-y-2 gap-x-2 px-4 sm:px-6 md:px-10 lg:px-12 pt-6 max-w-3xl mx-auto w-full">
+          <div className="flex items-center gap-2">
+            <SaveBadge
+              status={actionPending ? "updating" : status}
+              lastSavedAt={lastSaved}
+              isDirty={isDirty}
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 gap-1 text-[11px]"
+              onClick={saveNow}
+              disabled={actionPending || status === "saving"}
+            >
+              <Check className="h-3 w-3" /> Save
+            </Button>
+            {status === "conflict" && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 text-[11px]"
+                onClick={() => window.location.reload()}
+              >
+                Reload
+              </Button>
+            )}
+          </div>
+          <div className="flex items-center gap-1 flex-wrap">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={actionPending}
+                  className="h-7 px-2 text-[11px] border border-border bg-transparent hover:bg-muted/40 gap-1.5"
+                >
+                  {icon ? (
+                    <span className="text-sm leading-none">{icon}</span>
+                  ) : (
+                    <Smile className="h-3 w-3 text-muted-foreground" />
+                  )}
+                  <span className="text-muted-foreground">Icon</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="p-0 w-auto border-border">
+                <EmojiPicker
+                  theme={EmojiTheme.AUTO}
+                  onEmojiClick={(d) =>
+                    handleIcon(d.emoji, { emoji: icon, color: cover })
+                  }
+                  width={320}
+                  height={360}
+                />
+                {icon && (
+                  <div className="border-t border-border p-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={actionPending}
+                      className="w-full h-7 text-[11px]"
+                      onClick={() => setIcon(null)}
+                    >
+                      Remove icon
+                    </Button>
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={actionPending}
+                  className="h-7 px-2 text-[11px] border border-border bg-transparent hover:bg-muted/40 gap-1.5"
+                >
+                  <ImageIcon className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-muted-foreground">Cover</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-64 p-3 space-y-3">
+                <div>
+                  <div className="text-[11px] font-medium text-muted-foreground mb-1.5">
+                    Color
+                  </div>
+                  <div className="grid grid-cols-6 gap-1.5">
+                    {[
+                      "245 80% 66%",
+                      "200 80% 60%",
+                      "38 92% 60%",
+                      "142 65% 50%",
+                      "0 70% 60%",
+                      "280 70% 65%",
+                    ].map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                         onClick={() => handleCover(c, { emoji: icon, color: cover })}
+                         disabled={actionPending}
+                         className={cn(
+                           "h-7 rounded-md border-2",
+                           cover === c ? "border-foreground" : "border-transparent",
+                         )}
+                        style={{ backgroundColor: `hsl(${c})` }}
+                        aria-label={`color ${c}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                {cover && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="w-full h-7 text-[11px]"
+                    onClick={() => setCover(null)}
+                    disabled={actionPending}
+                  >
+                    Remove cover
+                  </Button>
+                )}
+              </PopoverContent>
+            </Popover>
+            <Select
+              value={selectNotebook ?? "__none__"}
+              disabled={actionPending}
+              onValueChange={(v) => handleNotebook(v)}
+            >
+              <SelectTrigger className="h-7 gap-1.5 px-2 text-[11px] border-border bg-transparent hover:bg-muted/40 w-auto min-w-0">
+                <BookOpen className="h-3 w-3 text-muted-foreground" />
+                <SelectValue placeholder="No notebook" />
+              </SelectTrigger>
+              <SelectContent align="end">
+                <SelectItem value="__none__">No notebook</SelectItem>
+                {notebooks?.map((nb) => (
+                  <SelectItem key={nb.id} value={nb.id}>
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: `hsl(${nb.color})` }}
+                      />
+                      {nb.name}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={actionPending}
+                  className="h-7 gap-1.5 px-2 text-[11px] border border-border bg-transparent hover:bg-muted/40"
+                >
+                  <TagIcon className="h-3 w-3 text-muted-foreground" />
+                  {selectTags.length === 0 ? (
+                    <span className="text-muted-foreground">No tags</span>
+                  ) : (
+                    <span>
+                      {selectTags.length} tag
+                      {selectTags.length === 1 ? "" : "s"}
+                    </span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent align="end" className="w-60 p-2">
+                <div className="flex items-center justify-between px-1 pb-1.5">
+                  <span className="text-[11px] font-medium text-muted-foreground">
+                    Tags
+                  </span>
+                  {selectTags.length > 0 && (
+                    <button
+                      onClick={() => handleTags([])}
+                      disabled={actionPending}
+                      className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+                    >
+                      <X className="h-3 w-3" /> Clear
+                    </button>
+                  )}
+                </div>
+                {tags?.length === 0 ? (
+                  <div className="px-2 py-3 text-[11px] text-muted-foreground">
+                    No tags yet. Create one from the sidebar.
+                  </div>
+                ) : (
+                  <div className="max-h-64 overflow-y-auto">
+                    {tags?.map((t) => {
+                      const selected = selectTags.includes(t.id);
+                      return (
+                        <button
+                          key={t.id}
+                          disabled={actionPending}
+                          onClick={() => toggleTag(t.id)}
+                          className="flex w-full items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-xs hover:bg-accent hover:text-accent-foreground"
+                        >
+                          <span className="flex items-center gap-2 min-w-0">
+                            <span
+                              className="h-2 w-2 rounded-full shrink-0"
+                              style={{ backgroundColor: `hsl(${t.color})` }}
+                            />
+                            <span className="truncate">{t.name}</span>
+                          </span>
+                          {selected && (
+                            <Check className="h-3.5 w-3.5 text-primary shrink-0" />
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </PopoverContent>
+            </Popover>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleTogglePin}
+              disabled={actionPending}
+              className="h-7 w-7"
+              aria-label="Pin"
+            >
+              <Pin
+                className={`h-3.5 w-3.5 ${isPinned ? "fill-primary text-primary" : ""}`}
+              />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleToggleFav}
+              disabled={actionPending}
+              className="h-7 w-7"
+              aria-label="Favorite"
+            >
+              <Star
+                className={`h-3.5 w-3.5 ${isFav ? "fill-warning text-warning" : ""}`}
+              />
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-7 w-7">
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={handleToggleArchive}
                   disabled={actionPending}
                 >
-                  Remove cover
-                </Button>
-              )}
-            </PopoverContent>
-          </Popover>
-          {/* Notebook */}
-          <Select
-            value={selectNotebook ?? "__none__"}
-            disabled={actionPending}
-            onValueChange={(v) => handleNotebook(v)}
-          >
-            <SelectTrigger className="h-7 gap-1.5 px-2 text-[11px] border-border bg-transparent hover:bg-muted/40 w-auto min-w-0">
-              <BookOpen className="h-3 w-3 text-muted-foreground" />
-              <SelectValue placeholder="No notebook" />
-            </SelectTrigger>
-            <SelectContent align="end">
-              <SelectItem value="__none__">No notebook</SelectItem>
-              {notebooks?.map((nb) => (
-                <SelectItem key={nb.id} value={nb.id}>
-                  <span className="flex items-center gap-2">
-                    <span
-                      className="h-2 w-2 rounded-full"
-                      style={{ backgroundColor: `hsl(${nb.color})` }}
-                    />
-                    {nb.name}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {/*  Tags */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                disabled={actionPending}
-                className="h-7 gap-1.5 px-2 text-[11px] border border-border bg-transparent hover:bg-muted/40"
-              >
-                <TagIcon className="h-3 w-3 text-muted-foreground" />
-                {selectTags.length === 0 ? (
-                  <span className="text-muted-foreground">No tags</span>
-                ) : (
-                  <span>
-                    {selectTags.length} tag
-                    {selectTags.length === 1 ? "" : "s"}
-                  </span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-60 p-2">
-              <div className="flex items-center justify-between px-1 pb-1.5">
-                <span className="text-[11px] font-medium text-muted-foreground">
-                  Tags
-                </span>
-                {selectTags.length > 0 && (
-                  <button
-                    onClick={() => {
-                      handleTags([]);
-                    }}
-                    disabled={actionPending}
-                    className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
-                  >
-                    <X className="h-3 w-3" /> Clear
-                  </button>
-                )}
-              </div>
-              {tags?.length === 0 ? (
-                <div className="px-2 py-3 text-[11px] text-muted-foreground">
-                  No tags yet. Create one from the sidebar.
-                </div>
-              ) : (
-                <div className="max-h-64 overflow-y-auto">
-                  {tags?.map((t) => {
-                    const selected = selectTags.includes(t.id);
-                    return (
-                      <button
-                        key={t.id}
-                        disabled={actionPending}
-                        onClick={() => toggleTag(t.id)}
-                        className="flex w-full items-center justify-between gap-2 rounded-sm px-2 py-1.5 text-xs hover:bg-accent hover:text-accent-foreground"
-                      >
-                        <span className="flex items-center gap-2 min-w-0">
-                          <span
-                            className="h-2 w-2 rounded-full shrink-0"
-                            style={{ backgroundColor: `hsl(${t.color})` }}
-                          />
-                          <span className="truncate">{t.name}</span>
-                        </span>
-                        {selected && (
-                          <Check className="h-3.5 w-3.5 text-primary shrink-0" />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </PopoverContent>
-          </Popover>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleTogglePin}
-            disabled={actionPending}
-            className="h-7 w-7"
-            aria-label="Pin"
-          >
-            <Pin
-              className={`h-3.5 w-3.5 ${isPinned ? "fill-primary text-primary" : ""}`}
-            />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleToggleFav}
-            disabled={actionPending}
-            className="h-7 w-7"
-            aria-label="Favorite"
-          >
-            <Star
-              className={`h-3.5 w-3.5 ${isFav ? "fill-warning text-warning" : ""}`}
-            />
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-7 w-7">
-                <MoreHorizontal className="h-3.5 w-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={handleToggleArchive} disabled={actionPending}>
-                <Archive className="h-3.5 w-3.5 mr-2" /> Archive
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={handleTrash}
-                disabled={actionPending}
-                className="text-destructive"
-              >
-                <Trash2 className="h-3.5 w-3.5 mr-2" /> Move to Trash
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-
-      <div className="px-4 sm:px-6 md:px-10 lg:px-12 pt-2 pb-0 max-w-3xl mx-auto w-full">
-        <input
-          value={draft.title}
-          onChange={(e) =>
-            setDraft((previous) => ({ ...previous, title: e.target.value }))
-          }
-          onBlur={handleTitleBlur}
-          placeholder="Untitled"
-          className="w-full bg-transparent text-3xl font-semibold tracking-tight outline-none placeholder:text-muted-foreground/40"
-        />
-        <div className="mt-1 text-[11px] text-muted-foreground">
-          {wc} words · {readingTime(wc)}
-        </div>
-        {selectTags.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {selectTags.map((tid) => {
-              const t = tags.find((x) => x.id === tid);
-              if (!t) return null;
-              return (
-                <Badge
-                  key={t.id}
-                  variant="secondary"
-                  className="gap-1 pl-1.5 pr-1 py-0.5 text-[10px] font-normal"
+                  <Archive className="h-3.5 w-3.5 mr-2" /> Archive
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleTrash}
+                  disabled={actionPending}
+                  className="text-destructive"
                 >
-                  <span
-                    className="h-1.5 w-1.5 rounded-full"
-                    style={{ backgroundColor: `hsl(${t.color})` }}
-                  />
-                  {t.name}
+                  <Trash2 className="h-3.5 w-3.5 mr-2" /> Move to Trash
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        <div className="px-4 sm:px-6 md:px-10 lg:px-12 pt-2 pb-0 max-w-3xl mx-auto w-full">
+          <input
+            value={draft.title}
+            onChange={(e) =>
+              setDraft((previous) => ({ ...previous, title: e.target.value }))
+            }
+            onBlur={handleTitleBlur}
+            placeholder="Untitled"
+            className="w-full bg-transparent text-3xl font-semibold tracking-tight outline-none placeholder:text-muted-foreground/40"
+          />
+          <div className="mt-1 text-[11px] text-muted-foreground">
+            {wc} words
+          </div>
+          {selectTags.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {selectTags.map((tid) => {
+                const t = tags.find((x) => x.id === tid);
+                if (!t) return null;
+                return (
+                  <Badge
+                    key={t.id}
+                    variant="secondary"
+                    className="gap-1 pl-1.5 pr-1 py-0.5 text-[10px] font-normal"
+                  >
+                    <span
+                      className="h-1.5 w-1.5 rounded-full"
+                      style={{ backgroundColor: `hsl(${t.color})` }}
+                    />
+                    {t.name}
                     <button
                       onClick={() => {
                         handleTags(selectTags.filter((id) => id !== t.id));
-                    }}
-                    className="ml-0.5 rounded-sm hover:bg-background/60 p-0.5"
-                    aria-label={`Remove ${t.name}`}
-                  >
-                    <X className="h-2.5 w-2.5" />
-                  </button>
-                </Badge>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                      }}
+                      className="ml-0.5 rounded-sm hover:bg-background/60 p-0.5"
+                      aria-label={`Remove ${t.name}`}
+                    >
+                      <X className="h-2.5 w-2.5" />
+                    </button>
+                  </Badge>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 md:px-10 lg:px-12 pt-2 pb-0 max-w-3xl mx-auto w-full">
         <NoteEditor
@@ -834,52 +729,4 @@ function NoteDetailEditor({ id, note, tags, notebooks }) {
       </AlertDialog>
     </div>
   );
-}
-
-function SaveBadge({ status, lastSavedAt, isDirty }) {
-  if (status === "updating")
-    return (
-      <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-        <Loader2 className="h-3 w-3 animate-spin" /> Updating…
-      </span>
-    );
-  if (status === "saving")
-    return (
-      <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-        <Loader2 className="h-3 w-3 animate-spin" /> Saving…
-      </span>
-    );
-  if (status === "error")
-    return (
-      <span className="text-[11px] text-destructive flex items-center gap-1">
-        <AlertCircle className="h-3 w-3" /> Save failed
-      </span>
-    );
-  if (status === "conflict")
-    return (
-      <span className="text-[11px] text-destructive flex items-center gap-1">
-        <AlertCircle className="h-3 w-3" /> Conflict - reload required
-      </span>
-    );
-  if (isDirty)
-    return (
-      <span className="text-[11px] text-warning flex items-center gap-1">
-        <AlertCircle className="h-3 w-3" /> Unsaved
-      </span>
-    );
-  if (status === "saved" || lastSavedAt)
-    return (
-      <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-        <CheckCircle2 className="h-3 w-3 text-success" /> Saved{" "}
-        {lastSavedAt ? `· ${timeAgo(lastSavedAt)}` : ""}
-      </span>
-    );
-  return <span className="text-[11px] text-muted-foreground">Draft</span>;
-}
-
-function timeAgo(d) {
-  const sec = Math.round((Date.now() - d.getTime()) / 1000);
-  if (sec < 5) return "just now";
-  if (sec < 60) return `${sec}s ago`;
-  return `${Math.round(sec / 60)}m ago`;
 }

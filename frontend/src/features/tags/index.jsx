@@ -5,4 +5,4 @@ export { EditTagDialog } from "./components/EditTagDialog";
 export { EditTagForm } from "./components/EditTagForm";
 export { DeleteTagDialog } from "./components/DeleteTagDialog";
 
-export { useTags } from "./hooks/useTags";
+

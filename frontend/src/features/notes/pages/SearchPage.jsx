@@ -59,9 +59,7 @@ export function SearchPage() {
   const [recents, setRecents] = useState([]);
   const debouncedQ = useDebounce(q, 1000);
 
-  useEffect(() => {
-    setPage(1);
-  }, [debouncedQ, notebookId, tagId, from, to, pinned]);
+
 
   const apiParams = useMemo(() => {
     const p = {};
@@ -77,13 +75,7 @@ export function SearchPage() {
     return p;
   }, [debouncedQ, notebookId, tagId, from, to, pinned, page]);
 
-  useEffect(() => {
-    try {
-      setRecents(JSON.parse(localStorage.getItem(RECENT_KEY) || "[]"));
-    } catch {
-      setRecents([]);
-    }
-  }, []);
+
 
   // Sync params for shareable URLs
   useEffect(() => {

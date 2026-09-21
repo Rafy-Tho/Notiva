@@ -18,7 +18,7 @@ import {
   Star,
   Trash2,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useNotebooks } from "@/features/notebooks/hooks/useNotebooks";
 import { useCreateNote, useNotes } from "../hooks/useNotes";
@@ -55,9 +55,7 @@ export function CommandPalette() {
     navigate(path);
   };
 
-  useEffect(() => {
-    if (!cmdkOpen) setQ("");
-  }, [cmdkOpen]);
+
 
   const newNote = async () => {
     try {

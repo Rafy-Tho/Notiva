@@ -8,4 +8,4 @@ export { EmptyEditor } from "./components/EmptyEditor";
 export { NoteEditor } from "./components/NoteEditor";
 export { EditorToolbar } from "./components/EditorToolbar";
 
-export { useNotes } from "./hooks/useNotes";
+

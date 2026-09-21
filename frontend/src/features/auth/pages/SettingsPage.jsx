@@ -15,7 +15,7 @@ import {
   Upload,
   User as UserIcon,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
@@ -69,9 +69,7 @@ export function SettingsPage() {
     useChangePassword();
   const { data: notes } = useNotes();
 
-  useEffect(() => {
-    if (user?.name) setName(user.name);
-  }, [user?.name]);
+
 
   if (!user) return null;
 

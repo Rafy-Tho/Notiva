@@ -4,7 +4,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { fetchWithAuth } from "@/lib/fecthWithAuth";
+import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { useAuthStore } from "@/store/authStore";
 
 const BASE_URL = import.meta.env.VITE_BASE_API;

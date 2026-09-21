@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { RouterProvider } from "react-router-dom";
-import router from "./routes";
+import { router } from "./routes";
 import { useAuthStore } from "@/store/authStore";
 import { Providers } from "./providers";
 
@@ -11,6 +11,7 @@ function Bootstrap({ children }) {
 
   useEffect(() => {
     restoreSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (isLoading && isAuthenticated) {
