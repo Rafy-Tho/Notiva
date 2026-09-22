@@ -1,5 +1,6 @@
 import * as authSvc from "./auth.service.js";
 import * as sessionSvc from "./session.service.js";
+import { UAParser } from "ua-parser-js";
 import { me as getUser } from "../users/user.service.js";
 import { sendResetEmail } from "../email/email.service.js";
 import { securityAudit } from "../../common/middleware/securityAudit.js";
@@ -24,7 +25,14 @@ function clearAuthCookie(res) {
 
 export async function register(req, res) {
   const user = await authSvc.register(req.body);
-  const session = await sessionSvc.createSession({ userId: user.id });
+  const ua = new UAParser(req.headers["user-agent"]);
+  const device = ua.getDevice();
+  const session = await sessionSvc.createSession({
+    userId: user.id,
+    deviceName: device.model || req.headers["sec-ch-ua-model"] || "Unknown Device",
+    ipAddress: req.ip,
+    userAgent: req.headers["user-agent"],
+  });
   setAuthCookie(res, session.rawToken);
   return ok(res, { user }, "registered", 201);
 }

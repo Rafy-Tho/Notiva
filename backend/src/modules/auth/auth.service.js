@@ -1,5 +1,6 @@
 import * as userRepo from "../users/user.repository.js";
 import { toPublicUser } from "../users/user.service.js";
+import { UAParser } from "ua-parser-js";
 import crypto from "node:crypto";
 import bcrypt from "bcrypt";
 import { hashToken } from "../../common/utils/tokens.js";
@@ -61,11 +62,13 @@ export async function login({ email, password }, req) {
     throw new UnauthorizedError("Invalid credentials");
   }
 
+  const ua = new UAParser(req.headers["user-agent"]);
+  const device = ua.getDevice();
   const session = await createSession({
     userId: user.id,
-    deviceName: req?.headers["sec-ch-ua-model"],
-    ipAddress: req?.ip,
-    userAgent: req?.headers["user-agent"],
+    deviceName: device.model || req.headers["sec-ch-ua-model"] || "Unknown Device",
+    ipAddress: req.ip,
+    userAgent: req.headers["user-agent"],
   });
 
   if (req) securityAudit.successfulLogin(normalizedEmail, req.ip);
