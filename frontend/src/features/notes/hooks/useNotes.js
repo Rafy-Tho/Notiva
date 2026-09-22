@@ -147,7 +147,6 @@ export function useUpdateNote(id) {
     },
     onSuccess: (data) => {
       queryClient.setQueryData(["note", id], data);
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
   });
 }
