@@ -23,6 +23,7 @@ model User {
   notebooks   Notebook[]
   tags       Tag[]
   notes      Note[]
+  sessions   UserSession[]
 }
 
 model Notebook {
@@ -91,4 +92,23 @@ model NoteTag {
 
   @@id([noteId, tagId])
   @@index([tagId])
+}
+
+model UserSession {
+  id          String   @id @default(uuid())
+  userId      String
+  tokenHash   String   @unique
+  deviceName  String?
+  ipAddress   String?
+  userAgent   String?
+  expiresAt   DateTime
+  lastUsedAt  DateTime?
+  revokedAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([tokenHash])
 }

@@ -1,10 +1,11 @@
-import * as svc from "./auth.service.js";
+import * as authSvc from "./auth.service.js";
+import * as sessionSvc from "./session.service.js";
 import { me as getUser } from "../users/user.service.js";
 import { sendResetEmail } from "../email/email.service.js";
 import { securityAudit } from "../../common/middleware/securityAudit.js";
 import { ok } from "../../common/utils/response.js";
 
-const COOKIE_NAME = "noteflow_token";
+const COOKIE_NAME = "noteflow_session";
 const COOKIE_OPTS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
@@ -22,28 +23,27 @@ function clearAuthCookie(res) {
 }
 
 export async function register(req, res) {
-  const user = await svc.register(req.body);
-  const { accessToken } = svc.issueToken(user);
-  setAuthCookie(res, accessToken);
+  const user = await authSvc.register(req.body);
+  const session = await sessionSvc.createSession({ userId: user.id });
+  setAuthCookie(res, session.rawToken);
   return ok(res, { user }, "registered", 201);
 }
 
 export async function login(req, res) {
-  const user = await svc.login(req.body, req);
-  const { accessToken } = svc.issueToken(user);
-  setAuthCookie(res, accessToken);
+  const { user, session } = await authSvc.login(req.body, req);
+  setAuthCookie(res, session.rawToken);
   return ok(res, { user }, "logged in");
 }
 
 export async function forgotPassword(req, res) {
-  const canProceed = await svc.checkResetRate(req.body.email);
+  const canProceed = await authSvc.checkResetRate(req.body.email);
 
   if (!canProceed) {
     securityAudit.passwordResetRequested(req.body.email, req.ip);
     return ok(res, null, "If that email exists, a reset link has been sent");
   }
 
-  const result = await svc.createResetToken(req.body.email);
+  const result = await authSvc.createResetToken(req.body.email);
 
   if (result) {
     securityAudit.passwordResetRequested(result.user.email, req.ip);
@@ -57,12 +57,15 @@ export async function forgotPassword(req, res) {
 }
 
 export async function resetPassword(req, res) {
-  await svc.consumeResetToken(req.body.token, req.body.password);
+  await authSvc.consumeResetToken(req.body.token, req.body.password);
   securityAudit.passwordResetCompleted(req.body.email, req.ip);
   return ok(res, null, "Password updated");
 }
 
 export async function logout(req, res) {
+  if (req.userId) {
+    await sessionSvc.revokeAllSessions(req.userId);
+  }
   clearAuthCookie(res);
   return ok(res, null, "logged out");
 }

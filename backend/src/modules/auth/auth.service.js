@@ -2,10 +2,10 @@ import * as userRepo from "../users/user.repository.js";
 import { toPublicUser } from "../users/user.service.js";
 import crypto from "node:crypto";
 import bcrypt from "bcrypt";
-import { signToken, hashToken } from "../../common/utils/tokens.js";
+import { hashToken } from "../../common/utils/tokens.js";
 import { trackLoginAttempt, checkResetRate } from "../../common/utils/rateLimit.js";
 import { securityAudit } from "../../common/middleware/securityAudit.js";
-import { getRedisClient } from "../../config/redis.js";
+import { createSession } from "./session.service.js";
 import {
   ConflictError,
   UnauthorizedError,
@@ -61,17 +61,15 @@ export async function login({ email, password }, req) {
     throw new UnauthorizedError("Invalid credentials");
   }
 
-  const redis = getRedisClient();
-  await redis.del(`login_attempts:${normalizedEmail}`);
-  await redis.del(`login_locked:${normalizedEmail}`);
+  const session = await createSession({
+    userId: user.id,
+    deviceName: req?.headers["sec-ch-ua-model"],
+    ipAddress: req?.ip,
+    userAgent: req?.headers["user-agent"],
+  });
 
   if (req) securityAudit.successfulLogin(normalizedEmail, req.ip);
-  return toPublicUser(user);
-}
-
-export function issueToken(user) {
-  const accessToken = signToken(user.id);
-  return { accessToken, user };
+  return { user: toPublicUser(user), session };
 }
 
 export async function createResetToken(email) {
@@ -103,9 +101,6 @@ export async function consumeResetToken(token, newPassword) {
     resetToken: null,
     resetTokenExpires: null,
   });
-
-  const redis = getRedisClient();
-  await redis.del(`password_reset:${updated.email}`);
 
   return toPublicUser(updated);
 }
