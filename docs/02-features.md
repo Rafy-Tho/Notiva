@@ -114,7 +114,7 @@
 | **Entry Point** | Search icon, ⌘K |
 | **Frontend** | SearchPage component |
 | **Backend** | `GET /api/v1/notes` with search param |
-| **Database** | MongoDB text indexes |
+| **Database** | PostgreSQL case-insensitive search |
 | **Status** | IMPLEMENTED |
 
 ---

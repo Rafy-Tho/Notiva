@@ -4,7 +4,7 @@
 
 The application is implemented and currently in maintenance/development.
 
-Last analyzed: 2026-09-20
+Last analyzed: 2026-09-22
 
 ## Completed
 
@@ -18,6 +18,7 @@ Last analyzed: 2026-09-20
 - Note Organization (notebooks, tags, pin, favorite, archive)
 - Note Search
 - Note Trash System (30-day retention)
+- PostgreSQL/Prisma persistence (migrated from MongoDB/Mongoose)
 - Notebook Management
 - Tag Management
 - Avatar Upload
@@ -52,6 +53,17 @@ All known issues resolved (see `docs/15-known-issues.md` for completion summary)
 See `decisions/unresolved-questions.md` for additional unknowns that may represent technical debt.
 
 ## Recent Changes
+
+**2026-09-22** - Migrated persistence from MongoDB/Mongoose to PostgreSQL/Prisma:
+- Replaced Mongoose models with Prisma schema (User, Note, Notebook, Tag, NoteTag)
+- Converted all repositories to Prisma queries via a shared client (`src/db/prisma.js`)
+- Converted auth/user/note/notebook/tag services and removed direct DB access from services
+- Normalized `tagIds` array into the `NoteTag` relation; API still returns `tagIds`
+- Mapped `coverColor`/`coverEmoji` back to the `cover` object at the service boundary
+- Replaced `isMongoId` validation with `isUUID`
+- Mapped Prisma errors to the existing AppError/error envelope
+- Rewrote backup/restore scripts for PostgreSQL; removed Mongoose dependency
+- Updated docs (architecture, data model, environment, backup) and ai/ notes
 
 **2025-09-20** - Resolved all 12 known issues:
 - Added backup/restore scripts and recovery documentation

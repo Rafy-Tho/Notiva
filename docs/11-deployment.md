@@ -37,7 +37,7 @@ No build step required (native ESM, no transpilation)
 ### Runtime Configuration
 | Variable | Purpose | Required |
 |----------|---------|----------|
-| `MONGO_URI` | MongoDB connection string | Yes |
+| `DATABASE_URL` | PostgreSQL connection string | Yes |
 | `JWT_ACCESS_SECRET` | JWT signing secret | Yes |
 | `PORT` | Server port | Yes |
 | `FRONTEND_ORIGIN` | CORS allowed origins | Yes |
@@ -57,12 +57,12 @@ npm run dev
 
 ## Database Deployment
 
-**MongoDB Atlas** (cloud-hosted)
+**PostgreSQL** (cloud-hosted, e.g. Neon/RDS)
 
 **Configuration:**
-- Connection string via `MONGO_URI`
+- Connection string via `DATABASE_URL`
 - Network access configured to allow backend IP
-- Atlas-specific features: text indexes for search
+- Migrations applied with `npx prisma migrate deploy`
 
 ---
 
@@ -70,7 +70,7 @@ npm run dev
 
 | Service | Deployment Requirement |
 |---------|----------------------|
-| MongoDB Atlas | Provision cloud cluster |
+| PostgreSQL | Provision cloud database + run migrations |
 | Cloudinary | Create account, get credentials |
 | Brevo | Create account, get API key |
 
@@ -107,7 +107,7 @@ FRONTEND_ORIGIN=https://yourapp.onrender.com
 
 ```
 1. Load environment variables (dotenv)
-2. Connect to MongoDB
+2. Connect to PostgreSQL (Prisma `$connect`)
 3. Initialize Express app
 4. Set up middleware (helmet, cors, etc.)
 5. Register routes

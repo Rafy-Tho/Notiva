@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { validateEnv } from "./config/env.js";
-import { connectMongo, shutdownMongo } from "./config/database.js";
+import { connectPostgres, shutdownPostgres } from "./db/prisma.js";
 import { shutdownRedis } from "./config/redis.js";
 import { app } from "./app/app.js";
 import { setupRoutes } from "./app/routes.js";
@@ -11,7 +11,7 @@ validateEnv();
 
 async function shutdown() {
   console.log("Shutting down...");
-  await Promise.all([shutdownMongo(), shutdownRedis()]);
+  await Promise.all([shutdownPostgres(), shutdownRedis()]);
   process.exit(0);
 }
 
@@ -20,7 +20,7 @@ process.on("SIGINT", shutdown);
 
 async function server() {
   try {
-    await connectMongo();
+    await connectPostgres();
     setupRoutes(app);
     const server = app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

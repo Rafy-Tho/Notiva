@@ -2,10 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const noteRepository = vi.hoisted(() => ({
   findById: vi.fn(),
-  findByIdAndUpdate: vi.fn(),
+  updateById: vi.fn(),
   findMany: vi.fn(),
   countMany: vi.fn(),
   createOne: vi.fn(),
+  softDelete: vi.fn(),
+  restore: vi.fn(),
   deleteOne: vi.fn(),
   findTrash: vi.fn(),
   aggregateNoteCounts: vi.fn(),
@@ -27,41 +29,44 @@ describe("updateNote", () => {
   });
 
   it("updates explicit empty, false, null, and metadata values atomically", async () => {
-    const updatedNote = { id: "note-1", updatedAt: "2026-09-04T00:00:01.000Z" };
-    noteRepository.findByIdAndUpdate.mockResolvedValue(updatedNote);
+    const updatedNote = {
+      id: "note-1",
+      coverColor: "",
+      coverEmoji: "",
+      tags: [],
+      updatedAt: "2026-09-04T00:00:01.000Z",
+    };
+    noteRepository.updateById.mockResolvedValue(updatedNote);
 
-    await expect(
-      updateNote(
-        "user-1",
-        "note-1",
-        {
-          title: "",
-          content: "",
-          notebookId: null,
-          tagIds: [],
-          cover: { color: null, emoji: null },
-          isFavorite: false,
-        },
-      ),
-    ).resolves.toBe(updatedNote);
+    const result = await updateNote("user-1", "note-1", {
+      title: "",
+      content: "",
+      notebookId: null,
+      tagIds: [],
+      cover: { color: null, emoji: null },
+      isFavorite: false,
+    });
 
-    expect(noteRepository.findByIdAndUpdate).toHaveBeenCalledWith(
-      "note-1",
-      {
+    expect(noteRepository.updateById).toHaveBeenCalledWith("user-1", "note-1", {
+      data: {
         content: "",
-        cover: { color: null, emoji: null },
+        coverColor: "",
+        coverEmoji: "",
         isFavorite: false,
         notebookId: null,
-        tagIds: [],
         title: "",
         wordCount: 0,
       },
-    );
+      tagIds: [],
+      expectedUpdatedAt: undefined,
+    });
+    expect(result.tagIds).toEqual([]);
+    expect(result.cover).toEqual({ color: "", emoji: "" });
   });
 
   it("returns a conflict when the expected version is stale", async () => {
-    noteRepository.findByIdAndUpdate.mockResolvedValue(null);
-    noteRepository.findById.mockResolvedValue({ _id: "note-1" });
+    noteRepository.updateById.mockResolvedValue(null);
+    noteRepository.findById.mockResolvedValue({ id: "note-1" });
 
     await expect(
       updateNote(
@@ -74,7 +79,7 @@ describe("updateNote", () => {
   });
 
   it("returns not found when the note does not exist", async () => {
-    noteRepository.findByIdAndUpdate.mockResolvedValue(null);
+    noteRepository.updateById.mockResolvedValue(null);
     noteRepository.findById.mockResolvedValue(null);
 
     await expect(
@@ -91,20 +96,14 @@ describe("listNotes", () => {
   it("returns paginated notes with content preview", async () => {
     const mockNotes = [
       {
-        _id: "note-1",
+        id: "note-1",
         title: "Test Note",
         content: "<p>Hello world</p>",
+        coverColor: "",
+        coverEmoji: "",
+        tags: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        toJSON() {
-          return {
-            _id: "note-1",
-            title: "Test Note",
-            content: "<p>Hello world</p>",
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          };
-        },
       },
     ];
 
@@ -122,20 +121,14 @@ describe("listNotes", () => {
   it("includes content when includeContent is true", async () => {
     const mockNotes = [
       {
-        _id: "note-1",
+        id: "note-1",
         title: "Test Note",
         content: "<p>Hello world</p>",
+        coverColor: "",
+        coverEmoji: "",
+        tags: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        toJSON() {
-          return {
-            _id: "note-1",
-            title: "Test Note",
-            content: "<p>Hello world</p>",
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          };
-        },
       },
     ];
 
@@ -155,9 +148,12 @@ describe("createNote", () => {
 
   it("creates a note with sanitized content", async () => {
     const mockNote = {
-      _id: "note-1",
+      id: "note-1",
       title: "Test Note",
       content: "<p>Hello world</p>",
+      coverColor: "",
+      coverEmoji: "",
+      tags: [],
       wordCount: 2,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -176,9 +172,12 @@ describe("createNote", () => {
 
   it("uses default title when not provided", async () => {
     const mockNote = {
-      _id: "note-1",
+      id: "note-1",
       title: "Untitled",
       content: "",
+      coverColor: "",
+      coverEmoji: "",
+      tags: [],
       wordCount: 0,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -199,16 +198,21 @@ describe("getNote", () => {
 
   it("returns the note when found", async () => {
     const mockNote = {
-      _id: "note-1",
+      id: "note-1",
       title: "Test Note",
       content: "<p>Hello world</p>",
+      coverColor: "245 80% 66%",
+      coverEmoji: "📝",
+      tags: [{ tagId: "tag-1" }],
     };
 
     noteRepository.findById.mockResolvedValue(mockNote);
 
     const result = await getNote("user-1", "note-1");
 
-    expect(result).toBe(mockNote);
+    expect(result).toMatchObject({ id: "note-1", title: "Test Note" });
+    expect(result.tagIds).toEqual(["tag-1"]);
+    expect(result.cover).toEqual({ color: "245 80% 66%", emoji: "📝" });
   });
 
   it("throws NotFoundError when note not found", async () => {
@@ -227,18 +231,24 @@ describe("softDelete", () => {
 
   it("sets deletedAt timestamp on note", async () => {
     const mockNote = {
-      _id: "note-1",
+      id: "note-1",
       title: "Test Note",
+      coverColor: "",
+      coverEmoji: "",
+      tags: [],
       deletedAt: null,
-      save: vi.fn().mockResolvedValue(),
     };
 
     noteRepository.findById.mockResolvedValue(mockNote);
+    noteRepository.softDelete.mockResolvedValue({
+      ...mockNote,
+      deletedAt: new Date(),
+    });
 
     const result = await softDelete("user-1", "note-1");
 
-    expect(mockNote.deletedAt).toBeTruthy();
-    expect(mockNote.save).toHaveBeenCalled();
+    expect(noteRepository.softDelete).toHaveBeenCalledWith("user-1", "note-1");
+    expect(result.deletedAt).toBeTruthy();
   });
 
   it("throws NotFoundError when note not found", async () => {

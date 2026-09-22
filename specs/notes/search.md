@@ -37,10 +37,10 @@ Authenticated users
 ## Behavior
 
 1. Validate input
-2. Build MongoDB query with text search
+2. Build Prisma `where` with case-insensitive partial match on title/content
 3. Filter by userId (ownership)
 4. Apply pagination
-5. Return matching notes sorted by relevance
+5. Return matching notes
 
 ## Frontend
 
@@ -59,7 +59,7 @@ Authenticated users
 
 ## Database
 
-MongoDB text indexes on Note collection (title, content, markdown fields)
+PostgreSQL `Note` table; case-insensitive `contains` match on `title` and `content`
 
 ## Authorization
 
@@ -91,11 +91,12 @@ Frontend:
 - frontend/src/store/notesStore.js
 
 Backend:
-- backend/src/routes/notes.routes.js
-- backend/src/controllers/notes.controller.js
-- backend/src/services/notes.service.js
-- backend/src/models/Note.js
+- backend/src/modules/notes/note.routes.js
+- backend/src/modules/notes/note.controller.js
+- backend/src/modules/notes/note.service.js
+- backend/src/modules/notes/note.repository.js
+- backend/prisma/schema.prisma
 
 ## Unknowns
 
-- Exact text index configuration
+- None

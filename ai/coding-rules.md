@@ -15,7 +15,7 @@ File Organization
 **Backend:**
 - controllers/ - Request handlers per resource
 - services/ - Business logic per resource
-- models/ - Mongoose schemas
+- repositories/ - Prisma data access per resource
 - routes/ - API route definitions
 - validators/ - express-validator schemas
 - middleware/ - Shared middleware
@@ -65,10 +65,11 @@ API Patterns
 Database Patterns
 -----------------
 - All queries filter by userId (ownership)
-- Use .lean() for read-only queries
-- Check deletedAt before returning documents
-- Use populate() for relationships
-- Indexes: text on title/content, compound on (userId, name)
+- Use Prisma `select`/`include` to avoid over-fetching
+- Check deletedAt before returning records
+- Use `include`/`select` for relations (replaces populate())
+- Indexes: (userId, updatedAt), (userId, name) unique, etc.
+- Map Prisma fields to the API shape in services (e.g. cover, tagIds)
 
 Frontend Patterns
 -----------------

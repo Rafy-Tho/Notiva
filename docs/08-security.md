@@ -76,9 +76,9 @@
 
 | Protection | Implementation |
 |------------|----------------|
-| **Query escaping** | Mongoose handles escaping |
+| **Parameterized queries** | Prisma parameterizes all query values |
 | **Input validation** | express-validator sanitizes inputs |
-| **No raw queries** | All queries use Mongoose methods |
+| **Raw queries** | Prisma `$queryRaw` uses tagged-template parameters |
 
 ---
 
@@ -97,7 +97,7 @@
 | Secret | Environment Variable |
 |--------|---------------------|
 | JWT signing key | `JWT_ACCESS_SECRET` |
-| MongoDB connection | `MONGO_URI` |
+| PostgreSQL connection | `DATABASE_URL` |
 | Cloudinary credentials | `CLOUDINARY_*` |
 | Brevo API key | `BREVO_API_KEY` |
 

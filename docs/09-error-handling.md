@@ -111,9 +111,9 @@ All API errors follow this structure:
 | `database_error` | 500 | Database operation failed |
 
 **Triggers:**
-- MongoDB connection failure
+- PostgreSQL connection failure
 - Query execution error
-- Index violation
+- Unique/foreign-key constraint violation (mapped to 409/400)
 
 ---
 

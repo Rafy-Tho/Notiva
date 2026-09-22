@@ -2,17 +2,17 @@
 
 ## External Services
 
-### MongoDB Atlas
+### PostgreSQL
 
 | Attribute | Value |
 |-----------|-------|
-| **Service** | MongoDB Atlas |
-| **Purpose** | Primary database hosting |
-| **Integration Point** | `backend/src/config/db.js` |
-| **Authentication** | Connection string in `MONGO_URI` |
-| **API Usage** | Mongoose ODM (v9) |
+| **Service** | PostgreSQL |
+| **Purpose** | Primary database |
+| **Integration Point** | `backend/src/db/prisma.js` (shared PrismaClient) |
+| **Authentication** | Connection string in `DATABASE_URL` |
+| **API Usage** | Prisma ORM v7 + `@prisma/adapter-pg` |
 | **Failure Behavior** | App fails to start if connection fails |
-| **Configuration** | `MONGO_URI` environment variable |
+| **Configuration** | `DATABASE_URL` environment variable |
 
 ---
 
@@ -48,7 +48,7 @@
 
 | Service | Type | Sync/Async | Required |
 |---------|------|------------|----------|
-| MongoDB Atlas | Database | Sync | Yes |
+| PostgreSQL | Database | Sync | Yes |
 | Cloudinary | Storage | Sync | No |
 | Brevo | Email | Sync | No |
 
@@ -62,7 +62,7 @@ NoteFlow Backend
     ├───┬────────────┐
     │   │            │
     ▼   ▼            ▼
-MongoDB Cloudinary  Brevo
+PostgreSQL Cloudinary  Brevo
 ```
 
 All integrations are configured via environment variables and are initialized on application startup.

@@ -7,7 +7,7 @@
 #### Required
 | Name | Purpose | Default |
 |------|---------|---------|
-| `MONGO_URI` | MongoDB Atlas connection string | - |
+| `DATABASE_URL` | PostgreSQL connection string (used by Prisma) | - |
 | `JWT_ACCESS_SECRET` | Secret key for JWT signing | - |
 | `PORT` | Server listening port | - |
 | `FRONTEND_ORIGIN` | Allowed CORS origin | - |
@@ -38,7 +38,7 @@
 
 ### Backend (`backend/.env`)
 ```
-MONGO_URI=mongodb+srv://...
+DATABASE_URL=postgresql://...
 JWT_ACCESS_SECRET=your-secret-key
 PORT=5000
 FRONTEND_ORIGIN=http://localhost:5173
@@ -84,7 +84,7 @@ VITE_BASE_API=http://localhost:5000/api/v1
 
 | Service | Purpose | Configuration |
 |---------|---------|---------------|
-| MongoDB Atlas | Primary database | MONGO_URI |
+| PostgreSQL | Primary database | DATABASE_URL |
 | Cloudinary | Avatar storage | CLOUDINARY_* |
 | Brevo | Email delivery | BREVO_* |
 
@@ -97,7 +97,7 @@ VITE_BASE_API=http://localhost:5000/api/v1
 | API Base | localhost:5000 | Render domain |
 | Frontend Origin | localhost:5173 | Render domain |
 | Cookie secure | false | true |
-| Database | Atlas cluster | Atlas cluster |
+| Database | PostgreSQL | PostgreSQL |
 | Logging | Verbose (morgan) | Minimal |
 
 ---

@@ -20,7 +20,7 @@ export const generalLimiter = rateLimit({
   max: 100,
   skip: (req) => skipHealthCheck(req) || skipTrustedIP(req),
   store: new RedisStore({
-    sendCommand: (...args) => redis.sendCommand(...args),
+    sendCommand: (...args) => redis.call(...args),
   }),
 });
 
@@ -28,6 +28,6 @@ export const authLimiter = rateLimit({
   ...sharedOptions,
   max: 10,
   store: new RedisStore({
-    sendCommand: (...args) => redis.sendCommand(...args),
+    sendCommand: (...args) => redis.call(...args),
   }),
 });

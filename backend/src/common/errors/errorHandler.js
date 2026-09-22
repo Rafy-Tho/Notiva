@@ -8,37 +8,65 @@ export function notFoundHandler(req, res) {
 }
 
 function normalizeError(err) {
-  if (err.name === "ValidationError") {
-    const messages = Object.values(err.errors).map((e) => e.message);
+  if (typeof err.code === "string" && /^P\d{4}$/.test(err.code)) {
+    switch (err.code) {
+      case "P2002": {
+        const target = err.meta?.target;
+        const field = Array.isArray(target)
+          ? target.join(", ")
+          : target ?? "field";
+        return {
+          status: 409,
+          code: "DUPLICATE_KEY",
+          message: `${field} already exists`,
+        };
+      }
+      case "P2025":
+        return {
+          status: 404,
+          code: "NOT_FOUND",
+          message: "Resource not found",
+        };
+      case "P2003":
+        return {
+          status: 400,
+          code: "FOREIGN_KEY_VIOLATION",
+          message: "Related record not found",
+        };
+      case "P2000":
+        return {
+          status: 400,
+          code: "VALUE_TOO_LONG",
+          message: "Provided value is too long",
+        };
+      case "P2004":
+        return {
+          status: 400,
+          code: "CONSTRAINT_FAILED",
+          message: "Database constraint failed",
+        };
+      default:
+        return {
+          status: 400,
+          code: "DATABASE_ERROR",
+          message: "Database request failed",
+        };
+    }
+  }
+
+  if (err.name === "PrismaClientValidationError") {
     return {
       status: 400,
       code: "VALIDATION_ERROR",
-      message: messages.join(", "),
+      message: "Invalid request data",
     };
   }
 
-  if (err.code === 11000) {
-    const field = Object.keys(err.keyValue ?? {})[0] ?? "field";
+  if (err.name === "PrismaClientInitializationError") {
     return {
-      status: 409,
-      code: "DUPLICATE_KEY",
-      message: `${field} already exists`,
-    };
-  }
-
-  if (err.name === "CastError") {
-    return {
-      status: 400,
-      code: "INVALID_ID",
-      message: `Invalid value for field: ${err.path}`,
-    };
-  }
-
-  if (err.name === "DocumentNotFoundError") {
-    return {
-      status: 404,
-      code: "NOT_FOUND",
-      message: "Resource not found",
+      status: 503,
+      code: "DATABASE_UNAVAILABLE",
+      message: "Database unavailable",
     };
   }
 
@@ -81,7 +109,11 @@ function normalizeError(err) {
   };
 }
 
-export function errorHandler(err, req, res) {
+export function errorHandler(err, req, res, next) {
+  if (res.headersSent) {
+    return next(err);
+  }
+
   const { status, code, message } = normalizeError(err);
 
   if (status === 500 && process.env.NODE_ENV === "development") {

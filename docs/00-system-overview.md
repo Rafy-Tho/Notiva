@@ -46,32 +46,33 @@ NoteFlow addresses the need for:
                           ▼
 ┌─────────────────────────────────────────────────────┐
 │                    Backend (Express API)             │
-│  Node.js • Express 5 • Mongoose 9 • bcrypt  │
+│  Node.js • Express 5 • Prisma 7 • bcrypt  │
 │  jsonwebtoken • express-validator • helmet • cors  │
 └─────────────────────────────────────────────────────┘
                           │
                           ▼
 ┌─────────────────────────────────────────────────────┐
 │                   Database & Services                │
-│  MongoDB Atlas • Cloudinary • Brevo (Email)        │
+│  PostgreSQL • Cloudinary • Brevo (Email)        │
 └─────────────────────────────────────────────────────┘
 ```
 
 ## Database
 
-**MongoDB Atlas** with Mongoose ODM. Collection schema:
-- `users` - User accounts with hashed passwords
-- `notes` - Rich-text notes with ownership (userId)
-- `notebooks` - Note categorization
-- `tags` - Note tagging system
+**PostgreSQL** with Prisma ORM. Tables:
+- `User` - User accounts with hashed passwords
+- `Note` - Rich-text notes with ownership (userId)
+- `Notebook` - Note categorization
+- `Tag` - Note tagging system
+- `NoteTag` - Note ↔ Tag join table
 
-All collections support soft-delete via `deletedAt` field.
+All primary entities support soft-delete via `deletedAt` field.
 
 ## External Services
 
 | Service | Purpose | Integration Point |
 |---------|---------|-------------------|
-| MongoDB Atlas | Primary database | Mongoose connection |
+| PostgreSQL | Primary database | Prisma Client (pg driver adapter) |
 | Cloudinary | Image hosting (avatars) | `/me/avatar` endpoint |
 | Brevo | Email delivery | Password reset emails |
 

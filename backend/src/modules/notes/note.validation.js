@@ -26,7 +26,7 @@ const contentRules = [
 const notebookIdRules = [
   body("notebookId")
     .optional({ nullable: true })
-    .isMongoId()
+    .isUUID()
     .withMessage("Invalid notebook id")
     .bail(),
 ];
@@ -37,7 +37,7 @@ const tagIdsRules = [
     .isArray({ min: 0 })
     .withMessage("Invalid tags")
     .bail(),
-  body("tagIds.*").optional().isMongoId().withMessage("Invalid tag id").bail(),
+  body("tagIds.*").optional().isUUID().withMessage("Invalid tag id").bail(),
 ];
 
 const coverRules = [
@@ -95,7 +95,7 @@ export const create = [
 ];
 
 export const update = [
-  param("id").isMongoId().withMessage("Invalid note id").bail(),
+  param("id").isUUID().withMessage("Invalid note id").bail(),
   ...titleRules,
   ...contentRules,
   ...notebookIdRules,

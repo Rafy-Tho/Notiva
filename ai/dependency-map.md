@@ -65,7 +65,7 @@ Technical Dependencies
 ----------------------
 **Backend:**
 - Express: HTTP server
-- Mongoose: Database ODM
+- Prisma: PostgreSQL ORM
 - jsonwebtoken: JWT tokens
 - bcrypt: Password hashing
 - express-validator: Input validation

@@ -1,89 +1,105 @@
 import * as repo from "./note.repository.js";
 import { cleanHtml, wordCount, htmlToText } from "../../common/utils/html.js";
-import { NotFoundError } from "../../common/errors/NotFoundError.js";
+import {
+  NotFoundError,
+} from "../../common/errors/NotFoundError.js";
 import { ConflictError } from "../../common/errors/ConflictError.js";
 
-export async function listNotes(userId, query = {}) {
+export function toNoteResponse(note) {
+  if (!note) return note;
+  const { coverColor, coverEmoji, tags, ...rest } = note;
+  return {
+    ...rest,
+    cover: { color: coverColor ?? "", emoji: coverEmoji ?? "" },
+    tagIds: tags ? tags.map((tag) => tag.tagId) : [],
+  };
+}
+
+function buildFilter(query = {}) {
   const {
     search,
     dateFilter,
     from,
     to,
-    page = 1,
-    limit = 20,
-    sort,
     notebookId,
     tagId,
     isArchived,
     isFavorite,
     isPinned,
     trashed,
-    includeContent,
   } = query;
 
   const filter = {};
 
   if (search) {
-    filter.$text = { $search: search };
+    filter.OR = [
+      { title: { contains: search, mode: "insensitive" } },
+      { content: { contains: search, mode: "insensitive" } },
+    ];
   }
 
   const now = new Date();
+  const updatedAt = {};
+
   if (dateFilter === "today") {
-    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    filter.updatedAt = { $gte: start };
+    updatedAt.gte = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   } else if (dateFilter === "yesterday") {
-    const start = new Date(
+    updatedAt.gte = new Date(
       now.getFullYear(),
       now.getMonth(),
       now.getDate() - 1,
     );
-    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    filter.updatedAt = { $gte: start, $lt: end };
+    updatedAt.lt = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   } else if (dateFilter === "last_7_days") {
-    const start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    filter.updatedAt = { $gte: start };
+    updatedAt.gte = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   } else if (dateFilter === "last_30_days") {
-    const start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-    filter.updatedAt = { $gte: start };
+    updatedAt.gte = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   } else if (dateFilter === "last_90_days") {
-    const start = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
-    filter.updatedAt = { $gte: start };
+    updatedAt.gte = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
   } else if (dateFilter === "last_year") {
-    const start = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-    filter.updatedAt = { $gte: start };
+    updatedAt.gte = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
   } else if (dateFilter === "custom") {
-    if (from || to) {
-      filter.updatedAt = {};
-      if (from) filter.updatedAt.$gte = new Date(from);
-      if (to) filter.updatedAt.$lte = new Date(`${to  }T23:59:59`);
-    }
+    if (from) updatedAt.gte = new Date(from);
+    if (to) updatedAt.lte = new Date(`${to}T23:59:59`);
   }
 
+  if (Object.keys(updatedAt).length > 0) filter.updatedAt = updatedAt;
+
   if (notebookId) filter.notebookId = notebookId;
-  if (tagId) filter.tagIds = tagId;
+  if (tagId) filter.tags = { some: { tagId } };
   if (isArchived === "true") filter.isArchived = true;
   if (isFavorite === "true") filter.isFavorite = true;
   if (isPinned === "true") filter.isPinned = true;
   if (trashed === "true") {
-    filter.deletedAt = { $ne: null };
+    filter.deletedAt = { not: null };
   } else {
     filter.deletedAt = null;
   }
 
-  const sortOption =
-    sort === "title" ? { title: 1 } : { isPinned: -1, updatedAt: -1 };
+  return filter;
+}
+
+export async function listNotes(userId, query = {}) {
+  const { page = 1, limit = 20, sort, includeContent } = query;
+
+  const filter = buildFilter(query);
+
+  const orderBy =
+    sort === "title"
+      ? { title: "asc" }
+      : [{ isPinned: "desc" }, { updatedAt: "desc" }];
 
   const pageNum = Math.max(1, parseInt(page, 10) || 1);
   const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
   const skip = (pageNum - 1) * limitNum;
 
   const [notes, total] = await Promise.all([
-    repo.findMany(userId, filter, { sort: sortOption, skip, limit: limitNum }),
+    repo.findMany(userId, filter, { orderBy, skip, take: limitNum }),
     repo.countMany(userId, filter),
   ]);
 
   const notesWithPreview = notes.map((note) => {
-    const n = note.toJSON();
+    const n = toNoteResponse(note);
     const text = htmlToText(n.content);
     n.contentPreview = text.slice(0, 50);
     if (includeContent !== "true") delete n.content;
@@ -103,7 +119,7 @@ export async function listNotes(userId, query = {}) {
 export async function getNote(userId, id) {
   const note = await repo.findById(userId, id);
   if (!note) throw new NotFoundError();
-  return note;
+  return toNoteResponse(note);
 }
 
 export async function createNote(userId, data) {
@@ -118,7 +134,7 @@ export async function createNote(userId, data) {
     isFavorite: data.isFavorite || false,
     wordCount: wordCount(content) || 0,
   });
-  return note;
+  return toNoteResponse(note);
 }
 
 export async function updateNote(userId, id, data, opts = {}) {
@@ -132,33 +148,37 @@ export async function updateNote(userId, id, data, opts = {}) {
     updates.wordCount = wordCount(content);
   }
 
-  for (const field of [
-    "notebookId",
-    "tagIds",
-    "cover",
-    "isPinned",
-    "isArchived",
-    "isFavorite",
-  ]) {
+  for (const field of ["notebookId", "isPinned", "isArchived", "isFavorite"]) {
     if (Object.hasOwn(data, field)) updates[field] = data[field];
   }
 
-  if (Object.keys(updates).length === 0) return getNote(userId, id);
-
-  const filter = { _id: id, userId };
-  if (opts.expectedUpdatedAt) {
-    filter.updatedAt = new Date(opts.expectedUpdatedAt);
+  if (Object.hasOwn(data, "cover")) {
+    updates.coverColor = data.cover?.color ?? "";
+    updates.coverEmoji = data.cover?.emoji ?? "";
   }
 
-  const note = await repo.findByIdAndUpdate(id, updates);
+  const tagIds = Object.hasOwn(data, "tagIds") ? data.tagIds || [] : undefined;
 
-  if (note) return note;
+  if (Object.keys(updates).length === 0 && tagIds === undefined) {
+    return getNote(userId, id);
+  }
+
+  const note = await repo.updateById(userId, id, {
+    data: updates,
+    tagIds,
+    expectedUpdatedAt: opts.expectedUpdatedAt,
+  });
+
+  if (note) return toNoteResponse(note);
 
   const exists = await repo.findById(userId, id);
   if (!exists) throw new NotFoundError();
 
   if (opts.expectedUpdatedAt) {
-    throw new ConflictError("Note has been updated since last read", "NOTE_CONFLICT");
+    throw new ConflictError(
+      "Note has been updated since last read",
+      "NOTE_CONFLICT",
+    );
   }
 
   throw new ConflictError("Note could not be updated");
@@ -166,31 +186,31 @@ export async function updateNote(userId, id, data, opts = {}) {
 
 export async function softDelete(userId, id) {
   const note = await getNote(userId, id);
-  note.deletedAt = new Date();
-  await note.save();
-  return note;
+  const deleted = await repo.softDelete(userId, note.id);
+  return toNoteResponse(deleted);
 }
 
 export async function restore(userId, id) {
   const note = await getNote(userId, id);
-  note.deletedAt = null;
-  await note.save();
-  return note;
+  const restored = await repo.restore(userId, note.id);
+  return toNoteResponse(restored);
 }
 
 export async function permanentDelete(userId, id) {
-  await repo.deleteOne(userId, id);
+  return repo.deleteOne(userId, id);
 }
 
 export async function toggleField(userId, id, field) {
   const note = await getNote(userId, id);
-  note[field] = !note[field];
-  await note.save();
-  return note;
+  const updated = await repo.updateById(userId, id, {
+    data: { [field]: !note[field] },
+  });
+  return toNoteResponse(updated);
 }
 
 export async function trashNotes(userId) {
-  return await repo.findTrash(userId);
+  const notes = await repo.findTrash(userId);
+  return notes.map(toNoteResponse);
 }
 
 export async function getNoteCounts(userId) {
@@ -201,7 +221,7 @@ export async function getNoteCounts(userId) {
       repo.countMany(userId, baseFilter),
       repo.countMany(userId, { ...baseFilter, isFavorite: true }),
       repo.countMany(userId, { ...baseFilter, isArchived: true }),
-      repo.countMany(userId, { deletedAt: { $ne: null } }),
+      repo.countMany(userId, { deletedAt: { not: null } }),
       repo.aggregateNoteCounts(userId),
       repo.aggregateTagCounts(userId),
     ]);

@@ -1,117 +1,126 @@
 # NoteFlow — Data Model
 
+Persistence is PostgreSQL, accessed through Prisma (`backend/prisma/schema.prisma`).
+All primary keys are UUIDs (`String @id @default(uuid())`).
+
 ## Entities
 
 ### User
-**Collection:** `users`
+**Table:** `User`
 
 **Purpose:** Application user accounts
 
 | Field | Type | Required | Default | Notes |
 |-------|------|----------|---------|-------|
-| `_id` | ObjectId | Yes | auto | Primary key |
+| `id` | UUID | Yes | `uuid()` | Primary key |
 | `name` | String | Yes | | User display name |
-| `email` | String | Yes | | Unique, lowercase, indexed |
+| `email` | String | Yes | | Unique, stored lowercase |
 | `password` | String | Yes | | bcrypt hash (cost 12) |
 | `avatar` | String | No | | Cloudinary URL |
 | `resetToken` | String | No | | SHA-256 hashed |
-| `resetTokenExpires` | Date | No | | 1-hour expiry |
-| `deletedAt` | Date | No | null | Soft delete marker |
-| `createdAt` | Date | Yes | auto | Timestamp |
-| `updatedAt` | Date | Yes | auto | Timestamp |
+| `resetTokenExpires` | Timestamp | No | | 1-hour expiry |
+| `deletedAt` | Timestamp | No | null | Soft delete marker |
+| `createdAt` | Timestamp | Yes | `now()` | |
+| `updatedAt` | Timestamp | Yes | `@updatedAt` | |
 
-**Indexes:**
+**Constraints / Indexes:**
 - `email` (unique)
 
-**JSON Transform:**
-- `password`, `resetToken`, `resetTokenExpires` excluded from responses
-- `_id` renamed to `id`
-- `__v` excluded
+**API serialization (`toPublicUser`):**
+- `password`, `resetToken`, `resetTokenExpires` are never returned
 
 ---
 
 ### Note
-**Collection:** `notes`
+**Table:** `Note`
 
 **Purpose:** Rich-text user notes
 
 | Field | Type | Required | Default | Notes |
 |-------|------|----------|---------|-------|
-| `_id` | ObjectId | Yes | auto | Primary key |
-| `title` | String | No | "Untitled" | |
-| `content` | String | No | "" | HTML content (TipTap output) |
-| `userId` | ObjectId | Yes | | References User, indexed |
-| `notebookId` | ObjectId | No | null | References Notebook, indexed |
-| `tagIds` | Array | No | [] | References Tag[] (indexed array) |
-| `isPinned` | Boolean | No | false | Pin status |
-| `isFavorite` | Boolean | No | false | Favorite status |
-| `isArchived` | Boolean | No | false | Archive status |
-| `cover` | Object | No | {} | `{color: string, emoji: string}` |
-| `wordCount` | Number | No | 0 | Estimated word count |
-| `deletedAt` | Date | No | null | Soft delete marker |
-| `createdAt` | Date | Yes | auto | Timestamp |
-| `updatedAt` | Date | Yes | auto | Timestamp |
+| `id` | UUID | Yes | `uuid()` | Primary key |
+| `title` | String | Yes | "Untitled" | |
+| `content` | String | Yes | "" | HTML content (TipTap output) |
+| `userId` | UUID | Yes | | FK → User (cascade delete) |
+| `notebookId` | UUID | No | null | FK → Notebook (set null on delete) |
+| `isPinned` | Boolean | Yes | false | |
+| `isFavorite` | Boolean | Yes | false | |
+| `isArchived` | Boolean | Yes | false | |
+| `coverColor` | String | Yes | "" | Cover background color |
+| `coverEmoji` | String | Yes | "" | Cover emoji |
+| `wordCount` | Int | Yes | 0 | Estimated word count |
+| `deletedAt` | Timestamp | No | null | Soft delete marker |
+| `createdAt` | Timestamp | Yes | `now()` | |
+| `updatedAt` | Timestamp | Yes | `@updatedAt` | |
+
+**Relationships:**
+- Many-to-many with `Tag` through the `NoteTag` join table
 
 **Indexes:**
-- `userId`
-- `notebookId`
-- `tagIds` (array index)
-- `title`, `content` (text search)
+- `(userId, updatedAt)`
+- `(userId, notebookId)`
+- `(userId, isPinned, updatedAt)`
+- `deletedAt`
 
-**Virtuals:**
-- `contentPreview` - First 50 chars of plain text content
-
-**JSON Transform:**
-- `_id` renamed to `id`
-- `__v` excluded
+**API serialization (`toNoteResponse`):**
+- `coverColor` + `coverEmoji` → `cover: { color, emoji }`
+- `NoteTag` rows → `tagIds: string[]`
+- `contentPreview` added on list responses (first 50 chars of plain text)
 
 ---
 
 ### Notebook
-**Collection:** `notebooks`
+**Table:** `Notebook`
 
 **Purpose:** Note categorization folders
 
 | Field | Type | Required | Default | Notes |
 |-------|------|----------|---------|-------|
-| `_id` | ObjectId | Yes | auto | Primary key |
+| `id` | UUID | Yes | `uuid()` | Primary key |
 | `name` | String | Yes | | Unique per user |
-| `color` | String | No | "245 80% 66%" | Tailwind color |
-| `userId` | ObjectId | Yes | | References User, indexed |
-| `deletedAt` | Date | No | null | Soft delete marker |
-| `createdAt` | Date | Yes | auto | Timestamp |
-| `updatedAt` | Date | Yes | auto | Timestamp |
+| `color` | String | Yes | "245 80% 66%" | |
+| `userId` | UUID | Yes | | FK → User (cascade delete) |
+| `deletedAt` | Timestamp | No | null | Soft delete marker |
+| `createdAt` | Timestamp | Yes | `now()` | |
+| `updatedAt` | Timestamp | Yes | `@updatedAt` | |
 
-**Indexes:**
-- `userId`, `name` (unique compound)
-
-**JSON Transform:**
-- `_id` renamed to `id`
-- `__v` excluded
+**Constraints:**
+- `@@unique([userId, name])`
 
 ---
 
 ### Tag
-**Collection:** `tags`
+**Table:** `Tag`
 
 **Purpose:** Note tagging system
 
 | Field | Type | Required | Default | Notes |
 |-------|------|----------|---------|-------|
-| `_id` | ObjectId | Yes | auto | Primary key |
+| `id` | UUID | Yes | `uuid()` | Primary key |
 | `name` | String | Yes | | Unique per user |
-| `color` | String | No | "200 80% 60%" | Tailwind color |
-| `userId` | ObjectId | Yes | | References User, indexed |
-| `deletedAt` | Date | No | null | Soft delete marker |
-| `createdAt` | Date | Yes | auto | Timestamp |
-| `updatedAt` | Date | Yes | auto | Timestamp |
+| `color` | String | Yes | "245 80% 66%" | |
+| `userId` | UUID | Yes | | FK → User (cascade delete) |
+| `deletedAt` | Timestamp | No | null | Soft delete marker |
+| `createdAt` | Timestamp | Yes | `now()` | |
+| `updatedAt` | Timestamp | Yes | `@updatedAt` | |
 
-**Indexes:**
-- `userId`, `name` (unique compound)
+**Constraints:**
+- `@@unique([userId, name])`
+- `NoteTag.tagId` indexed
 
-**JSON Transform:**
-- `_id` renamed to `id`
-- `__v` excluded
+---
+
+### NoteTag
+**Table:** `NoteTag`
+
+**Purpose:** Join table between Notes and Tags
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `noteId` | UUID | Yes | FK → Note (cascade delete) |
+| `tagId` | UUID | Yes | FK → Tag (cascade delete) |
+
+**Primary key:** `@@id([noteId, tagId])`
 
 ---
 
@@ -121,8 +130,8 @@
 User ─── (1:N) ─── Notes
 User ─── (1:N) ─── Notebooks
 User ─── (1:N) ─── Tags
-Note ─── (N:1) ─── Notebook
-Note ─── (N:N) ─── Tags [via tagIds array]
+Notebook ─── (1:N) ─── Notes
+Note ─── (N:N) ─── Tags [via NoteTag]
 ```
 
 ---
@@ -131,27 +140,31 @@ Note ─── (N:N) ─── Tags [via tagIds array]
 
 | Model | Constraint | Enforcement |
 |-------|------------|-------------|
-| User | email unique | MongoDB unique index |
-| Notebook | (userId, name) unique | MongoDB unique compound index |
-| Tag | (userId, name) unique | MongoDB unique compound index |
-| Note | userId required | Mongoose schema validation |
+| User | id primary key, email unique | PostgreSQL |
+| Notebook | (userId, name) unique | PostgreSQL compound unique |
+| Tag | (userId, name) unique | PostgreSQL compound unique |
+| Note | userId FK, notebookId FK | PostgreSQL foreign keys |
+| NoteTag | (noteId, tagId) primary key | PostgreSQL |
 
 ---
 
 ## Soft Delete Pattern
 
-All entities use `deletedAt` field:
+All primary entities use `deletedAt`:
 - `null` = active record
-- Date value = soft-deleted record
+- Timestamp = soft-deleted record
 
-**Query Pattern:**
+**Query Pattern (Prisma):**
 ```javascript
 // Find active notes
-Note.find({ userId, deletedAt: null })
+prisma.note.findMany({ where: { userId, deletedAt: null } })
 
-// Find all notes including trash
-Note.find({ userId })
+// Find trashed notes
+prisma.note.findMany({ where: { userId, deletedAt: { not: null } } })
 ```
+
+Note: MongoDB's `tagIds` array was normalized into the `NoteTag` relation.
+The API still exposes `tagIds` (mapped in `toNoteResponse`), so clients are unaffected.
 
 ---
 
@@ -169,11 +182,11 @@ All data is owned by a single user:
 ## Lifecycle Behavior
 
 ### Creation
-- All timestamps auto-populated by Mongoose
+- `id`, `createdAt`, `updatedAt` handled by Prisma defaults
 - `title` defaults to "Untitled" for notes
 
 ### Update
-- `updatedAt` auto-populated on modification
+- `updatedAt` updated automatically via `@updatedAt`
 
 ### Soft Delete
 - `deletedAt` set to current timestamp
@@ -182,7 +195,6 @@ All data is owned by a single user:
 ### Hard Delete
 - Physical removal from database
 - Used for permanent purge of notes
-- Not implemented for notebooks/tags
 
 ---
 
@@ -190,7 +202,8 @@ All data is owned by a single user:
 
 | Field | Validation |
 |-------|------------|
-| User.name | 2-50 chars, letters and spaces only |
+| User.name | 2-50 chars (request validation) |
 | User.email | Valid email format |
-| User.password | Min 8 chars, uppercase, lowercase, digit, special char |
-| Note.content | Sanitized HTML (server) + DOMPurified (client) |
+| User.password | Min 8 chars |
+| Note.content | Sanitized HTML (server) + DOMPurify (client) |
+| Route ids | UUID (`isUUID`) |

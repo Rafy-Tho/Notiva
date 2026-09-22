@@ -80,7 +80,7 @@ Server State (TanStack Query)
 |-----------|------------|
 | Runtime | Node.js (native ESM) |
 | Framework | Express 5 |
-| Database ODM | Mongoose 9 |
+| Database | PostgreSQL + Prisma 7 |
 | Validation | express-validator |
 | Security | bcrypt, jsonwebtoken, helmet, cors |
 
@@ -104,11 +104,9 @@ Controller Layer (request/response handling)
     ↓
 Service Layer (business logic)
     ↓
-Repository Layer (data access)
+Repository Layer (data access, Prisma)
     ↓
-Model Layer (Mongoose schemas)
-    ↓
-Database (MongoDB Atlas)
+PostgreSQL (Prisma Client + pg driver adapter)
 ```
 
 ### Key Files
@@ -120,7 +118,8 @@ Database (MongoDB Atlas)
 | `backend/src/modules/*/routes.js` | Route definitions |
 | `backend/src/modules/*/controller.js` | Request handlers |
 | `backend/src/modules/*/service.js` | Business logic |
-| `backend/src/modules/*/repository.js` | Data access layer |
+| `backend/src/modules/*/repository.js` | Data access layer (Prisma) |
+| `backend/src/db/prisma.js` | Shared PrismaClient singleton |
 
 ---
 
@@ -129,50 +128,54 @@ Database (MongoDB Atlas)
 ### Schema
 ```
 User
-├── _id (ObjectId, PK)
+├── id (UUID, PK)
 ├── name (String)
-├── email (String, unique, indexed)
+├── email (String, unique)
 ├── password (String, bcrypt hashed)
 ├── avatar (String, Cloudinary URL)
 ├── resetToken (String, SHA-256 hashed)
-├── resetTokenExpires (Date)
-├── deletedAt (Date, soft delete)
-├── createdAt (Date)
-└── updatedAt (Date)
+├── resetTokenExpires (Timestamp)
+├── deletedAt (Timestamp, soft delete)
+├── createdAt (Timestamp)
+└── updatedAt (Timestamp)
 
 Note
-├── _id (ObjectId, PK)
+├── id (UUID, PK)
 ├── title (String)
 ├── content (String, HTML)
-├── userId (ObjectId, FK → User, indexed)
-├── notebookId (ObjectId, FK → Notebook, indexed)
-├── tagIds (Array of ObjectId, indexed)
+├── userId (UUID, FK → User, indexed)
+├── notebookId (UUID, FK → Notebook, indexed)
 ├── isPinned (Boolean)
 ├── isFavorite (Boolean)
 ├── isArchived (Boolean)
-├── cover (Object: {color, emoji})
-├── wordCount (Number)
-├── deletedAt (Date, soft delete)
-├── createdAt (Date)
-└── updatedAt (Date)
+├── coverColor (String)
+├── coverEmoji (String)
+├── wordCount (Int)
+├── deletedAt (Timestamp, soft delete)
+├── createdAt (Timestamp)
+└── updatedAt (Timestamp)
 
 Notebook
-├── _id (ObjectId, PK)
+├── id (UUID, PK)
 ├── name (String, unique per user)
 ├── color (String)
-├── userId (ObjectId, FK → User, indexed)
-├── deletedAt (Date, soft delete)
-├── createdAt (Date)
-└── updatedAt (Date)
+├── userId (UUID, FK → User, indexed)
+├── deletedAt (Timestamp, soft delete)
+├── createdAt (Timestamp)
+└── updatedAt (Timestamp)
 
 Tag
-├── _id (ObjectId, PK)
+├── id (UUID, PK)
 ├── name (String, unique per user)
 ├── color (String)
-├── userId (ObjectId, FK → User, indexed)
-├── deletedAt (Date, soft delete)
-├── createdAt (Date)
-└── updatedAt (Date)
+├── userId (UUID, FK → User, indexed)
+├── deletedAt (Timestamp, soft delete)
+├── createdAt (Timestamp)
+└── updatedAt (Timestamp)
+
+NoteTag (join table)
+├── noteId (UUID, FK → Note)
+└── tagId (UUID, FK → Tag)
 ```
 
 ### Relationships
@@ -181,16 +184,17 @@ User (1) ──< Notes (N)
 User (1) ──< Notebooks (N)
 User (1) ──< Tags (N)
 Notebook (1) ──< Notes (N)
-Tag (N) ── Notes (N) [via tagIds array]
+Note (N) ── Tag (N) [via NoteTag]
 ```
 
 ### Indexes
-| Collection | Index |
-|------------|-------|
+| Table | Index |
+|-------|-------|
 | User | email (unique) |
-| Note | userId, notebookId, tagIds (array), title+content (text) |
-| Notebook | userId+name (unique compound) |
-| Tag | userId+name (unique compound) |
+| Note | (userId, updatedAt), (userId, notebookId), (userId, isPinned, updatedAt), deletedAt |
+| Notebook | (userId, name) unique |
+| Tag | (userId, name) unique |
+| NoteTag | (tagId) |
 
 ---
 
@@ -214,9 +218,9 @@ Controller (extracts data, calls service)
     ↓
 Service (business logic, DB operations)
     ↓
-Mongoose (query/transform)
+Repository (Prisma queries)
     ↓
-MongoDB Atlas
+PostgreSQL
     ↓
 Response back through middleware chain
 ```
@@ -278,7 +282,7 @@ me.service.get() fetches user
 ### External Services
 | Service | Protocol | Usage |
 |---------|----------|-------|
-| MongoDB Atlas | Mongoose ODM | Primary database |
+| PostgreSQL | Prisma ORM | Primary database |
 | Cloudinary | REST API | Avatar image hosting |
 | Brevo | REST API | Email delivery |
 

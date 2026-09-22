@@ -32,11 +32,13 @@ Or use Windows Task Scheduler for Windows environments.
 {
   "timestamp": "2025-01-15T10:30:00.000Z",
   "version": "1.0.0",
-  "collections": {
-    "users": [...],
-    "notes": [...],
-    "notebooks": [...],
-    "tags": [...]
+  "database": "postgresql",
+  "tables": {
+    "User": [...],
+    "Notebook": [...],
+    "Tag": [...],
+    "Note": [...],
+    "NoteTag": [...]
   }
 }
 ```
@@ -58,13 +60,13 @@ npm run restore -- backup/backups/backup-2025-01-15T10-30-00-000Z.json
 
 Check that users and notes are accessible after restoration.
 
-## MongoDB Atlas
+## PostgreSQL Hosted Backups
 
-If using MongoDB Atlas:
+If using a managed PostgreSQL provider (Neon, RDS, Supabase, etc.):
 
-1. Enable **Continuous Backups** in Atlas dashboard
-2. Configure **Automated Snapshots** (recommended: daily)
-3. Set **Point-in-Time Recovery** if available
+1. Enable automated backups / point-in-time recovery in the provider dashboard
+2. Schedule regular snapshots (recommended: daily)
+3. Use `pg_dump` for a logical backup of the `public` schema if needed
 
 ## Best Practices
 
@@ -84,7 +86,7 @@ If using MongoDB Atlas:
 
 ## Notes
 
-- Backups exclude deleted documents (soft delete pattern)
+- Backups include soft-deleted rows (restore is a full table replace)
 - Restore overwrites existing data
 - Always verify backup integrity before using for recovery
 - Store backup files separately from application servers

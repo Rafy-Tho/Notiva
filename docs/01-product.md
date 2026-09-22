@@ -60,7 +60,7 @@ NoteFlow is a **note-taking and knowledge management web application** that enab
 | Tags (CRUD) | ✅ Fully implemented | `/tags/*` routes |
 | Pin/Favorite/Archive | ✅ Fully implemented | Toggle endpoints |
 | Trash system | ✅ Fully implemented | Soft-delete + restore/purge |
-| Full-text search | ✅ Fully implemented | MongoDB text indexes |
+| Full-text search | ✅ Fully implemented | Case-insensitive search on title/content |
 | Auto-save | ✅ Fully implemented | `useAutosave` hook |
 | Command palette | ✅ Fully implemented | cmdk integration |
 | Avatar upload | ✅ Fully implemented | Cloudinary service |
@@ -102,7 +102,7 @@ NoteFlow is a **note-taking and knowledge management web application** that enab
 
 | Constraint | Impact |
 |------------|--------|
-| MongoDB Atlas hosting | Cloud-only database, no local deployment |
+| PostgreSQL hosting | Hosted database (e.g. Neon, RDS), no embedded DB |
 | Single-user data model | No multi-tenancy or team features |
 | Sync-based auto-save | No real-time sync across devices |
 

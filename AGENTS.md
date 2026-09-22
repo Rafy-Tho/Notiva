@@ -4,7 +4,7 @@
 
 ## Project
 
-A full-stack note-taking web application with rich text editing, notebooks, tags, and search functionality. Built with React (frontend) and Node.js/Express (backend), using MongoDB for storage.
+A full-stack note-taking web application with rich text editing, notebooks, tags, and search functionality. Built with React (frontend) and Node.js/Express (backend), using PostgreSQL via Prisma for storage.
 
 ## Repository Structure
 
@@ -28,7 +28,7 @@ note-taking-app-4/
 │       │   ├── middleware/
 │       │   ├── utils/
 │       │   └── constants/
-│       ├── models/       # Mongoose schemas
+│       ├── db/           # Shared PrismaClient singleton
 │       ├── tests/        # Unit and integration tests
 │       └── server.js
 ├── frontend/             # React SPA
@@ -70,7 +70,7 @@ note-taking-app-4/
 
 **Frontend:** React 19 + Vite 8 + Router 7 + Zustand 5 + TanStack Query 5 + Tailwind CSS + TipTap Editor
 
-**Backend:** Node.js (ESM) + Express 5 + Mongoose 9 + JWT auth + express-validator + helmet
+**Backend:** Node.js (ESM) + Express 5 + Prisma 7 + PostgreSQL + JWT auth + express-validator + helmet
 
 **Data Flow:**
 
@@ -87,9 +87,9 @@ Controllers
     ↓
 Services (business logic)
     ↓
-Repositories (data access)
+Repositories (data access via Prisma)
     ↓
-Database (MongoDB via Mongoose)
+Database (PostgreSQL via Prisma)
 ```
 
 ## Source of Truth
@@ -98,7 +98,7 @@ Before making any changes, the agent MUST inspect:
 
 1. **source code** - Implementation details in backend/src/modules/, backend/src/common/, backend/src/app/
 2. **tests** - backend/src/tests/notes.service.test.js (current test coverage)
-3. **database** - Mongoose models in backend/src/models/
+3. **database** - Prisma schema in backend/prisma/schema.prisma and the shared client in backend/src/db/prisma.js
 4. **docs/** - System documentation in docs/ (especially 03-architecture.md, 04-data-model.md, 05-api.md)
 5. **progress.md** - Current project progress and status
 6. **specs/** - Feature specifications in specs/ (auth/, notes/, notebooks/, tags/, profile/)

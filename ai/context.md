@@ -22,14 +22,14 @@ Tech Stack
 **Backend:**
 - Node.js (ES modules)
 - Express 5
-- Mongoose 9
+- Prisma 7 (PostgreSQL)
 - jsonwebtoken + bcrypt
 - express-validator
 - helmet + cors + express-rate-limit
 
 **Database:**
-- MongoDB Atlas
-- Mongoose ODM
+- PostgreSQL
+- Prisma ORM (`@prisma/client` + `@prisma/adapter-pg`)
 
 Architecture
 ------------
@@ -40,7 +40,7 @@ API Client (fetchWithAuth, credentials: "include")
     ↓
 HTTP API (/api/v1/*)
     ↓
-Routes → Controllers → Services → Database (MongoDB/Mongoose)
+Routes → Controllers → Services → Repositories → Prisma → PostgreSQL
 ```
 
 **Frontend Structure:**
@@ -60,19 +60,21 @@ Major Features
 
 Database
 --------
-**Collections:** User, Note, Notebook, Tag
+**Tables:** User, Note, Notebook, Tag, NoteTag (join table)
 
 **Key Fields:**
-- User: email (unique), password (bcrypt), avatar
-- Note: title, content (HTML), userId, notebookId, tagIds, isPinned/isFavorite/isArchived, cover, wordCount
-- Notebook: name (unique per user), color, userId
-- Tag: name (unique per user), color, userId
+- User: id (UUID), email (unique), password (bcrypt), avatar
+- Note: id (UUID), title, content (HTML), userId, notebookId, coverColor/coverEmoji, wordCount
+- Notebook: id (UUID), name (unique per user), color, userId
+- Tag: id (UUID), name (unique per user), color, userId
+- NoteTag: noteId + tagId (composite PK)
 
 **Patterns:**
-- Soft delete via `deletedAt` field on all collections
+- Soft delete via `deletedAt` field on User/Note/Notebook/Tag
 - User ownership via `userId` field on all user-specific entities
-- Text indexes on Note.title and Note.content
-- Unique compound indexes: (userId, name) on Notebooks and Tags
+- Search via case-insensitive `contains` on title/content
+- Unique compound constraints: (userId, name) on Notebook and Tag
+- API maps `coverColor`/`coverEmoji` → `cover`, and NoteTag rows → `tagIds`
 
 Authentication
 --------------
@@ -91,7 +93,7 @@ Authorization
 
 External Services
 -----------------
-- **MongoDB Atlas**: Primary database
+- **PostgreSQL**: Primary database
 - **Cloudinary**: Avatar image hosting
 - **Brevo (Sendinblue)**: Password reset emails
 
@@ -99,7 +101,7 @@ Deployment
 ----------
 - Backend: Node.js server (`server.js`)
 - Frontend: Vite static build
-- Environment vars: MONGO_URI, JWT_SECRET, CLOUDINARY_*, BREVO_*, etc.
+- Environment vars: DATABASE_URL, JWT_ACCESS_SECRET, CLOUDINARY_*, BREVO_*, etc.
 
 Important Constraints
 ---------------------

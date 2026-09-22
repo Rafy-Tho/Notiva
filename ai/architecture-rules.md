@@ -18,9 +18,9 @@ Controllers
     ↓
 Services (business logic)
     ↓
-Repositories (data access)
+Repositories (data access, Prisma)
     ↓
-Database (MongoDB/Mongoose)
+PostgreSQL
 ```
 
 Backend Architecture
@@ -35,8 +35,8 @@ Backend Architecture
 - Controllers call services for data operations
 
 **Repository pattern:**
-- Repositories handle all database queries
-- Services call repositories instead of accessing models directly
+- Repositories handle all Prisma queries (via the shared client in src/db/prisma.js)
+- Services call repositories instead of accessing Prisma directly
 - One repository per module
 
 **Controller pattern:**

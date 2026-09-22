@@ -1,57 +1,128 @@
-import mongoose from "mongoose";
-import Note from "../../models/Note.js";
+import prisma from "../../db/prisma.js";
 
-export async function findMany(userId, filter, options) {
-  return Note.find({ userId, ...filter })
-    .lean()
-    .sort(options.sort)
-    .skip(options.skip)
-    .limit(options.limit);
+const tagInclude = { tags: { select: { tagId: true } } };
+
+export async function findMany(userId, where, { orderBy, skip, take }) {
+  return prisma.note.findMany({
+    where: { userId, ...where },
+    orderBy,
+    skip,
+    take,
+    include: tagInclude,
+  });
 }
 
-export async function countMany(userId, filter) {
-  return Note.countDocuments({ userId, ...filter });
+export async function countMany(userId, where) {
+  return prisma.note.count({ where: { userId, ...where } });
 }
 
 export async function findById(userId, id) {
-  return Note.findOne({ _id: id, userId });
+  return prisma.note.findFirst({
+    where: { id, userId },
+    include: tagInclude,
+  });
 }
 
-export async function createOne(data) {
-  return Note.create(data);
+export async function createOne({
+  userId,
+  title,
+  content,
+  notebookId,
+  tagIds,
+  cover,
+  isPinned,
+  isFavorite,
+  isArchived,
+  wordCount,
+}) {
+  return prisma.note.create({
+    data: {
+      userId,
+      title,
+      content,
+      notebookId: notebookId ?? null,
+      isPinned: isPinned ?? false,
+      isFavorite: isFavorite ?? false,
+      isArchived: isArchived ?? false,
+      wordCount: wordCount ?? 0,
+      coverColor: cover?.color ?? "",
+      coverEmoji: cover?.emoji ?? "",
+      tags: { create: (tagIds ?? []).map((tagId) => ({ tagId })) },
+    },
+    include: tagInclude,
+  });
 }
 
-export async function findByIdAndUpdate(id, updates) {
-  return Note.findOneAndUpdate(
-    { _id: id },
-    { $set: updates },
-    { new: true, runValidators: true }
-  );
+export async function updateById(userId, id, { data = {}, tagIds, expectedUpdatedAt } = {}) {
+  return prisma.$transaction(async (tx) => {
+    const where = { id, userId };
+    if (expectedUpdatedAt) {
+      where.updatedAt = new Date(expectedUpdatedAt);
+    }
+
+    const result = await tx.note.updateMany({ where, data });
+    if (result.count === 0) return null;
+
+    if (tagIds !== undefined) {
+      await tx.noteTag.deleteMany({ where: { noteId: id } });
+      if (tagIds.length > 0) {
+        await tx.noteTag.createMany({
+          data: tagIds.map((tagId) => ({ noteId: id, tagId })),
+          skipDuplicates: true,
+        });
+      }
+    }
+
+    return tx.note.findFirst({ where: { id, userId }, include: tagInclude });
+  });
+}
+
+export async function softDelete(userId, id) {
+  const result = await prisma.note.updateMany({
+    where: { id, userId },
+    data: { deletedAt: new Date() },
+  });
+  if (result.count === 0) return null;
+  return findById(userId, id);
+}
+
+export async function restore(userId, id) {
+  const result = await prisma.note.updateMany({
+    where: { id, userId },
+    data: { deletedAt: null },
+  });
+  if (result.count === 0) return null;
+  return findById(userId, id);
 }
 
 export async function deleteOne(userId, id) {
-  return Note.deleteOne({ _id: id, userId });
+  const result = await prisma.note.deleteMany({ where: { id, userId } });
+  return result.count;
 }
 
 export async function findTrash(userId) {
-  return Note.find({ userId, deletedAt: { $ne: null } });
+  return prisma.note.findMany({
+    where: { userId, deletedAt: { not: null } },
+    include: tagInclude,
+  });
 }
 
 export async function aggregateNoteCounts(userId) {
-  return Note.aggregate([
-    { $match: { userId: new mongoose.Types.ObjectId(userId), deletedAt: null } },
-    { $group: { _id: "$notebookId", count: { $sum: 1 } } },
-    { $project: { _id: 0, id: "$_id", count: 1 } },
-    { $limit: 100 },
-  ]);
+  const rows = await prisma.note.groupBy({
+    by: ["notebookId"],
+    where: { userId, deletedAt: null },
+    _count: { _all: true },
+  });
+  return rows.map((row) => ({ id: row.notebookId, count: row._count._all }));
 }
 
 export async function aggregateTagCounts(userId) {
-  return Note.aggregate([
-    { $match: { userId: new mongoose.Types.ObjectId(userId), deletedAt: null } },
-    { $unwind: { path: "$tagIds", preserveNullAndEmptyArrays: false } },
-    { $group: { _id: "$tagIds", count: { $sum: 1 } } },
-    { $project: { _id: 0, id: "$_id", count: 1 } },
-    { $limit: 100 },
-  ]);
+  const rows = await prisma.$queryRaw`
+    SELECT nt."tagId" AS id, COUNT(*)::int AS count
+    FROM "NoteTag" nt
+    JOIN "Note" n ON n."id" = nt."noteId"
+    WHERE n."userId" = ${userId} AND n."deletedAt" IS NULL
+    GROUP BY nt."tagId"
+    LIMIT 100`;
+  return rows;
 }

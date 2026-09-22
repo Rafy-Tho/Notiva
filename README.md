@@ -1,6 +1,6 @@
 # NoteFlow — Full-Stack Note-Taking Application
 
-> **Version:** 1.0.0 | **Stack:** React 19 + Express 5 + MongoDB Atlas
+> **Version:** 1.0.0 | **Stack:** React 19 + Express 5 + PostgreSQL (Prisma)
 
 ---
 
@@ -11,7 +11,7 @@
 | **Project**       | NoteFlow — A modern, fast, rich-text note-taking web app                                                                                                                             |
 | **Target**        | Knowledge workers, students, developers                                                                                                                                              |
 | **Core Features** | Rich-text editor (TipTap), notebooks/tags, pin/favorite/archive/trash, auto-save, ⌘K command palette, full-text search, dark/light theme, data export, avatar upload, password reset |
-| **Architecture**  | Two-tier: React SPA (Vite) + Express REST API (Mongoose → MongoDB Atlas)                                                                                                             |
+| **Architecture**  | Two-tier: React SPA (Vite) + Express REST API (Prisma → PostgreSQL)                                                                                                                  |
 
 <img src="workflow.png" />
 
@@ -19,9 +19,9 @@
 
 **Frontend:** React 19, Vite 8, Tailwind CSS 3, Zustand 5, TanStack Query 5, React Router 7, TipTap 3, Radix UI, Lucide, cmdk, date-fns, DOMPurify, JSZip
 
-**Backend:** Node.js, Express 5, Mongoose 9, jsonwebtoken, bcrypt, express-validator, helmet, cors, cookie-parser, express-rate-limit, multer, cloudinary, sanitize-html, nodemailer
+**Backend:** Node.js, Express 5, Prisma 7, jsonwebtoken, bcrypt, express-validator, helmet, cors, cookie-parser, express-rate-limit, multer, cloudinary, sanitize-html, nodemailer
 
-**Database:** MongoDB Atlas  
+**Database:** PostgreSQL (Prisma Client + `@prisma/adapter-pg`)  
 **Infrastructure:** Cloudinary (images), Brevo (email)
 
 ---
@@ -31,8 +31,9 @@
 ```
 backend/
 ├── src/
-│   ├── config/       # DB, Cloudinary, Mailer config
-│   ├── models/       # User, Note, Notebook, Tag (Mongoose)
+│   ├── config/       # Cloudinary, Mailer, env config
+│   ├── db/           # Shared PrismaClient singleton
+│   ├── modules/      # Feature modules (auth, users, notes, notebooks, tags)
 │   ├── routes/       # auth, me, notes, notebooks, tags
 │   ├── controllers/  # Request/response handling
 │   ├── services/     # Business logic
@@ -207,8 +208,9 @@ User types query → SearchPage filters all notes client-side
 ```bash
 # Backend
 cd backend
-cp .env.example .env  # Fill in MONGO_URI, JWT secrets, Cloudinary, Brevo
+cp .env.example .env  # Fill in DATABASE_URL, JWT secrets, Cloudinary, Brevo
 npm install
+npx prisma migrate deploy   # apply migrations (or `npx prisma migrate dev`)
 npm run dev           # Port 5000
 
 # Frontend

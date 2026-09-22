@@ -331,8 +331,8 @@ All auth endpoints (`/register`, `/login`, `/verify`) set an httpOnly JWT cookie
 | `from`, `to` | string | Custom date range |
 | `page`, `limit` | number | Pagination (default: page=1, limit=20) |
 | `sort` | string | title |
-| `notebookId` | ObjectId | Filter by notebook |
-| `tagId` | ObjectId | Filter by tag |
+| `notebookId` | UUID | Filter by notebook |
+| `tagId` | UUID | Filter by tag |
 | `isArchived` | boolean | Filter archived |
 | `isFavorite` | boolean | Filter favorites |
 | `isPinned` | boolean | Filter pinned |

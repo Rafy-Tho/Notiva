@@ -1,44 +1,35 @@
-import Tag from "../../models/Tag.js";
-import { NotFoundError, ConflictError } from "../../common/errors/errors.js";
+import prisma from "../../db/prisma.js";
+import { ConflictError, NotFoundError } from "../../common/errors/errors.js";
 
 export async function list(userId) {
-  return Tag.find({ userId, deletedAt: null });
+  return prisma.tag.findMany({
+    where: { userId, deletedAt: null },
+  });
 }
 
 export async function create(name, color, userId) {
-  const existing = await Tag.findOne({ name, userId });
-
+  const existing = await prisma.tag.findFirst({ where: { userId, name } });
   if (existing) {
     throw new ConflictError("Tag already exists");
   }
-
-  return Tag.create({ name, color, userId });
+  return prisma.tag.create({ data: { name, color, userId } });
 }
 
 export async function update(id, name, color, userId) {
-  const tag = await Tag.findByIdAndUpdate(
-    { _id: id, userId },
-    { name, color },
-    { new: true },
-  );
-
+  const tag = await prisma.tag.findFirst({ where: { id, userId } });
   if (!tag) {
     throw new NotFoundError("Tag not found");
   }
-
-  return tag;
+  return prisma.tag.update({ where: { id }, data: { name, color } });
 }
 
 export async function remove(id, userId) {
-  const tag = await Tag.findByIdAndUpdate(
-    { _id: id, userId },
-    { deletedAt: Date.now() },
-    { new: true },
-  );
-
+  const tag = await prisma.tag.findFirst({ where: { id, userId } });
   if (!tag) {
     throw new NotFoundError("Tag not found");
   }
-
-  return tag;
+  return prisma.tag.update({
+    where: { id },
+    data: { deletedAt: new Date() },
+  });
 }
