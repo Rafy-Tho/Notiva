@@ -17,10 +17,13 @@ model User {
   resetToken         String?
   resetTokenExpires  DateTime?
   deletedAt          DateTime?
+  emailVerifiedAt    DateTime?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
-  notebooks   Notebook[]
+  notebooks            Notebook[]
+  verificationTokens EmailVerificationToken[]
+  resetTokens        PasswordResetToken[]
   tags       Tag[]
   notes      Note[]
   sessions   UserSession[]
@@ -111,4 +114,32 @@ model UserSession {
 
   @@index([userId])
   @@index([tokenHash])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tokenHash String   @map("token_hash") @unique
+  expiresAt DateTime @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_verification_tokens")
+  @@index([userId, expiresAt])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tokenHash String   @map("token_hash") @unique
+  expiresAt DateTime @map("expires_at")
+  usedAt    DateTime? @map("used_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+  @@index([userId, expiresAt])
 }

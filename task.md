@@ -1,37 +1,15 @@
-Refactor the existing authentication system from **JWT authentication to server-side session authentication**.
+Refactor the email-sending implementation to use Hostinger's email API instead of Brevo.
 
-### Requirements
+Requirements:
 
-- Remove JWT authentication.
-- Use an HTTP-only cookie containing a random session token.
-- Store only the **SHA-256 hash** of the session token in the database.
-- Use this table:
+- Remove the Brevo API key and Brevo-specific email-sending code.
+- Add support for the Hostinger API key using an environment variable.
+- Keep the existing email functionality, templates, recipients, and application behavior unchanged.
+- Update the email service to call Hostinger's API.
+- Update `.env.example` with the new Hostinger environment variables.
+- Remove unused Brevo dependencies/imports.
+- Do not expose API keys in source code.
+- Update any relevant documentation/configuration.
+- Keep the refactor minimal and production-ready.
 
-```sql
-user_sessions (
-  id uuid primary key,
-  user_id uuid not null references users(id),
-  token_hash text not null unique,
-  device_name varchar(255),
-  ip_address inet,
-  user_agent text,
-  expires_at timestamptz not null,
-  last_used_at timestamptz,
-  revoked_at timestamptz,
-  created_at timestamptz not null default now()
-)
-```
-
-### Session behavior
-
-- Generate a cryptographically secure random token.
-- Store its hash in `user_sessions`.
-- Send the raw token using a secure HTTP-only cookie.
-- Validate the session on authenticated requests.
-- Update `last_used_at`.
-- Reject expired or revoked sessions.
-- Support logout by revoking the current session.
-- Do not store the raw token in the database.
-- Preserve existing API behavior, permissions, roles, and frontend functionality.
-
-First inspect the existing authentication codebase, then refactor it consistently without breaking unrelated features.
+Before changing code, inspect the existing email service and identify all Brevo-related usage.

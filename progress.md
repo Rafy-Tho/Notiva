@@ -36,7 +36,7 @@ Last analyzed: 2026-09-22
 
 ## In Progress
 
-No active development work was identified from the repository.
+- Email Verification and Password Reset: Implementing 6-digit code-based authentication flow with email verification and password reset tokens
 
 ## Planned
 
@@ -53,6 +53,18 @@ All known issues resolved (see `docs/15-known-issues.md` for completion summary)
 See `decisions/unresolved-questions.md` for additional unknowns that may represent technical debt.
 
 ## Recent Changes
+
+**2026-09-22** - Implemented email verification and password reset with 6-digit codes:
+- Added `emailVerifiedAt` field to User model
+- Created EmailVerificationToken and PasswordResetToken tables with hashed tokens
+- Implemented `email_verification.repository.js` and `password_reset.repository.js`
+- Added verification services: `sendVerificationCode`, `verifyCode`, `sendPasswordResetCode`, `resetPasswordWithCode`
+- Added auth endpoints: `/resend-verification`, `/verify-email`, `/reset-password-code`, `/confirm-password-reset`
+- Updated authentication middleware to block unverified users from protected routes
+- Updated frontend: `RegistrationVerificationPage`, `UpdatePasswordPage`, auth store methods
+- Updated registration flow to redirect to email verification
+- Added rate limiting for code requests (5 per hour)
+- Tokens expire in 15 minutes and are single-use
 
 **2026-09-22** - Fixed note saving never reaching the API (frontend):
 - `fetchWithAuth` built a hand-rolled `combinedSignal` plain object and passed it as `RequestInit.signal`. Browsers require a real `AbortSignal`, so `fetch` threw a `TypeError` before sending the request. Only the autosave path supplied a signal, so note saves failed silently while signal-less requests worked.

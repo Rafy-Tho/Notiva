@@ -104,8 +104,69 @@ export const useAuthStore = create((set, get) => ({
   },
 
   delete: async () => {
-     await fetchJson(getApiUrl("/me"), { method: "DELETE" });
+      await fetchJson(getApiUrl("/me"), { method: "DELETE" });
     saveAuth(null);
     set({ user: null });
+  },
+
+  verifyEmailCode: async (email, code) => {
+    set({ isLoading: false, error: null });
+    try {
+      const data = await fetchJson(getApiUrl("/auth/verify-email"), {
+        method: "POST",
+        body: JSON.stringify({ email, code }),
+      });
+      saveAuth(data.user);
+      set({ user: data.user, isLoading: false, error: null });
+      return data;
+    } catch (err) {
+      set({ error: err.message, isLoading: false });
+      throw err;
+    }
+  },
+
+  resendVerificationCode: async (email) => {
+    set({ isLoading: false, error: null });
+    try {
+      const data = await fetchJson(getApiUrl("/auth/resend-verification"), {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+      set({ isLoading: false, error: null });
+      return data;
+    } catch (err) {
+      set({ error: err.message, isLoading: false });
+      throw err;
+    }
+  },
+
+  resetPasswordCode: async (email) => {
+    set({ isLoading: false, error: null });
+    try {
+      const data = await fetchJson(getApiUrl("/auth/reset-password-code"), {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+      set({ isLoading: false, error: null });
+      return data;
+    } catch (err) {
+      set({ error: err.message, isLoading: false });
+      throw err;
+    }
+  },
+
+  confirmPasswordReset: async (email, code, password) => {
+    set({ isLoading: false, error: null });
+    try {
+      const data = await fetchJson(getApiUrl("/auth/confirm-password-reset"), {
+        method: "POST",
+        body: JSON.stringify({ email, code, password }),
+      });
+      set({ isLoading: false, error: null });
+      return data;
+    } catch (err) {
+      set({ error: err.message, isLoading: false });
+      throw err;
+    }
   },
 }));

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Logo } from "@/components/common/Logo";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { registerSchema } from "@/lib/validation";
 
@@ -15,6 +15,7 @@ export function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const validate = () => {
@@ -35,7 +36,7 @@ export function RegisterPage() {
     setLoading(true);
     try {
       await register(name, email, password);
-      navigate("/notes", { replace: true });
+      navigate("/verify-email", { replace: true });
     } catch (err) {
       toast.error(err.message);
     } finally {
@@ -74,10 +75,24 @@ export function RegisterPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="p">Password</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="p">Password</Label>
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-xs text-muted-foreground hover:text-foreground"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-3.5 w-3.5" />
+                ) : (
+                  <Eye className="h-3.5 w-3.5" />
+                )}
+              </button>
+            </div>
             <Input
               id="p"
-              type="password"
+              type={showPassword ? "text" : "password"}
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}

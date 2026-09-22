@@ -23,3 +23,24 @@ export const resetV = [
     .isLength({ min: 8 })
     .withMessage("Password must be at least 8 characters"),
 ];
+
+export const resendVerificationV = [
+  body("email").isEmail().normalizeEmail().withMessage("Invalid email"),
+];
+
+export const verifyEmailV = [
+  body("email").isEmail().normalizeEmail().withMessage("Invalid email"),
+  body("code").isLength({ min: 6, max: 6 }).withMessage("Code must be 6 digits"),
+];
+
+export const resetPasswordV = [
+  body("email").isEmail().normalizeEmail().withMessage("Invalid email"),
+];
+
+export const confirmPasswordResetV = [
+  body("email").isEmail().normalizeEmail().withMessage("Invalid email"),
+  body("code").isLength({ min: 6, max: 6 }).withMessage("Code must be 6 digits"),
+  body("password")
+    .isLength({ min: 8 })
+    .withMessage("Password must be at least 8 characters"),
+];

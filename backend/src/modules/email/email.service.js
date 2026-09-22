@@ -7,6 +7,24 @@ export async function sendResetEmail(to, link) {
   });
 }
 
+export async function sendVerificationEmail(to, code, userId) {
+  return send({
+    to,
+    subject: "Verify Your Email",
+    text: `Your verification code is: ${code}. This code expires in 15 minutes.`,
+    html: `<p>Your verification code is: <strong>${code}</strong></p><p>This code expires in 15 minutes.</p>`,
+  });
+}
+
+export async function sendPasswordResetEmail(to, code, userId) {
+  return send({
+    to,
+    subject: "Password Reset Code",
+    text: `Your password reset code is: ${code}. This code expires in 15 minutes.`,
+    html: `<p>Your password reset code is: <strong>${code}</strong></p><p>This code expires in 15 minutes.</p>`,
+  });
+}
+
 export async function sendWelcomeEmail(to, name) {
   return send({
     to,

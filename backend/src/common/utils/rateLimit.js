@@ -38,3 +38,14 @@ export async function checkResetRate(email) {
 
   return attempts <= 5;
 }
+
+export async function checkVerificationRate(email) {
+  const key = `verification:${email}`;
+  const attempts = await redis.incr(key);
+
+  if (attempts === 1) {
+    await redis.expire(key, 3600);
+  }
+
+  return attempts <= 5;
+}

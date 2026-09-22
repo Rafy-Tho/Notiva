@@ -2,7 +2,7 @@ import * as authSvc from "./auth.service.js";
 import * as sessionSvc from "./session.service.js";
 import { UAParser } from "ua-parser-js";
 import { me as getUser } from "../users/user.service.js";
-import { sendResetEmail } from "../email/email.service.js";
+import { sendResetEmail, sendVerificationEmail, sendPasswordResetEmail } from "../email/email.service.js";
 import { securityAudit } from "../../common/middleware/securityAudit.js";
 import { ok } from "../../common/utils/response.js";
 
@@ -81,4 +81,27 @@ export async function logout(req, res) {
 export async function verify(req, res) {
   const user = await getUser(req.userId);
   return ok(res, { user }, "verified");
+}
+
+export async function resendVerification(req, res) {
+  const { code, userId } = await authSvc.sendVerificationCode(req.body.email);
+  await sendVerificationEmail(req.body.email, code, userId);
+  return ok(res, null, "Verification code sent");
+}
+
+export async function verifyEmail(req, res) {
+  const { user, session } = await authSvc.verifyCode(req.body.email, req.body.code);
+  setAuthCookie(res, session.rawToken);
+  return ok(res, { user }, "Email verified");
+}
+
+export async function resetPasswordCode(req, res) {
+  const { code, userId } = await authSvc.sendPasswordResetCode(req.body.email);
+  await sendPasswordResetEmail(req.body.email, code, userId);
+  return ok(res, null, "Reset code sent");
+}
+
+export async function confirmPasswordReset(req, res) {
+  const { user } = await authSvc.resetPasswordWithCode(req.body.email, req.body.code, req.body.password);
+  return ok(res, { user }, "Password reset");
 }
