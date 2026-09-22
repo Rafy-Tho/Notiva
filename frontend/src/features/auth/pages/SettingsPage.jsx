@@ -494,6 +494,8 @@ export function SettingsPage() {
   );
 }
 
+export default SettingsPage;
+
 /* ---------------- helpers ---------------- */
 
 function SettingsSection({

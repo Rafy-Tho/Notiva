@@ -276,6 +276,12 @@ export function useAutoSave(data, saveFn, options = {}) {
   }, [saveSnapshot]);
 
   useEffect(() => {
+    saveFnRef.current = saveFn;
+    onSavedRef.current = onSaved;
+    enabledRef.current = enabled;
+  });
+
+  useEffect(() => {
     if (equal(data, observedDataRef.current)) return;
 
     observedDataRef.current = data;

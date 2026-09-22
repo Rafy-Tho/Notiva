@@ -105,3 +105,5 @@ export function RegisterPage() {
     </div>
   );
 }
+
+export default RegisterPage;

@@ -742,3 +742,5 @@ function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
     </div>
   );
 }
+
+export default NoteDetailPage;

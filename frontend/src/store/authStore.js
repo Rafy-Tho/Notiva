@@ -1,5 +1,4 @@
 import { create } from "zustand";
-import { devtools } from "zustand/middleware";
 import { getApiUrl } from "@/config/api";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
@@ -42,94 +41,71 @@ async function fetchJson(url, opts = {}) {
 
 const storedUser = getAuth();
 
-export const useAuthStore = create(
-  devtools(
-    (set, get) => ({
-      user: storedUser,
-      isLoading: false,
-      error: null,
-      isAuthenticated: isAuthenticated(),
+export const useAuthStore = create((set, get) => ({
+  user: storedUser,
+  isLoading: false,
+  error: null,
+  isAuthenticated: isAuthenticated(),
 
-      setUser: (user) => {
-        saveAuth(user);
-        set({ user });
-      },
+  setUser: (user) => {
+    saveAuth(user);
+    set({ user });
+  },
 
-      register: async (name, email, password) => {
-        set({ isLoading: false, error: null }, false, "auth/register/pending");
-        try {
-           const data = await fetchJson(getApiUrl("/auth/register"), {
-            method: "POST",
-            body: JSON.stringify({ name, email, password }),
-          });
-          saveAuth(data.user);
-          set(
-            { user: data.user, isLoading: false, error: null },
-            false,
-            "auth/register/fulfilled",
-          );
-        } catch (err) {
-          set(
-            { error: err.message, isLoading: false },
-            false,
-            "auth/register/rejected",
-          );
-          throw err;
-        }
-      },
+  register: async (name, email, password) => {
+    set({ isLoading: false, error: null });
+    try {
+       const data = await fetchJson(getApiUrl("/auth/register"), {
+        method: "POST",
+        body: JSON.stringify({ name, email, password }),
+      });
+      saveAuth(data.user);
+      set({ user: data.user, isLoading: false, error: null });
+    } catch (err) {
+      set({ error: err.message, isLoading: false });
+      throw err;
+    }
+  },
 
-      login: async (email, password) => {
-        set({ isLoading: false, error: null }, false, "auth/login/pending");
-        try {
-           const data = await fetchJson(getApiUrl("/auth/login"), {
-            method: "POST",
-            body: JSON.stringify({ email, password }),
-          });
-          saveAuth(data.user);
-          set(
-            { user: data.user, isLoading: false, error: null },
-            false,
-            "auth/login/fulfilled",
-          );
-        } catch (err) {
-          set(
-            { error: err.message, isLoading: false },
-            false,
-            "auth/login/rejected",
-          );
-          throw err;
-        }
-      },
+  login: async (email, password) => {
+    set({ isLoading: false, error: null });
+    try {
+       const data = await fetchJson(getApiUrl("/auth/login"), {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+      saveAuth(data.user);
+      set({ user: data.user, isLoading: false, error: null });
+    } catch (err) {
+      set({ error: err.message, isLoading: false });
+      throw err;
+    }
+  },
 
-      logout: async () => {
-        try {
-           await fetchJson(getApiUrl("/auth/logout"), { method: "POST" });
-        } finally {
-          saveAuth(null);
-          set({ user: null }, false, "auth/logout");
-        }
-      },
+  logout: async () => {
+    try {
+       await fetchJson(getApiUrl("/auth/logout"), { method: "POST" });
+    } finally {
+      saveAuth(null);
+      set({ user: null });
+    }
+  },
 
-      restoreSession: async () => {
-        if (get().isAuthenticated && !!get().user)
-          try {
-             const data = await fetchJson(getApiUrl("/auth/verify"));
-            saveAuth(data.user);
-            set({ user: data.user }, false, "auth/verify/fulfilled");
-          } catch {
-            saveAuth(null);
-            set({ user: null }, false, "auth/verify/rejected");
-          } finally {
-            set({ isLoading: false }, false, "auth/verify/done");
-          }
-      },
-
-      delete: async () => {
-         await fetchJson(getApiUrl("/me"), { method: "DELETE" });
+  restoreSession: async () => {
+    if (get().isAuthenticated && !!get().user)
+      try {
+         const data = await fetchJson(getApiUrl("/auth/verify"));
+        saveAuth(data.user);
+        set({ user: data.user });
+      } catch {
         saveAuth(null);
-        set({ user: null }, false, "auth/deleteAccount");
-      },
-    }),
-    { name: "AuthStore" },
-  ),
-);
+        set({ user: null });
+      }
+  },
+
+  delete: async () => {
+     await fetchJson(getApiUrl("/me"), { method: "DELETE" });
+    saveAuth(null);
+    set({ user: null });
+  },
+}));

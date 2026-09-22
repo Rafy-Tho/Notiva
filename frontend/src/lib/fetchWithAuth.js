@@ -26,42 +26,39 @@ function sleep(ms) {
 }
 
 export async function fetchWithAuth(url, options = {}) {
-  const { maxRetries = config.retry.maxRetries, signal: userSignal, ...fetchOptions } = options;
-  
-  const abortController = new AbortController();
-  const signal = userSignal || abortController.signal;
-  const combinedSignal = userSignal
-    ? {
-        aborted: userSignal.aborted || abortController.aborted,
-        addEventListener(event, handler) {
-          userSignal.addEventListener(event, handler);
-          abortController.addEventListener(event, handler);
-        },
-        removeEventListener(event, handler) {
-          userSignal.removeEventListener(event, handler);
-          abortController.removeEventListener(event, handler);
-        },
-        throwIfAborted() {
-          if (userSignal.aborted) userSignal.throwIfAborted();
-          if (abortController.aborted) abortController.throwIfAborted();
-        },
-      }
-    : abortController.signal;
+  const {
+    maxRetries = config.retry.maxRetries,
+    signal: userSignal,
+    ...fetchOptions
+  } = options;
+
+  // Keepalive requests must survive page unload, so they are intentionally
+  // not tied to the caller's abort signal.
+  const abortSignal = fetchOptions.keepalive === true ? null : userSignal;
 
   let lastError;
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const controller = new AbortController();
+    const onUserAbort = () => controller.abort();
+    let timeoutId;
+
+    if (abortSignal) {
+      if (abortSignal.aborted) {
+        controller.abort();
+      } else {
+        abortSignal.addEventListener("abort", onUserAbort);
+      }
+    }
+
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), config.timeout);
+      timeoutId = setTimeout(() => controller.abort(), config.timeout);
 
       const response = await fetch(url, {
         ...fetchOptions,
         headers: buildHeaders(fetchOptions),
         credentials: "include",
-        signal: combinedSignal,
+        signal: controller.signal,
       });
-
-      clearTimeout(timeoutId);
 
       if (response.status === 401) {
         useAuthStore.getState().setUser(null);
@@ -83,11 +80,18 @@ export async function fetchWithAuth(url, options = {}) {
       return response;
     } catch (error) {
       lastError = error;
-      if (error.name === "AbortError" && (signal.aborted || (userSignal && userSignal.aborted))) {
+
+      // A caller-initiated abort is final; timeouts abort our internal
+      // controller and stay retryable.
+      if (error.name === "AbortError" && abortSignal?.aborted) {
         throw error;
       }
+
       if (attempt >= maxRetries) break;
       await sleep(config.retry.initialDelay * Math.pow(2, attempt));
+    } finally {
+      clearTimeout(timeoutId);
+      abortSignal?.removeEventListener("abort", onUserAbort);
     }
   }
 

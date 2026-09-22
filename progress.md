@@ -54,6 +54,17 @@ See `decisions/unresolved-questions.md` for additional unknowns that may represe
 
 ## Recent Changes
 
+**2026-09-22** - Fixed note saving never reaching the API (frontend):
+- `fetchWithAuth` built a hand-rolled `combinedSignal` plain object and passed it as `RequestInit.signal`. Browsers require a real `AbortSignal`, so `fetch` threw a `TypeError` before sending the request. Only the autosave path supplied a signal, so note saves failed silently while signal-less requests worked.
+- Replaced it with a real per-attempt `AbortController`, bridging the caller signal via `addEventListener("abort")` and wiring the previously dead 30-second timeout to the same controller.
+- Keepalive flushes (pagehide/visibilitychange) no longer bind the caller's abort signal so the request can survive page unload.
+- `useAutoSave` now syncs `saveFnRef`, `onSavedRef`, and `enabledRef` after render to avoid stale closures.
+- Added `frontend/src/lib/fetchWithAuth.test.js` covering real-signal passing, caller-abort propagation, keepalive behavior, and retry.
+
+**2026-09-22** - Fixed lazy-loaded route crash (frontend):
+- Seven page modules imported via `React.lazy` lacked default exports, so `module.default` was `undefined` and React logged the lazy resolution warning with the ES module namespace object (null prototype), producing `TypeError: Cannot convert object to primitive value` in the React DevTools console hook and crashing the route tree
+- Added `export default` to `LoginPage`, `RegisterPage`, `ForgotPasswordPage`, `ResetPasswordPage`, `SettingsPage`, `NotesPage`, and `NoteDetailPage`, matching the existing pattern in `Index.jsx` and `SearchPage.jsx`
+
 **2026-09-22** - Migrated persistence from MongoDB/Mongoose to PostgreSQL/Prisma:
 - Replaced Mongoose models with Prisma schema (User, Note, Notebook, Tag, NoteTag)
 - Converted all repositories to Prisma queries via a shared client (`src/db/prisma.js`)

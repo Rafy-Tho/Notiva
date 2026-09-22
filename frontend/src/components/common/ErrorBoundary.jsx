@@ -14,7 +14,11 @@ class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error("ErrorBoundary caught:", error, errorInfo);
+    try {
+      console.error("ErrorBoundary caught:", error, errorInfo);
+    } catch {
+      console.error("ErrorBoundary caught:", error?.message || error);
+    }
     toast.error("Something went wrong. Please try reloading.");
   }
 

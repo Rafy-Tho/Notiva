@@ -5,6 +5,7 @@ import helmet from "helmet";
 import crypto from "crypto";
 import { errorHandler, notFoundHandler } from "../common/errors/errorHandler.js";
 import { generalLimiter } from "../common/middleware/rateLimiter.js";
+import { setupRoutes } from "./routes.js";
 
 export const app = express();
 
@@ -50,6 +51,8 @@ app.use((req, res, next) => {
 app.get("/", (req, res) => {
   res.send("<h1>API is healthy</h1>");
 });
+
+setupRoutes(app);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

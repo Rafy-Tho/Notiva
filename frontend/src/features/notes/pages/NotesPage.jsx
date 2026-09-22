@@ -171,3 +171,5 @@ export function NotesPage({
     </div>
   );
 }
+
+export default NotesPage;
