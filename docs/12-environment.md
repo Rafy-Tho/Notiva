@@ -24,6 +24,9 @@
 | `MAIL_FROM` | Email sender address | - |
 | `MAIL_FROM_NAME` | Email sender name | - |
 | `NODE_ENV` | Environment mode | `development` |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID (Google Login) | - |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret (Google Login) | - |
+| `GOOGLE_CALLBACK_URL` | OAuth callback URL that must be whitelisted in the Google Cloud console (e.g. `http://localhost:5000/api/v1/auth/google/callback`) | - |
 
 ---
 
@@ -53,6 +56,9 @@ HOSTINGER_MAIL_MAILBOX_ID=...
 HOSTINGER_API_BASE_URL=https://api.mail.hostinger.com
 MAIL_FROM=noreply@...
 MAIL_FROM_NAME=NoteFlow
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GOOGLE_CALLBACK_URL=http://localhost:5000/api/v1/auth/google/callback
 NODE_ENV=development
 ```
 

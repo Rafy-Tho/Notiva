@@ -17,6 +17,8 @@ function setAuthCookie(res, token) {
   res.cookie(COOKIE_NAME, token, COOKIE_OPTS);
 }
 
+export { setAuthCookie };
+
 function clearAuthCookie(res) {
   res.clearCookie(COOKIE_NAME, { path: "/" });
 }

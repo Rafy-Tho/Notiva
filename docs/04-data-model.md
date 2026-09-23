@@ -163,8 +163,27 @@ All primary keys are UUIDs (`String @id @default(uuid())`).
 | `lastUsedAt` | Timestamp | No | Updated on each authenticated request |
 | `revokedAt` | Timestamp | No | null until revoked (logout / password reset) |
 | `createdAt` | Timestamp | Yes | |
+| `updatedAt` | Timestamp | Yes | `@updatedAt` |
 
 **Indexes:** `@@index([userId])`, `@@index([tokenHash])`
+
+---
+
+### AuthAccount
+**Table:** `auth_accounts`
+
+**Purpose:** Links a user to an external OAuth identity (Google)
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `id` | UUID | Yes | Primary key |
+| `userId` | UUID | Yes | FK → User (cascade delete) |
+| `provider` | String | Yes | e.g. `google` |
+| `providerUserId` | String | Yes | Google `sub` (never the email) |
+| `createdAt` | Timestamp | Yes | |
+| `updatedAt` | Timestamp | Yes | `@updatedAt` |
+
+**Constraints:** `UNIQUE(provider, provider_user_id)` — prevents one Google account from being linked to multiple users and guards against concurrent-link race conditions (the service recovers from `P2002` by re-reading the account).
 
 ---
 
@@ -191,6 +210,7 @@ User ─── (1:N) ─── Tags
 User ─── (1:N) ─── PasswordResetTokens
 User ─── (1:N) ─── EmailVerificationTokens
 User ─── (1:N) ─── UserSessions
+User ─── (1:N) ─── AuthAccounts
 Notebook ─── (1:N) ─── Notes
 Note ─── (N:N) ─── Tags [via NoteTag]
 ```
@@ -206,6 +226,7 @@ Note ─── (N:N) ─── Tags [via NoteTag]
 | Tag | (userId, name) unique | PostgreSQL compound unique |
 | Note | userId FK, notebookId FK | PostgreSQL foreign keys |
 | NoteTag | (noteId, tagId) primary key | PostgreSQL |
+| AuthAccount | (provider, providerUserId) unique | PostgreSQL compound unique |
 
 ---
 

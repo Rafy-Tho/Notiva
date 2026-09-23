@@ -6,15 +6,14 @@ import { Providers } from "./providers";
 
 function Bootstrap({ children }) {
   const restoreSession = useAuthStore((state) => state.restoreSession);
-  const isLoading = useAuthStore((state) => state.isLoading);
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const isRestoring = useAuthStore((state) => state.isRestoring);
 
   useEffect(() => {
     restoreSession();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (isLoading && isAuthenticated) {
+  if (isRestoring) {
     return (
       <div className="flex h-screen items-center justify-center text-muted-foreground">
         Loading…

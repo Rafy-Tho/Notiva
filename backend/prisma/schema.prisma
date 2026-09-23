@@ -25,6 +25,7 @@ model User {
   tags       Tag[]
   notes      Note[]
   sessions   UserSession[]
+  authAccounts       AuthAccount[]
 }
 
 model Notebook {
@@ -91,6 +92,20 @@ model NoteTag {
 
   @@id([noteId, tagId])
   @@index([tagId])
+}
+
+model AuthAccount {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  provider       String
+  providerUserId String   @map("provider_user_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerUserId])
+  @@map("auth_accounts")
 }
 
 model UserSession {

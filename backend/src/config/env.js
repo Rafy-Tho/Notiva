@@ -27,6 +27,11 @@ export const env = {
   mailFrom: process.env.MAIL_FROM,
   mailFromName: process.env.MAIL_FROM_NAME,
 
+  // Google OAuth (optional)
+  googleClientId: process.env.GOOGLE_CLIENT_ID,
+  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  googleCallbackUrl: process.env.GOOGLE_CALLBACK_URL,
+
   // Redis
   redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
 

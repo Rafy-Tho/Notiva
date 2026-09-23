@@ -50,6 +50,7 @@ Routes → Controllers → Services → Repositories → Prisma → PostgreSQL
 
 Major Features
 --------------
+- **Google Login**: OAuth 2.0 / OIDC server-side Authorization Code flow
 - **Notes CRUD**: Create, read, update, delete notes with rich text content
 - **Notebooks**: Organize notes in notebooks with colors
 - **Tags**: Tag-based organization with color coding
@@ -60,7 +61,7 @@ Major Features
 
 Database
 --------
-**Tables:** User, Note, Notebook, Tag, NoteTag (join table)
+**Tables:** User, Note, Notebook, Tag, NoteTag (join table), AuthAccount
 
 **Key Fields:**
 - User: id (UUID), email (unique), password (bcrypt), avatar
@@ -84,6 +85,7 @@ Authentication
 - Email verification logs the user in automatically (server session + cookie)
 - Login blocks unverified users (401 "Email not verified"); failed-attempt lockout resets on success
 - Password reset uses a 6-digit code (SHA-256 hashed, 15-min expiry, single-use); successful reset revokes all sessions
+- Google Login: server-side Authorization Code flow; ID token verified against Google JWKS (`iss`/`aud`/`exp`/`email_verified`); Google `sub` stored in `auth_accounts` (never the email); links to the existing user by verified email or creates a new verified user with a random unusable password; `UNIQUE(provider, provider_user_id)` prevents multi-user linking with `P2002` race recovery
 - bcrypt password hashing (cost 12)
 - 10/min rate limiting on auth endpoints; verification/reset code requests 5/hour per email
 - Cookie storage prevents XSS
@@ -100,12 +102,13 @@ External Services
 - **Redis (Upstash)**: Rate limiting
 - **Cloudinary**: Avatar image hosting
 - **Hostinger mail API**: Verification / password reset emails
+- **Google**: OAuth 2.0 / OIDC sign-in (optional; `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`/`GOOGLE_CALLBACK_URL`)
 
 Deployment
 ----------
 - Backend: Node.js server (`server.js`)
 - Frontend: Vite static build
-- Environment vars: DATABASE_URL, REDIS_URL, JWT_ACCESS_SECRET, HOSTINGER_MAIL_*, CLOUDINARY_*, etc.
+- Environment vars: DATABASE_URL, REDIS_URL, JWT_ACCESS_SECRET, HOSTINGER_MAIL_*, CLOUDINARY_*, GOOGLE_* (optional), etc.
 
 Important Constraints
 ---------------------

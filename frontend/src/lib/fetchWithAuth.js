@@ -60,10 +60,13 @@ export async function fetchWithAuth(url, options = {}) {
         signal: controller.signal,
       });
 
+      // A 401 (expired/invalid session) is a permanent condition: never
+      // retry it, otherwise boot-time session checks hammer the server.
       if (response.status === 401) {
         useAuthStore.getState().setUser(null);
         const { message } = await parseError(response);
-        throw new Error(message ?? "Session expired");
+        lastError = new Error(message ?? "Session expired");
+        break;
       }
 
       if (!response.ok && attempt < maxRetries && isRetryableStatus(response.status)) {

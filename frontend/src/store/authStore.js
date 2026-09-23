@@ -2,29 +2,6 @@ import { create } from "zustand";
 import { getApiUrl } from "@/config/api";
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 
-function getAuth() {
-  try {
-    const stored = JSON.parse(localStorage.getItem("auth") || "null");
-    return stored;
-  } catch {
-    return null;
-  }
-}
-
-function isAuthenticated() {
-  return localStorage.getItem("isAuth") === "true";
-}
-
-function saveAuth(user) {
-  if (user) {
-    localStorage.setItem("auth", JSON.stringify(user));
-    localStorage.setItem("isAuth", "true");
-  } else {
-    localStorage.removeItem("auth");
-    localStorage.removeItem("isAuth");
-  }
-}
-
 async function fetchJson(url, opts = {}) {
   const headers = { ...opts.headers };
   if (!(opts.body instanceof FormData)) {
@@ -39,16 +16,16 @@ async function fetchJson(url, opts = {}) {
   return data;
 }
 
-const storedUser = getAuth();
+let restorePromise = null;
 
-export const useAuthStore = create((set, get) => ({
-  user: storedUser,
+export const useAuthStore = create((set) => ({
+  user: null,
   isLoading: false,
   error: null,
-  isAuthenticated: isAuthenticated(),
+  isAuthenticated: false,
+  isRestoring: false,
 
   setUser: (user) => {
-    saveAuth(user);
     set({ user, isAuthenticated: !!user });
   },
 
@@ -74,7 +51,6 @@ export const useAuthStore = create((set, get) => ({
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
-      saveAuth(data.user);
       set({ user: data.user, isAuthenticated: true, isLoading: false, error: null });
     } catch (err) {
       set({ error: err.message, isLoading: false });
@@ -87,27 +63,30 @@ export const useAuthStore = create((set, get) => ({
     try {
       await fetchJson(getApiUrl("/auth/logout"), { method: "POST" });
     } finally {
-      saveAuth(null);
       set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },
 
   restoreSession: async () => {
-    if (get().isAuthenticated && !!get().user) {
+    // Deduplicate concurrent boot calls (e.g. StrictMode double-mount)
+    // so /auth/verify is only fired once per page load.
+    if (restorePromise) return restorePromise;
+    restorePromise = (async () => {
+      set({ isRestoring: true });
       try {
         const data = await fetchJson(getApiUrl("/auth/verify"));
-        saveAuth(data.user);
-        set({ user: data.user, isAuthenticated: true });
+        set({ user: data.user, isAuthenticated: true, isRestoring: false });
       } catch {
-        saveAuth(null);
-        set({ user: null, isAuthenticated: false });
+        set({ user: null, isAuthenticated: false, isRestoring: false });
+      } finally {
+        restorePromise = null;
       }
-    }
+    })();
+    return restorePromise;
   },
 
   delete: async () => {
     await fetchJson(getApiUrl("/me"), { method: "DELETE" });
-    saveAuth(null);
     set({ user: null, isAuthenticated: false });
   },
 
@@ -118,7 +97,6 @@ export const useAuthStore = create((set, get) => ({
         method: "POST",
         body: JSON.stringify({ email, code }),
       });
-      saveAuth(data.user);
       set({ user: data.user, isAuthenticated: true, isLoading: false, error: null });
       return data;
     } catch (err) {

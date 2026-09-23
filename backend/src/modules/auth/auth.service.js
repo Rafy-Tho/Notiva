@@ -45,7 +45,7 @@ function buildSessionContext(req) {
 }
 
 export { checkResetRate };
-export { generateVerificationCode, hashCode };
+export { generateVerificationCode, hashCode, buildSessionContext };
 
 export async function register({ name, email, password }) {
   const normalizedEmail = email.toLowerCase();

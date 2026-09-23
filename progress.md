@@ -9,6 +9,7 @@ Last analyzed: 2026-09-23
 ## Completed
 
 - User Registration
+- Google Login (OAuth 2.0 / OpenID Connect, server-side Authorization Code flow)
 - Email Verification (6-digit code, auto-login)
 - User Login
 - User Logout
@@ -54,6 +55,19 @@ All known issues resolved (see `docs/15-known-issues.md` for completion summary)
 See `decisions/unresolved-questions.md` for additional unknowns that may represent technical debt.
 
 ## Recent Changes
+
+**2026-09-23** - Fixed Google login not restoring the session after the OAuth callback redirect:
+- `restoreSession` only called `/auth/verify` when localStorage already claimed a logged-in user, so redirect-based Google login (which never populates local state) left the user logged out — `PrivateRoute` bounced `/` to `/login` despite a valid server session and cookie
+- `restoreSession` is now unconditional: it always verifies the session cookie on app mount (success → save user, failure → clear local state); added an `isRestoring` flag so `Bootstrap` shows the full-screen loader until the check resolves (prevents a login-page flash after the callback redirect; email-login button spinner unaffected)
+
+**2026-09-23** - Added Google Login (OAuth 2.0 / OpenID Connect) without replacing the existing email/password auth:
+- Added `auth_accounts` table (Prisma `AuthAccount` model, migration `20260923044551_add_auth_accounts`): `provider` + `provider_user_id` (Google `sub`, never email) with a unique constraint so one Google account cannot link to multiple users
+- Server-side Authorization Code flow, implemented with Node built-in `fetch` + `node:crypto` (no new dependencies): `GET /auth/google` (sets an httpOnly `oauth_state` cookie and redirects to Google) and `GET /auth/google/callback` (validates state, exchanges the code, verifies the ID token signature against Google JWKS with `iss`/`aud`/`exp`/`email_verified` checks)
+- User resolution: linked-account login → existing-user-by-email link (marks email verified if unverified, never touches the password) → new verified user creation with a random unusable bcrypt password; Google email is treated as verified
+- Race safety: `P2002` recovery re-reads the winning account on concurrent link attempts; soft-deleted users are rejected; cancelled/invalid callbacks redirect to `/login?oauth_error=...`
+- Reuses the existing `createSession`/`noteflow_session` cookie flow (exported `buildSessionContext`); Google creds (`GOOGLE_CLIENT_ID`/`SECRET`/`CALLBACK_URL`) are optional env vars so existing deployments are unaffected
+- Frontend: "Sign in with Google" button on the login page plus `?oauth_error` toast handling
+- Added `backend/src/tests/oauth.service.test.js` (8 vitest cases); docs updated (`docs/05-api.md`, `04-data-model.md`, `06-authentication.md`, `12-environment.md`, `13-integrations.md`), new `specs/auth/google-login.md`, `ai/context.md`, `backend/.env.example`
 
 **2026-09-23** - Fixed Hostinger email delivery (register/reset emails 500'd):
 - Corrected the `email.service.js` payload to match Hostinger's `V1.Send.Request` schema: `to` is now an array of email strings (was array of objects), `sender` object removed, `textContent`/`htmlContent` renamed to `text`/`html`, and display name sent via `displayName` (from `MAIL_FROM_NAME`). The old payload was rejected with `400 Bad Request`, failing `/auth/register`

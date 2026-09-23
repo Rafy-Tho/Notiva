@@ -99,7 +99,7 @@ Before making any changes, the agent MUST inspect:
 1. **source code** - Implementation details in backend/src/modules/, backend/src/common/, backend/src/app/
 2. **tests** - backend/src/tests/notes.service.test.js (current test coverage)
 3. **database** - Prisma schema in backend/prisma/schema.prisma and the shared client in backend/src/db/prisma.js
-4. **docs/** - System documentation in docs/ (especially 03-architecture.md, 04-data-model.md, 05-api.md)
+4. **docs/** - System documentation in docs/ (especially 03-architecture.md, 04-data-model.md, 05-api.md, UI_DESIGN.md)
 5. **progress.md** - Current project progress and status
 6. **specs/** - Feature specifications in specs/ (auth/, notes/, notebooks/, tags/, profile/)
 

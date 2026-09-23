@@ -259,6 +259,47 @@ The `message` field contains a human-readable success message (e.g., "registered
 
 ---
 
+### GET `/auth/google`
+| Attribute | Value |
+|-----------|-------|
+| **Auth** | Public |
+| **Rate Limit** | 10/min |
+| **Purpose** | Start Google OAuth sign-in |
+
+**Flow:**
+1. Backend generates a random `state` value and stores it in an httpOnly `oauth_state` cookie (10-minute expiry)
+2. Redirects (302) to Google's OAuth consent screen (`redirect_uri` = `GOOGLE_CALLBACK_URL`, scope `openid email profile`)
+
+**Errors:** no JSON error envelope; if Google OAuth is not configured the user is redirected to `FRONTEND_ORIGIN/login?oauth_error=google_not_configured`.
+
+---
+
+### GET `/auth/google/callback`
+| Attribute | Value |
+|-----------|-------|
+| **Auth** | Public |
+| **Rate Limit** | 10/min |
+| **Purpose** | Complete Google OAuth sign-in |
+
+**Query Parameters:** `code`, `state` (plus `error` when the user cancels at Google)
+
+**Flow:**
+1. Validates `state` against the `oauth_state` cookie (cleared after use); invalid state is rejected (no account change)
+2. Handles a Google `error` response (e.g., `access_denied`) as a cancelled login
+3. Exchanges `code` for tokens at Google's token endpoint (client secret used server-side)
+4. Verifies the ID token signature against Google's public JWKS and validates `iss`, `aud` (must equal `GOOGLE_CLIENT_ID`), `exp`, and `email_verified`
+5. Resolves the user by Google `sub` (never email):
+   - Account found by `(provider='google', provider_user_id)` → logs in that user
+   - Otherwise, finds an existing user by the verified Google email → links the account (marks email verified if unverified, never changes the password)
+   - Otherwise, creates a new verified user (name/avatar from Google, random unusable password) and links the Google account
+6. Race-safe: the `UNIQUE(provider, provider_user_id)` constraint prevents one Google account from being linked to multiple users; concurrent callbacks recover by re-fetching the winning account
+7. Rejects soft-deleted (`deletedAt`) accounts
+8. Creates the normal server session, sets the `noteflow_session` cookie, and redirects (302) to the frontend root
+
+**Failure behavior:** never returns a JSON error envelope to the browser; failures redirect to `FRONTEND_ORIGIN/login?oauth_error=<key>` where the key is `cancelled`, `invalid_state`, `invalid_callback`, or `google_failed`.
+
+---
+
 ### Authentication Cookies
 
 The app uses opaque **server-session authentication** (no JWT). `POST /login` and `POST /auth/verify-email` set an httpOnly cookie named `noteflow_session`; the raw token is a 32-byte random hex value and only its SHA-256 hash is stored in the `UserSession` table. `POST /register` does **not** set a cookie. The cookie behavior varies by environment:

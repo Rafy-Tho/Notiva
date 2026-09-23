@@ -50,6 +50,27 @@ NoteFlow uses **opaque server-session authentication** stored in PostgreSQL. A r
 
 ---
 
+## Google Login (`GET /auth/google`, `GET /auth/google/callback`)
+
+**Flow:**
+1. The login page's "Sign in with Google" button navigates the browser to `GET /auth/google`
+2. Backend generates a random `state`, stores it in an httpOnly `oauth_state` cookie (10-min expiry), and redirects to Google's consent screen
+3. Google redirects back to `GET /auth/google/callback?code=...&state=...`; the callback validates `state` (clearing the cookie) and handles cancellations (`error=access_denied`)
+4. Backend exchanges `code` for an ID token (client secret used server-side) and verifies the ID token signature against Google's JWKS, checking `iss`, `aud`, `exp`, and `email_verified` — Google identity is never trusted from the client
+5. User resolution (Google `sub` is the identity, never the email):
+   - **Account found** by `(provider='google', provider_user_id)` → log in that user
+   - **Email found** (existing user) → link the Google account to that user; mark their email verified if it was unverified; their password is untouched
+   - **No user** → create a new verified user (name/avatar from Google, random unusable bcrypt password) and link the Google account
+6. The `UNIQUE(provider, provider_user_id)` constraint prevents one Google account from linking to multiple users; concurrent callbacks recover from `P2002` by re-reading the account
+7. Soft-deleted users are rejected
+8. Creates a **normal server session** and sets the `noteflow_session` cookie, then redirects to the frontend root (the SPA's `restoreSession()` picks up the session)
+
+**Failure redirects** (to `FRONTEND_ORIGIN/login`): `?oauth_error=cancelled` (user cancelled), `invalid_state`, `invalid_callback`, `google_failed`, `google_not_configured`.
+
+**Google-authenticated emails are treated as verified** (`emailVerifiedAt` set on create/link).
+
+---
+
 ## Logout (`POST /auth/logout`)
 
 **Flow:**
@@ -67,6 +88,10 @@ NoteFlow uses **opaque server-session authentication** stored in PostgreSQL. A r
 3. Server looks up the session by hashed token, checks expiry/revocation, and blocks unverified users
 4. If valid: returns user data, client sets authenticated state
 5. If invalid: returns 401, client clears user state
+
+**Request-spam guards:**
+- Concurrent boot calls (e.g. React StrictMode double-mount) are deduplicated — only one `/auth/verify` fires per page load.
+- A 401 is treated as permanent and is **never retried** by `fetchWithAuth`.
 
 ---
 
@@ -146,6 +171,8 @@ NoteFlow uses **opaque server-session authentication** stored in PostgreSQL. A r
 - `/api/v1/auth/verify-email`
 - `/api/v1/auth/reset-password-code`
 - `/api/v1/auth/confirm-password-reset`
+- `/api/v1/auth/google`
+- `/api/v1/auth/google/callback`
 
 ---
 
@@ -153,7 +180,7 @@ NoteFlow uses **opaque server-session authentication** stored in PostgreSQL. A r
 
 | Browser Action | Behavior |
 |----------------|----------|
-| Login / verify-email | Cookie set with 7-day expiry |
+| Login / verify-email / Google login | Cookie set with 7-day expiry |
 | Register | No cookie (logged out until verified) |
 | Session active | Cookie sent on each request |
 | Logout | Cookie cleared, sessions revoked |

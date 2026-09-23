@@ -3,7 +3,7 @@ export const config = {
   baseURL: import.meta.env.VITE_BASE_API || '',
   timeout: 30000,
   retry: {
-    maxRetries: 3,
+    maxRetries: 2,
     initialDelay: 1000,
     maxDelay: 10000,
     retryableStatuses: [408, 429, 500, 502, 503, 504],

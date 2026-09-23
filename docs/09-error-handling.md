@@ -126,6 +126,8 @@ All API errors follow this structure:
 // Response status checks
 if (response.status === 401) {
   // Clear session, redirect to login
+  // 401 is NEVER retried (permanent condition) to avoid hammering the
+  // server during boot-time session checks
 }
 
 // JSON parsing
@@ -135,6 +137,12 @@ try {
   // Handle malformed JSON
 }
 ```
+
+**Retry policy:** transient statuses (`408`, `429`, `500`, `502`, `503`, `504`)
+are retried up to `config.retry.maxRetries` (default 2) with exponential
+backoff. `401` and caller-initiated aborts are final. Boot-time session
+restores (`restoreSession`) are deduplicated so `/auth/verify` fires once per
+page load.
 
 ### TanStack Query Error Handling
 

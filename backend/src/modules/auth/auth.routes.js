@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import * as c from './auth.controller.js';
+import * as oauthC from './oauth.controller.js';
 import { authLimiter } from '../../common/middleware/rateLimiter.js';
 import { validate } from '../../common/middleware/validate.js';
 import { authenticate } from '../../common/middleware/authenticate.js';
@@ -25,5 +26,8 @@ r.post('/verify-email', validate(verifyEmailV), asyncHandler(c.verifyEmail));
 r.post('/reset-password-code', validate(resetPasswordV), asyncHandler(c.resetPasswordCode));
 r.post('/confirm-password-reset', validate(confirmPasswordResetV), asyncHandler(c.confirmPasswordReset));
 r.post('/logout', asyncHandler(c.logout));
+
+r.get('/google', asyncHandler(oauthC.googleLogin));
+r.get('/google/callback', asyncHandler(oauthC.googleCallback));
 
 export default r;
