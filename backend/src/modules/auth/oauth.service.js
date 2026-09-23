@@ -204,6 +204,7 @@ export async function handleGoogleCallback({ code, redirectUri, req }) {
       if (recovered) return recovered;
       user = await userRepo.findByEmail(normalizedEmail);
       rejectIfDeleted(user);
+      user = await ensureVerified(user);
     }
   }
 

@@ -56,6 +56,12 @@ See `decisions/unresolved-questions.md` for additional unknowns that may represe
 
 ## Recent Changes
 
+**2026-09-23** - Fixed new Google users being saved as email-unverified:
+- Root cause: `src/modules/users/user.repository.js` `create()` destructured only `{ name, email, password }`, silently dropping the `emailVerifiedAt`/`avatar` fields that `oauth.service.js` passes on new-user creation. Result: new Google users were persisted with `emailVerifiedAt = NULL`, so `authenticate.js` rejected their fresh session with `EMAIL_NOT_VERIFIED` and the login appeared to fail
+- Fixed `user.repository.js:create()` to pass through optional `emailVerifiedAt` and `avatar`; backward compatible with password registration
+- Added `ensureVerified(user)` after re-fetch in the P2002 race-recovery path of `oauth.service.js` so a race-recovered user is also ensured verified
+- Verified via `backend` oauth.service tests (8/8 pass)
+
 **2026-09-23** - Replaced morgan with a custom logger (also fixes LiteSpeed boot crash on Hostinger):
 - Added `src/common/utils/logger.js` (zero-dep, levels debug/info/warn/error, threshold via `LOG_LEVEL` env, ISO timestamps, Error→stack)
 - Added `src/common/middleware/httpLogger.js` (dev-only request logger: `METHOD path status - ms`, 4xx→warn, 5xx→error)

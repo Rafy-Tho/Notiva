@@ -4,8 +4,8 @@ export async function findByEmail(email) {
   return prisma.user.findUnique({ where: { email } });
 }
 
-export async function create({ name, email, password }) {
-  return prisma.user.create({ data: { name, email, password } });
+export async function create({ name, email, password, emailVerifiedAt, avatar }) {
+  return prisma.user.create({ data: { name, email, password, emailVerifiedAt, avatar } });
 }
 
 export async function findById(id) {
