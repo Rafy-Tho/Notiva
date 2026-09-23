@@ -49,18 +49,18 @@ export const useAuthStore = create((set, get) => ({
 
   setUser: (user) => {
     saveAuth(user);
-    set({ user });
+    set({ user, isAuthenticated: !!user });
   },
 
   register: async (name, email, password) => {
-    set({ isLoading: false, error: null });
+    set({ isLoading: true, error: null });
     try {
-       const data = await fetchJson(getApiUrl("/auth/register"), {
+      const data = await fetchJson(getApiUrl("/auth/register"), {
         method: "POST",
         body: JSON.stringify({ name, email, password }),
       });
-      saveAuth(data.user);
-      set({ user: data.user, isLoading: false, error: null });
+      set({ isLoading: false, error: null });
+      return data;
     } catch (err) {
       set({ error: err.message, isLoading: false });
       throw err;
@@ -68,14 +68,14 @@ export const useAuthStore = create((set, get) => ({
   },
 
   login: async (email, password) => {
-    set({ isLoading: false, error: null });
+    set({ isLoading: true, error: null });
     try {
-       const data = await fetchJson(getApiUrl("/auth/login"), {
+      const data = await fetchJson(getApiUrl("/auth/login"), {
         method: "POST",
         body: JSON.stringify({ email, password }),
       });
       saveAuth(data.user);
-      set({ user: data.user, isLoading: false, error: null });
+      set({ user: data.user, isAuthenticated: true, isLoading: false, error: null });
     } catch (err) {
       set({ error: err.message, isLoading: false });
       throw err;
@@ -83,41 +83,43 @@ export const useAuthStore = create((set, get) => ({
   },
 
   logout: async () => {
+    set({ isLoading: true });
     try {
-       await fetchJson(getApiUrl("/auth/logout"), { method: "POST" });
+      await fetchJson(getApiUrl("/auth/logout"), { method: "POST" });
     } finally {
       saveAuth(null);
-      set({ user: null });
+      set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },
 
   restoreSession: async () => {
-    if (get().isAuthenticated && !!get().user)
+    if (get().isAuthenticated && !!get().user) {
       try {
-         const data = await fetchJson(getApiUrl("/auth/verify"));
+        const data = await fetchJson(getApiUrl("/auth/verify"));
         saveAuth(data.user);
-        set({ user: data.user });
+        set({ user: data.user, isAuthenticated: true });
       } catch {
         saveAuth(null);
-        set({ user: null });
+        set({ user: null, isAuthenticated: false });
       }
+    }
   },
 
   delete: async () => {
-      await fetchJson(getApiUrl("/me"), { method: "DELETE" });
+    await fetchJson(getApiUrl("/me"), { method: "DELETE" });
     saveAuth(null);
-    set({ user: null });
+    set({ user: null, isAuthenticated: false });
   },
 
   verifyEmailCode: async (email, code) => {
-    set({ isLoading: false, error: null });
+    set({ isLoading: true, error: null });
     try {
       const data = await fetchJson(getApiUrl("/auth/verify-email"), {
         method: "POST",
         body: JSON.stringify({ email, code }),
       });
       saveAuth(data.user);
-      set({ user: data.user, isLoading: false, error: null });
+      set({ user: data.user, isAuthenticated: true, isLoading: false, error: null });
       return data;
     } catch (err) {
       set({ error: err.message, isLoading: false });
@@ -126,7 +128,7 @@ export const useAuthStore = create((set, get) => ({
   },
 
   resendVerificationCode: async (email) => {
-    set({ isLoading: false, error: null });
+    set({ isLoading: true, error: null });
     try {
       const data = await fetchJson(getApiUrl("/auth/resend-verification"), {
         method: "POST",
@@ -141,7 +143,7 @@ export const useAuthStore = create((set, get) => ({
   },
 
   resetPasswordCode: async (email) => {
-    set({ isLoading: false, error: null });
+    set({ isLoading: true, error: null });
     try {
       const data = await fetchJson(getApiUrl("/auth/reset-password-code"), {
         method: "POST",
@@ -156,7 +158,7 @@ export const useAuthStore = create((set, get) => ({
   },
 
   confirmPasswordReset: async (email, code, password) => {
-    set({ isLoading: false, error: null });
+    set({ isLoading: true, error: null });
     try {
       const data = await fetchJson(getApiUrl("/auth/confirm-password-reset"), {
         method: "POST",

@@ -28,6 +28,11 @@ export async function trackLoginAttempt(email) {
   return { locked: false, attempts, remaining: threshold - attempts };
 }
 
+export async function resetLoginAttempts(email) {
+  const key = `login_attempts:${email}`;
+  await redis.del(key);
+}
+
 export async function checkResetRate(email) {
   const key = `password_reset:${email}`;
   const attempts = await redis.incr(key);

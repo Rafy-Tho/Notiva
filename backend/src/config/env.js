@@ -20,10 +20,12 @@ export const env = {
   cloudinaryApiKey: process.env.CLOUDINARY_API_KEY,
   cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET,
 
-  // Brevo (email)
-  brevoApiKey: process.env.BREVO_API_KEY,
-  brevoFromName: process.env.BREVO_FROM_NAME,
-  brevoFromEmail: process.env.BREVO_FROM_EMAIL,
+  // Hostinger (email)
+  hostingerApiKey: process.env.HOSTINGER_MAIL_API_KEY,
+  hostingerMailboxId: process.env.HOSTINGER_MAIL_MAILBOX_ID,
+  hostingerBaseUrl: process.env.HOSTINGER_API_BASE_URL,
+  mailFrom: process.env.MAIL_FROM,
+  mailFromName: process.env.MAIL_FROM_NAME,
 
   // Redis
   redisUrl: process.env.REDIS_URL || 'redis://localhost:6379',
@@ -43,9 +45,11 @@ export function validateEnv() {
     ['CLOUDINARY_CLOUD_NAME', env.cloudinaryCloudName],
     ['CLOUDINARY_API_KEY', env.cloudinaryApiKey],
     ['CLOUDINARY_API_SECRET', env.cloudinaryApiSecret],
-    ['BREVO_API_KEY', env.brevoApiKey],
-    ['BREVO_FROM_NAME', env.brevoFromName],
-    ['BREVO_FROM_EMAIL', env.brevoFromEmail],
+    ['HOSTINGER_MAIL_API_KEY', env.hostingerApiKey],
+    ['HOSTINGER_MAIL_MAILBOX_ID', env.hostingerMailboxId],
+    ['HOSTINGER_API_BASE_URL', env.hostingerBaseUrl],
+    ['MAIL_FROM', env.mailFrom],
+    ['MAIL_FROM_NAME', env.mailFromName],
   ];
 
   const missing = [];

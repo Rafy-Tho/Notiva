@@ -3,6 +3,7 @@
 | Feature | Status | Specification |
 |---------|--------|---------------|
 | User Registration | IMPLEMENTED | [auth/registration.md](auth/registration.md) |
+| Email Verification | IMPLEMENTED | [auth/email-verification.md](auth/email-verification.md) |
 | User Login | IMPLEMENTED | [auth/login.md](auth/login.md) |
 | User Logout | IMPLEMENTED | [auth/logout.md](auth/logout.md) |
 | Password Reset | IMPLEMENTED | [auth/password-reset.md](auth/password-reset.md) |

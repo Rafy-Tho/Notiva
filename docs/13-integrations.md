@@ -30,17 +30,18 @@
 
 ---
 
-### Brevo (via Nodemailer)
+### Hostinger (via REST API)
 
 | Attribute | Value |
 |-----------|-------|
-| **Service** | Brevo (Sendinblue) |
-| **Purpose** | Email delivery (password reset) |
-| **Integration Point** | `backend/src/config/mailer.js` |
-| **Authentication** | API key |
-| **API Usage** | Email sending via REST API |
-| **Failure Behavior** | Email send fails silently |
-| **Configuration** | `BREVO_API_KEY`, `BREVO_SENDER_EMAIL` |
+| **Service** | Hostinger |
+| **Purpose** | Email delivery (verification + password reset) |
+| **Integration Point** | `backend/src/modules/email/email.service.js` |
+| **Authentication** | Bearer token (API key) |
+| **API Usage** | `POST /api/v1/mailboxes/{mailboxResourceId}/send` (accepts `204 No Content`). Payload follows the `V1.Send.Request` schema: `to` (array of email strings), `displayName`, `cc?`, `bcc?`, `subject`, `text`, `html`, `attachments?`, `inReplyTo?`, `forwardOf?` |
+| **Recovery** | 10s request timeout, 3 attempts, jittered exponential backoff (300ms→5s cap), honors `Retry-After`; retries only on timeout/network/429/5xx |
+| **Failure Behavior** | Client errors (400/401/403/404/422) are permanent and surface as an error. For `/auth/register` and password-reset requests the send is non-fatal: the failure is logged and the endpoint still returns success (user can retry via `/verify-email/resend`). Logs only non-sensitive metadata (never recipient, codes, or content) |
+| **Configuration** | `HOSTINGER_MAIL_API_KEY`, `HOSTINGER_MAIL_MAILBOX_ID`, `HOSTINGER_API_BASE_URL`, `MAIL_FROM`, `MAIL_FROM_NAME` (used as `displayName`) |
 
 ---
 
@@ -50,7 +51,7 @@
 |---------|------|------------|----------|
 | PostgreSQL | Database | Sync | Yes |
 | Cloudinary | Storage | Sync | No |
-| Brevo | Email | Sync | No |
+| Hostinger | Email | Sync | No |
 
 ---
 
@@ -62,7 +63,7 @@ NoteFlow Backend
     ├───┬────────────┐
     │   │            │
     ▼   ▼            ▼
-PostgreSQL Cloudinary  Brevo
+PostgreSQL Cloudinary  Hostinger
 ```
 
 All integrations are configured via environment variables and are initialized on application startup.

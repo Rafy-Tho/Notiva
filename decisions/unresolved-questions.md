@@ -30,8 +30,8 @@
 - Brevo template configuration may not match code
 
 **Evidence Checked:**
-- `backend/src/services/email.service.js` - imports brevo SDK
-- `sendResetEmail` function called from auth.service
+- `backend/src/modules/email/email.service.js` - imports brevo SDK
+- Reset codes are sent via `sendPasswordResetEmail`
 - No template content in source code
 
 **Current Status:** UNKNOWN

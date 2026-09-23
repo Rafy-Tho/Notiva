@@ -6,9 +6,10 @@ Dependency Map
 Authentication Flow
 -------------------
 ```
-Authentication (JWT cookie)
-    ↓
-Session restore (verify endpoint)
+Authentication flow:
+    register (unverified) → verify-email (6-digit code, auto-login)
+    login / session restore (verify endpoint)
+    reset-password-code → confirm-password-reset
     ↓
 User
     ↓

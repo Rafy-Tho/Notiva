@@ -1,31 +1,38 @@
-import { useState, useLocation } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useState } from "react";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
-import { Link } from "react-router-dom";
 
-export function RegistrationVerificationPage() {
+function RegistrationVerificationPage() {
   const location = useLocation();
-  const [email, setEmail] = useState(location.state?.email || "");
+  const [searchParams] = useSearchParams();
+  const [email, setEmail] = useState(
+    location.state?.email || searchParams.get("email") || "",
+  );
   const [code, setCode] = useState("");
   const [resendCount, setResendCount] = useState(0);
-  const { isLoading, error, verifyEmailCode, resendVerificationCode } = useAuthStore();
+  const { isLoading, error, verifyEmailCode, resendVerificationCode } =
+    useAuthStore();
   const navigate = useNavigate();
-
+  console.log({ error, email });
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       await verifyEmailCode(email, code);
       navigate("/");
-    } catch (err) {
+    } catch {
       // Error handled by store
     }
   };
-
   const handleResend = async () => {
     try {
       await resendVerificationCode(email);
       setResendCount((c) => c + 1);
-    } catch (err) {
+    } catch {
       // Error handled by store
     }
   };
@@ -41,7 +48,6 @@ export function RegistrationVerificationPage() {
             We sent a 6-digit code to {email}
           </p>
         </div>
-
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm">
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -58,7 +64,6 @@ export function RegistrationVerificationPage() {
               placeholder="Enter your email"
             />
           </div>
-
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Verification Code
@@ -70,16 +75,16 @@ export function RegistrationVerificationPage() {
               maxLength={6}
               required
               value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              onChange={(e) =>
+                setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+              }
               className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-center text-xl tracking-widest"
               placeholder="000000"
             />
           </div>
-
           {error && (
             <div className="text-red-600 text-sm text-center">{error}</div>
           )}
-
           <button
             type="submit"
             disabled={isLoading || !email || code.length !== 6}
@@ -87,7 +92,6 @@ export function RegistrationVerificationPage() {
           >
             {isLoading ? "Verifying..." : "Verify Email"}
           </button>
-
           <div className="text-center">
             <button
               type="button"
@@ -99,7 +103,6 @@ export function RegistrationVerificationPage() {
             </button>
           </div>
         </form>
-
         <div className="text-center">
           <Link
             to="/login"
@@ -112,3 +115,5 @@ export function RegistrationVerificationPage() {
     </div>
   );
 }
+
+export default RegistrationVerificationPage;

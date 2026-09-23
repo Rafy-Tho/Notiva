@@ -19,23 +19,3 @@ export async function update(id, updates) {
 export async function setPassword(id, password) {
   return prisma.user.update({ where: { id }, data: { password } });
 }
-
-export async function setResetToken(id, { resetToken, resetTokenExpires }) {
-  return prisma.user.update({
-    where: { id },
-    data: { resetToken, resetTokenExpires },
-  });
-}
-
-export async function clearResetToken(id) {
-  return prisma.user.update({
-    where: { id },
-    data: { resetToken: null, resetTokenExpires: null },
-  });
-}
-
-export async function findByResetToken(resetToken, now = new Date()) {
-  return prisma.user.findFirst({
-    where: { resetToken, resetTokenExpires: { gt: now } },
-  });
-}

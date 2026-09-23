@@ -14,8 +14,6 @@ model User {
   email              String   @unique
   password           String
   avatar             String?
-  resetToken         String?
-  resetTokenExpires  DateTime?
   deletedAt          DateTime?
   emailVerifiedAt    DateTime?
   createdAt          DateTime @default(now())
@@ -119,7 +117,7 @@ model UserSession {
 model EmailVerificationToken {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
-  tokenHash String   @map("token_hash") @unique
+  tokenHash String   @map("token_hash")
   expiresAt DateTime @map("expires_at")
   usedAt    DateTime? @map("used_at")
   createdAt DateTime @default(now()) @map("created_at")
@@ -127,13 +125,14 @@ model EmailVerificationToken {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("email_verification_tokens")
+  @@index([userId, tokenHash])
   @@index([userId, expiresAt])
 }
 
 model PasswordResetToken {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
-  tokenHash String   @map("token_hash") @unique
+  tokenHash String   @map("token_hash")
   expiresAt DateTime @map("expires_at")
   usedAt    DateTime? @map("used_at")
   createdAt DateTime @default(now()) @map("created_at")
@@ -141,5 +140,6 @@ model PasswordResetToken {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("password_reset_tokens")
+  @@index([userId, tokenHash])
   @@index([userId, expiresAt])
 }

@@ -1,9 +1,7 @@
 import * as authSvc from "./auth.service.js";
 import * as sessionSvc from "./session.service.js";
-import { UAParser } from "ua-parser-js";
 import { me as getUser } from "../users/user.service.js";
-import { sendResetEmail, sendVerificationEmail, sendPasswordResetEmail } from "../email/email.service.js";
-import { securityAudit } from "../../common/middleware/securityAudit.js";
+import { sendVerificationEmail, sendPasswordResetEmail } from "../email/email.service.js";
 import { ok } from "../../common/utils/response.js";
 
 const COOKIE_NAME = "noteflow_session";
@@ -24,50 +22,20 @@ function clearAuthCookie(res) {
 }
 
 export async function register(req, res) {
-  const user = await authSvc.register(req.body);
-  const ua = new UAParser(req.headers["user-agent"]);
-  const device = ua.getDevice();
-  const session = await sessionSvc.createSession({
-    userId: user.id,
-    deviceName: device.model || req.headers["sec-ch-ua-model"] || "Unknown Device",
-    ipAddress: req.ip,
-    userAgent: req.headers["user-agent"],
-  });
-  setAuthCookie(res, session.rawToken);
-  return ok(res, { user }, "registered", 201);
+  const { user } = await authSvc.register(req.body);
+  const { code } = await authSvc.sendVerificationCode(req.body.email);
+  try {
+    await sendVerificationEmail(req.body.email, code);
+  } catch (err) {
+    console.error("Verification email failed:", err.message);
+  }
+  return ok(res, { user }, "Verification code sent", 201);
 }
 
 export async function login(req, res) {
   const { user, session } = await authSvc.login(req.body, req);
   setAuthCookie(res, session.rawToken);
   return ok(res, { user }, "logged in");
-}
-
-export async function forgotPassword(req, res) {
-  const canProceed = await authSvc.checkResetRate(req.body.email);
-
-  if (!canProceed) {
-    securityAudit.passwordResetRequested(req.body.email, req.ip);
-    return ok(res, null, "If that email exists, a reset link has been sent");
-  }
-
-  const result = await authSvc.createResetToken(req.body.email);
-
-  if (result) {
-    securityAudit.passwordResetRequested(result.user.email, req.ip);
-    const link = `${process.env.FRONTEND_ORIGIN.split(",")[0]
-      }/reset-password?token=${result.token}`;
-
-    await sendResetEmail(result.user.email, link);
-  }
-
-  return ok(res, null, "If that email exists, a reset link has been sent");
-}
-
-export async function resetPassword(req, res) {
-  await authSvc.consumeResetToken(req.body.token, req.body.password);
-  securityAudit.passwordResetCompleted(req.body.email, req.ip);
-  return ok(res, null, "Password updated");
 }
 
 export async function logout(req, res) {
@@ -84,21 +52,27 @@ export async function verify(req, res) {
 }
 
 export async function resendVerification(req, res) {
-  const { code, userId } = await authSvc.sendVerificationCode(req.body.email);
-  await sendVerificationEmail(req.body.email, code, userId);
+  const { code } = await authSvc.sendVerificationCode(req.body.email);
+  await sendVerificationEmail(req.body.email, code);
   return ok(res, null, "Verification code sent");
 }
 
 export async function verifyEmail(req, res) {
-  const { user, session } = await authSvc.verifyCode(req.body.email, req.body.code);
+  const { user, session } = await authSvc.verifyCode(req.body.email, req.body.code, req);
   setAuthCookie(res, session.rawToken);
   return ok(res, { user }, "Email verified");
 }
 
 export async function resetPasswordCode(req, res) {
-  const { code, userId } = await authSvc.sendPasswordResetCode(req.body.email);
-  await sendPasswordResetEmail(req.body.email, code, userId);
-  return ok(res, null, "Reset code sent");
+  const result = await authSvc.sendPasswordResetCode(req.body.email);
+  if (result.sent) {
+    try {
+      await sendPasswordResetEmail(req.body.email, result.code);
+    } catch (err) {
+      console.error("Password reset email failed:", err.message);
+    }
+  }
+  return ok(res, null, "If the account exists, a reset code has been sent");
 }
 
 export async function confirmPasswordReset(req, res) {

@@ -46,7 +46,7 @@ const snippet = memo(({ html, q }) => {
   return (start > 0 ? "… " : "") + text.slice(start, i + q.length + 140) + "…";
 });
 
-export function SearchPage() {
+function SearchPage() {
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const [q, setQ] = useState(params.get("q") || "");
@@ -125,9 +125,7 @@ export function SearchPage() {
   const searchResults = useMemo(() => {
     return notes.map((n) => {
       const nb = memoizedNotebooks.get(n.notebookId);
-      const tags = n.tagIds
-        .map((tid) => memoizedTags.get(tid))
-        .filter(Boolean);
+      const tags = n.tagIds.map((tid) => memoizedTags.get(tid)).filter(Boolean);
       return {
         ...n,
         nb,

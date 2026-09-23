@@ -9,7 +9,7 @@ import { Loader2, Eye, EyeOff } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { registerSchema } from "@/lib/validation";
 
-export function RegisterPage() {
+function RegisterPage() {
   const navigate = useNavigate();
   const register = useAuthStore((s) => s.register);
   const [name, setName] = useState("");
@@ -36,7 +36,7 @@ export function RegisterPage() {
     setLoading(true);
     try {
       await register(name, email, password);
-      navigate("/verify-email", { replace: true });
+      navigate("/verify-email", { state: { email }, replace: true });
     } catch (err) {
       toast.error(err.message);
     } finally {

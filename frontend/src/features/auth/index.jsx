@@ -1,7 +1,7 @@
-export { LoginPage } from "./pages/LoginPage";
-export { RegisterPage } from "./pages/RegisterPage";
-export { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
-export { ResetPasswordPage } from "./pages/ResetPasswordPage";
-export { SettingsPage } from "./pages/SettingsPage";
+export { default as LoginPage } from "./pages/LoginPage";
+export { default as RegisterPage } from "./pages/RegisterPage";
+export { default as RegistrationVerificationPage } from "./pages/RegistrationVerificationPage";
+export { default as UpdatePasswordPage } from "./pages/UpdatePasswordPage";
+export { default as SettingsPage } from "./pages/SettingsPage";
 export { PrivateRoute } from "./components/PrivateRoute";
 export { PublicRoute } from "./components/PublicRoute";

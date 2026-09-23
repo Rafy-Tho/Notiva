@@ -46,7 +46,7 @@ import { useAuthStore } from "@/store/authStore";
 import { useUIStore } from "@/store/useUIStore";
 import { useNotes } from "@/features/notes/hooks/useNotes";
 
-export function SettingsPage() {
+function SettingsPage() {
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   const logout = useAuthStore((s) => s.logout);
@@ -68,8 +68,6 @@ export function SettingsPage() {
   const { mutateAsync: changePassword, isPending: pwPending } =
     useChangePassword();
   const { data: notes } = useNotes();
-
-
 
   if (!user) return null;
 

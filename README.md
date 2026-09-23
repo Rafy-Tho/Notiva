@@ -60,7 +60,7 @@ frontend/
 
 ```
 / -> redirect /notes
-/login, /register, /forgot-password, /reset-password  (PublicRoute)
+/login, /register, /verify-email, /update-password  (PublicRoute)
 /notes, /favorites, /archive, /trash                    (PrivateRoute → AppLayout)
 /notebooks/:notebookId, /tags/:tagId
 /settings, /search
@@ -95,7 +95,7 @@ AppLayout
 
 | Prefix              | Auth     | Rate Limit | Purpose                                                |
 | ------------------- | -------- | ---------- | ------------------------------------------------------ |
-| `/api/v1/auth`      | Mixed    | 10/min     | register, login, logout, forgot/reset password, verify |
+| `/api/v1/auth`      | Mixed    | 10/min     | register, login, logout, verify email, reset password |
 | `/api/v1/me`        | Required | —          | profile, password, avatar, delete account              |
 | `/api/v1/notebooks` | Required | —          | CRUD notebooks                                         |
 | `/api/v1/tags`      | Required | —          | CRUD tags                                              |
@@ -114,7 +114,7 @@ Request → helmet → cors → cookieParser → express.json (2MB) → morgan (
 - JWT in httpOnly cookie (`noteflow_token`, 7d expiry, sameSite: lax)
 - Session restored on app boot via `GET /auth/verify`
 - Password: bcrypt (cost 12)
-- Reset token: 32-byte random → SHA-256 hash → 1-hour expiry
+- Reset: 6-digit code, SHA-256 hashed in PasswordResetToken table, 15-minute expiry
 
 ---
 
@@ -130,8 +130,8 @@ Request → helmet → cors → cookieParser → express.json (2MB) → morgan (
 | POST             | `/auth/login`           | No   | Sign in (sets cookie)           |
 | POST             | `/auth/logout`          | No   | Clear cookie                    |
 | GET              | `/auth/verify`          | Yes  | Restore session                 |
-| POST             | `/auth/forgot-password` | No   | Send reset email                |
-| POST             | `/auth/reset-password`  | No   | Consume token, set new password |
+| POST             | `/auth/reset-password-code` | No | Send 6-digit reset code         |
+| POST             | `/auth/confirm-password-reset` | No | Complete reset with code     |
 | GET              | `/me`                   | Yes  | Get profile                     |
 | PATCH            | `/me`                   | Yes  | Update name                     |
 | POST             | `/me/password`          | Yes  | Change password                 |

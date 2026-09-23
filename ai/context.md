@@ -78,11 +78,14 @@ Database
 
 Authentication
 --------------
-- JWT cookie-based authentication
-- httpOnly cookie `noteflow_token` (7-day expiry)
-- HS256 algorithm
+- Opaque server-session authentication (no JWT)
+- httpOnly cookie `noteflow_session` (7-day expiry); only the SHA-256 hash of the token is stored (`UserSession`)
+- Registration creates unverified users and emails a 6-digit verification code (SHA-256 hashed, 15-min expiry, single-use)
+- Email verification logs the user in automatically (server session + cookie)
+- Login blocks unverified users (401 "Email not verified"); failed-attempt lockout resets on success
+- Password reset uses a 6-digit code (SHA-256 hashed, 15-min expiry, single-use); successful reset revokes all sessions
 - bcrypt password hashing (cost 12)
-- 10/min rate limiting on auth endpoints
+- 10/min rate limiting on auth endpoints; verification/reset code requests 5/hour per email
 - Cookie storage prevents XSS
 
 Authorization
@@ -94,14 +97,15 @@ Authorization
 External Services
 -----------------
 - **PostgreSQL**: Primary database
+- **Redis (Upstash)**: Rate limiting
 - **Cloudinary**: Avatar image hosting
-- **Brevo (Sendinblue)**: Password reset emails
+- **Hostinger mail API**: Verification / password reset emails
 
 Deployment
 ----------
 - Backend: Node.js server (`server.js`)
 - Frontend: Vite static build
-- Environment vars: DATABASE_URL, JWT_ACCESS_SECRET, CLOUDINARY_*, BREVO_*, etc.
+- Environment vars: DATABASE_URL, REDIS_URL, JWT_ACCESS_SECRET, HOSTINGER_MAIL_*, CLOUDINARY_*, etc.
 
 Important Constraints
 ---------------------

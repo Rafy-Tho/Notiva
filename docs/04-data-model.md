@@ -17,8 +17,7 @@ All primary keys are UUIDs (`String @id @default(uuid())`).
 | `email` | String | Yes | | Unique, stored lowercase |
 | `password` | String | Yes | | bcrypt hash (cost 12) |
 | `avatar` | String | No | | Cloudinary URL |
-| `resetToken` | String | No | | SHA-256 hashed |
-| `resetTokenExpires` | Timestamp | No | | 1-hour expiry |
+| `emailVerifiedAt` | Timestamp | No | null | Set when email is verified |
 | `deletedAt` | Timestamp | No | null | Soft delete marker |
 | `createdAt` | Timestamp | Yes | `now()` | |
 | `updatedAt` | Timestamp | Yes | `@updatedAt` | |
@@ -26,8 +25,12 @@ All primary keys are UUIDs (`String @id @default(uuid())`).
 **Constraints / Indexes:**
 - `email` (unique)
 
+**Related tables:**
+- `PasswordResetToken` — reset tokens are stored here, not on the User
+- `EmailVerificationToken` — email verification codes (single-use)
+
 **API serialization (`toPublicUser`):**
-- `password`, `resetToken`, `resetTokenExpires` are never returned
+- `password` is never returned
 
 ---
 
@@ -110,6 +113,64 @@ All primary keys are UUIDs (`String @id @default(uuid())`).
 
 ---
 
+### PasswordResetToken
+**Table:** `password_reset_tokens`
+
+**Purpose:** One-time password reset tokens (6-digit codes)
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `id` | UUID | Yes | Primary key |
+| `userId` | UUID | Yes | FK → User (cascade delete) |
+| `tokenHash` | String | Yes | SHA-256 hashed (raw code never stored) |
+| `expiresAt` | Timestamp | Yes | 15-minute expiry |
+| `usedAt` | Timestamp | No | null until consumed |
+| `createdAt` | Timestamp | Yes | |
+
+**Indexes:** `@@index([userId, tokenHash])`, `@@index([userId, expiresAt])`
+
+---
+
+### EmailVerificationToken
+**Table:** `email_verification_tokens`
+
+**Purpose:** One-time email verification codes (6-digit)
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `id` | UUID | Yes | Primary key |
+| `userId` | UUID | Yes | FK → User (cascade delete) |
+| `tokenHash` | String | Yes | SHA-256 hashed (raw code never stored) |
+| `expiresAt` | Timestamp | Yes | 15-minute expiry |
+| `usedAt` | Timestamp | No | null until consumed |
+| `createdAt` | Timestamp | Yes | |
+
+**Indexes:** `@@index([userId, tokenHash])`, `@@index([userId, expiresAt])`
+
+---
+
+### UserSession
+**Table:** `UserSession`
+
+**Purpose:** Server-side authentication sessions (opaque tokens; no JWT)
+
+| Field | Type | Required | Notes |
+|-------|------|----------|-------|
+| `id` | UUID | Yes | Primary key |
+| `userId` | UUID | Yes | FK → User (cascade delete) |
+| `tokenHash` | String | Yes | SHA-256 hash of the raw 32-byte token (raw token never stored) |
+| `deviceName` | String | No | From UA parsing |
+| `ipAddress` | String | No | |
+| `userAgent` | String | No | |
+| `expiresAt` | Timestamp | Yes | 7-day expiry |
+| `lastUsedAt` | Timestamp | No | Updated on each authenticated request |
+| `revokedAt` | Timestamp | No | null until revoked (logout / password reset) |
+| `createdAt` | Timestamp | Yes | |
+
+**Indexes:** `@@index([userId])`, `@@index([tokenHash])`
+
+---
+
 ### NoteTag
 **Table:** `NoteTag`
 
@@ -130,6 +191,9 @@ All primary keys are UUIDs (`String @id @default(uuid())`).
 User ─── (1:N) ─── Notes
 User ─── (1:N) ─── Notebooks
 User ─── (1:N) ─── Tags
+User ─── (1:N) ─── PasswordResetTokens
+User ─── (1:N) ─── EmailVerificationTokens
+User ─── (1:N) ─── UserSessions
 Notebook ─── (1:N) ─── Notes
 Note ─── (N:N) ─── Tags [via NoteTag]
 ```

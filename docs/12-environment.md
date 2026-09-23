@@ -19,8 +19,10 @@
 | `CLOUDINARY_CLOUD_NAME` | Cloudinary cloud name | - |
 | `CLOUDINARY_API_KEY` | Cloudinary API key | - |
 | `CLOUDINARY_API_SECRET` | Cloudinary API secret | - |
-| `BREVO_API_KEY` | Brevo API key for email | - |
-| `BREVO_SENDER_EMAIL` | Email sender address | - |
+| `HOSTINGER_MAIL_API_KEY` | Hostinger API key for email | - |
+| `HOSTINGER_MAIL_MAILBOX_ID` | Hostinger mailbox ID | - |
+| `MAIL_FROM` | Email sender address | - |
+| `MAIL_FROM_NAME` | Email sender name | - |
 | `NODE_ENV` | Environment mode | `development` |
 
 ---
@@ -46,8 +48,11 @@ JWT_TTL=7d
 CLOUDINARY_CLOUD_NAME=...
 CLOUDINARY_API_KEY=...
 CLOUDINARY_API_SECRET=...
-BREVO_API_KEY=...
-BREVO_SENDER_EMAIL=noreply@...
+HOSTINGER_MAIL_API_KEY=...
+HOSTINGER_MAIL_MAILBOX_ID=...
+HOSTINGER_API_BASE_URL=https://api.mail.hostinger.com
+MAIL_FROM=noreply@...
+MAIL_FROM_NAME=NoteFlow
 NODE_ENV=development
 ```
 
@@ -86,7 +91,7 @@ VITE_BASE_API=http://localhost:5000/api/v1
 |---------|---------|---------------|
 | PostgreSQL | Primary database | DATABASE_URL |
 | Cloudinary | Avatar storage | CLOUDINARY_* |
-| Brevo | Email delivery | BREVO_* |
+| Hostinger | Email delivery | HOSTINGER_MAIL_* |
 
 ---
 

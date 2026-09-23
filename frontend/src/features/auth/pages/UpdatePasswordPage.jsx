@@ -2,17 +2,17 @@ import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
 import { Link } from "react-router-dom";
-
-export function UpdatePasswordPage() {
+function UpdatePasswordPage() {
   const [searchParams] = useSearchParams();
   const initialEmail = searchParams.get("email") || "";
-  
+
   const [email, setEmail] = useState(initialEmail);
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [step, setStep] = useState(1); // 1 = enter email, 2 = enter code, 3 = enter password
-  const { isLoading, error, resetPasswordCode, confirmPasswordReset } = useAuthStore();
+  const { isLoading, error, resetPasswordCode, confirmPasswordReset } =
+    useAuthStore();
   const navigate = useNavigate();
 
   const handleSendCode = async (e) => {
@@ -20,7 +20,7 @@ export function UpdatePasswordPage() {
     try {
       await resetPasswordCode(email);
       setStep(2);
-    } catch (err) {
+    } catch {
       // Error handled by store
     }
   };
@@ -29,7 +29,7 @@ export function UpdatePasswordPage() {
     e.preventDefault();
     try {
       setStep(3);
-    } catch (err) {
+    } catch {
       // Error handled by store
     }
   };
@@ -42,7 +42,7 @@ export function UpdatePasswordPage() {
     try {
       await confirmPasswordReset(email, code, password);
       navigate("/login");
-    } catch (err) {
+    } catch {
       // Error handled by store
     }
   };
@@ -97,7 +97,9 @@ export function UpdatePasswordPage() {
                 type="text"
                 maxLength={6}
                 value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onChange={(e) =>
+                  setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
+                }
                 required
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-center text-xl tracking-widest"
                 placeholder="000000"
@@ -147,6 +149,11 @@ export function UpdatePasswordPage() {
                 className="appearance-none relative block w-full px-3 py-2 border border-gray-300 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Confirm password"
               />
+              {confirmPassword && password !== confirmPassword && (
+                <p className="text-red-600 text-sm mt-1">
+                  Passwords do not match
+                </p>
+              )}
             </div>
 
             {error && (
@@ -175,3 +182,5 @@ export function UpdatePasswordPage() {
     </div>
   );
 }
+
+export default UpdatePasswordPage;

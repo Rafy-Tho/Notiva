@@ -4,10 +4,8 @@ import { authLimiter } from '../../common/middleware/rateLimiter.js';
 import { validate } from '../../common/middleware/validate.js';
 import { authenticate } from '../../common/middleware/authenticate.js';
 import { 
-  forgotV, 
   loginV, 
   registerV, 
-  resetV,
   resendVerificationV,
   verifyEmailV,
   resetPasswordV,
@@ -26,8 +24,6 @@ r.post('/resend-verification', validate(resendVerificationV), asyncHandler(c.res
 r.post('/verify-email', validate(verifyEmailV), asyncHandler(c.verifyEmail));
 r.post('/reset-password-code', validate(resetPasswordV), asyncHandler(c.resetPasswordCode));
 r.post('/confirm-password-reset', validate(confirmPasswordResetV), asyncHandler(c.confirmPasswordReset));
-r.post('/forgot-password', validate(forgotV), asyncHandler(c.forgotPassword));
-r.post('/reset-password', validate(resetV), asyncHandler(c.resetPassword));
 r.post('/logout', asyncHandler(c.logout));
 
 export default r;

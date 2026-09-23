@@ -54,36 +54,37 @@ All routes are prefixed with `/api/v1`.
 
 ---
 
-### POST `/auth/forgot-password`
+### POST `/auth/reset-password-code`
 **Authentication:** Public  
 **Rate Limit:** 10/min  
-**Purpose:** Initiate password reset  
+**Purpose:** Send 6-digit password reset code  
 
 **Request Body:**
 - `email` (string, valid email)
 
-**Validation:** `forgotV`  
-**Handler:** `auth.controller.forgotPassword`  
-**Service:** `auth.service.createResetToken` + `email.service.sendResetEmail`  
-**Database:** Updates User with resetToken + resetTokenExpires  
-**Response:** `{ success: true, message: "If that email exists, a reset link has been sent" }`
+**Validation:** `resetPasswordV`  
+**Handler:** `auth.controller.resetPasswordCode`  
+**Service:** `auth.service.sendPasswordResetCode` + `email.service.sendPasswordResetEmail`  
+**Database:** Deletes prior PasswordResetTokens for user, creates new hashed token (15-minute expiry)  
+**Response:** `{ success: true, message: "Reset code sent" }`
 
 ---
 
-### POST `/auth/reset-password`
+### POST `/auth/confirm-password-reset`
 **Authentication:** Public  
 **Rate Limit:** 10/min  
-**Purpose:** Complete password reset  
+**Purpose:** Complete password reset with code  
 
 **Request Body:**
-- `token` (string, SHA-256 hash of reset token)
-- `password` (string, same requirements as register)
+- `email` (string, valid email)
+- `code` (string, 6 digits)
+- `password` (string, min 8 characters)
 
-**Validation:** `resetV`  
-**Handler:** `auth.controller.resetPassword`  
-**Service:** `auth.service.consumeResetToken`  
-**Database:** Updates User password, clears resetToken fields  
-**Response:** `{ success: true, message: "Password updated" }`
+**Validation:** `confirmPasswordResetV`  
+**Handler:** `auth.controller.confirmPasswordReset`  
+**Service:** `auth.service.resetPasswordWithCode`  
+**Database:** Updates User password, marks PasswordResetToken used  
+**Response:** `{ success: true, data: { user }, message: "Password reset" }`
 
 ---
 

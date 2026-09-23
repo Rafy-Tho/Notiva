@@ -69,8 +69,7 @@ import {
 import { useTags } from "@/features/tags/hooks/useTags";
 import { useNoteActions } from "../hooks/useNoteActions";
 import { wordCount } from "@/lib/sanitize";
-
-export function NoteDetailPage() {
+function NoteDetailPage() {
   const { id } = useParams();
   const { data: note, isLoading: noteLoading, error: noteError } = useNote(id);
   const { data: tags, isLoading: tagsLoading } = useTags();
@@ -131,14 +130,10 @@ function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
 
   const { mutateAsync: updateNote, isPending: isUpdating } = useUpdateNote(id);
   const { mutateAsync: togglePin, isPending: isPinning } = useTogglePin(id);
-  const {
-    mutateAsync: toggleFav,
-    isPending: isFavoriting,
-  } = useToggleFavorite(id);
-  const {
-    mutateAsync: toggleArchive,
-    isPending: isArchiving,
-  } = useToggleArchive(id);
+  const { mutateAsync: toggleFav, isPending: isFavoriting } =
+    useToggleFavorite(id);
+  const { mutateAsync: toggleArchive, isPending: isArchiving } =
+    useToggleArchive(id);
   const { mutateAsync: remove, isPending: isRemoving } = useRemove(id);
   const { mutateAsync: restore, isPending: isRestoring } = useRestore(id);
   const { mutateAsync: purge, isPending: isPurging } = usePurge(id);
@@ -352,8 +347,8 @@ function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
                         Delete note permanently?
                       </AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will permanently remove "{note.title || "Untitled"}"
-                        and all of its version history. This action cannot be
+                        This will permanently remove "{note.title || "Untitled"}
+                        " and all of its version history. This action cannot be
                         undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
@@ -481,12 +476,16 @@ function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
                       <button
                         key={c}
                         type="button"
-                         onClick={() => handleCover(c, { emoji: icon, color: cover })}
-                         disabled={actionPending}
-                         className={cn(
-                           "h-7 rounded-md border-2",
-                           cover === c ? "border-foreground" : "border-transparent",
-                         )}
+                        onClick={() =>
+                          handleCover(c, { emoji: icon, color: cover })
+                        }
+                        disabled={actionPending}
+                        className={cn(
+                          "h-7 rounded-md border-2",
+                          cover === c
+                            ? "border-foreground"
+                            : "border-transparent",
+                        )}
                         style={{ backgroundColor: `hsl(${c})` }}
                         aria-label={`color ${c}`}
                       />

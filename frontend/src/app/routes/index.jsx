@@ -13,8 +13,6 @@ const Loading = () => <div className="p-4 text-center text-muted-foreground">Loa
 const LoginPage = lazy(() => import("@/features/auth/pages/LoginPage"));
 const RegisterPage = lazy(() => import("@/features/auth/pages/RegisterPage"));
 const RegistrationVerificationPage = lazy(() => import("@/features/auth/pages/RegistrationVerificationPage"));
-const ForgotPasswordPage = lazy(() => import("@/features/auth/pages/ForgotPasswordPage"));
-const ResetPasswordPage = lazy(() => import("@/features/auth/pages/ResetPasswordPage"));
 const UpdatePasswordPage = lazy(() => import("@/features/auth/pages/UpdatePasswordPage"));
 const SettingsPage = lazy(() => import("@/features/auth/pages/SettingsPage"));
 
@@ -58,8 +56,6 @@ const router = createBrowserRouter([
       { path: "/login", element: <Suspense fallback={<Loading />}><LoginPage /></Suspense> },
       { path: "/register", element: <Suspense fallback={<Loading />}><RegisterPage /></Suspense> },
       { path: "/verify-email", element: <Suspense fallback={<Loading />}><RegistrationVerificationPage /></Suspense> },
-      { path: "/forgot-password", element: <Suspense fallback={<Loading />}><ForgotPasswordPage /></Suspense> },
-      { path: "/reset-password", element: <Suspense fallback={<Loading />}><ResetPasswordPage /></Suspense> },
       { path: "/update-password", element: <Suspense fallback={<Loading />}><UpdatePasswordPage /></Suspense> },
     ],
   },

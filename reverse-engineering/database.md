@@ -12,8 +12,6 @@
 | `email` | String | Yes | | unique, lowercase, indexed |
 | `password` | String | Yes | | bcrypt hash (cost 12) |
 | `avatar` | String | No | | Cloudinary URL |
-| `resetToken` | String | No | | SHA-256 hashed |
-| `resetTokenExpires` | Date | No | | 1-hour expiry |
 | `deletedAt` | Date | No | null | Soft delete marker |
 | `createdAt` | Date | Yes | auto | timestamps |
 | `updatedAt` | Date | Yes | auto | timestamps |
@@ -22,7 +20,7 @@
 - `email` (unique)
 
 **JSON Transform:**
-- `password`, `resetToken`, `resetTokenExpires` excluded
+- `password` excluded
 - `_id` renamed to `id`
 - `__v` excluded
 

@@ -11,7 +11,7 @@ import { useAuthStore } from "@/store/authStore";
 import { toast } from "@/components/ui/sonner";
 import { loginSchema } from "@/lib/validation";
 
-export function LoginPage() {
+function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const login = useAuthStore((s) => s.login);
@@ -90,7 +90,7 @@ export function LoginPage() {
                   )}
                 </button>
                 <Link
-                  to="/forgot-password"
+                  to="/update-password"
                   className="text-xs text-muted-foreground hover:text-foreground"
                 >
                   Forgot?

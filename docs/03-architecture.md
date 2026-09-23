@@ -133,8 +133,6 @@ User
 ├── email (String, unique)
 ├── password (String, bcrypt hashed)
 ├── avatar (String, Cloudinary URL)
-├── resetToken (String, SHA-256 hashed)
-├── resetTokenExpires (Timestamp)
 ├── deletedAt (Timestamp, soft delete)
 ├── createdAt (Timestamp)
 └── updatedAt (Timestamp)

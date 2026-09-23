@@ -40,10 +40,10 @@
 |-----------|-------|
 | **Purpose** | Recover account access |
 | **User** | Public (unauthenticated) |
-| **Entry Point** | `/forgot-password` route |
-| **Frontend** | ForgotPasswordPage, ResetPasswordPage |
-| **Backend** | `/api/v1/auth/forgot-password`, `/api/v1/auth/reset-password` |
-| **Database** | Updates User with resetToken |
+| **Entry Point** | `/update-password` route |
+| **Frontend** | UpdatePasswordPage |
+| **Backend** | `/api/v1/auth/reset-password-code`, `/api/v1/auth/confirm-password-reset` |
+| **Database** | Creates PasswordResetToken row |
 | **External** | Brevo (email delivery) |
 | **Status** | IMPLEMENTED |
 

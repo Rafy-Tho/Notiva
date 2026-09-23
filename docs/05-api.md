@@ -37,7 +37,7 @@ The `message` field contains a human-readable success message (e.g., "registered
 |-----------|-------|
 | **Auth** | Public |
 | **Rate Limit** | 10/min |
-| **Purpose** | Create new account |
+| **Purpose** | Create account (unverified) and send verification code |
 
 **Request Body:**
 ```json
@@ -55,12 +55,18 @@ The `message` field contains a human-readable success message (e.g., "registered
 {
   "success": true,
   "data": { "user": { /* user object without password */ } },
-  "code": "registered",
+  "code": "Verification code sent",
   "status": 201
 }
 ```
 
-**Side Effect:** Sets httpOnly JWT cookie (`noteflow_token`)
+**Side Effect:**
+- Creates the user with `emailVerifiedAt = null` (unverified).
+- If the email already exists but is unverified, the existing account is reused (password unchanged).
+- Sends a 6-digit email verification code (SHA-256 hashed, 15-minute expiry, single-use, per-user).
+- Does **not** set an authentication cookie — the user stays logged out until verification.
+
+**Errors:** `400` validation, `409` `USER_ALREADY_EXISTS` when the email is already verified.
 
 ---
 
@@ -89,7 +95,72 @@ The `message` field contains a human-readable success message (e.g., "registered
 }
 ```
 
-**Side Effect:** Sets httpOnly JWT cookie
+**Side Effect:** Sets httpOnly `noteflow_session` cookie (7-day expiry). Failed attempts are tracked per email (5/hour lockout); the counter resets on success.
+
+**Errors:** `400` validation, `401` invalid credentials / deleted account, `401` `Email not verified` for unverified users, `429` locked after too many attempts.
+
+---
+
+### POST `/auth/resend-verification`
+| Attribute | Value |
+|-----------|-------|
+| **Auth** | Public |
+| **Rate Limit** | 5/hour (business-level, per email) |
+| **Purpose** | Resend the 6-digit email verification code |
+
+**Request Body:**
+```json
+{
+  "email": "john@example.com"
+}
+```
+
+**Validation:** `resendVerificationV`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": null,
+  "code": "Verification code sent"
+}
+```
+
+**Side Effect:** Deletes prior verification tokens for the user and emits a new one (SHA-256 hashed, 15-minute expiry, single-use).
+
+**Errors:** `401` unknown user, `400` already verified, `429` too many requests.
+
+---
+
+### POST `/auth/verify-email`
+| Attribute | Value |
+|-----------|-------|
+| **Auth** | Public |
+| **Rate Limit** | 10/min |
+| **Purpose** | Confirm email with the 6-digit code and log the user in |
+
+**Request Body:**
+```json
+{
+  "email": "john@example.com",
+  "code": "123456"
+}
+```
+
+**Validation:** `verifyEmailV`
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": { "user": { /* user object with emailVerifiedAt set */ } },
+  "code": "Email verified"
+}
+```
+
+**Side Effect:** Marks the user's email verified, consumes the code (`usedAt`), and creates a normal server session — the httpOnly `noteflow_session` cookie is set, so the user is logged in without re-entering their password.
+
+**Errors:** `400` validation / already verified, `401` invalid or expired code.
 
 ---
 
@@ -109,16 +180,16 @@ The `message` field contains a human-readable success message (e.g., "registered
 }
 ```
 
-**Side Effect:** Clears authentication cookie
+**Side Effect:** Clears the authentication cookie. When the request carries a valid session, that user's sessions are revoked server-side.
 
 ---
 
-### POST `/auth/forgot-password`
+### POST `/auth/reset-password-code`
 | Attribute | Value |
 |-----------|-------|
 | **Auth** | Public |
-| **Rate Limit** | 10/min |
-| **Purpose** | Initiate password reset |
+| **Rate Limit** | 5/hour (business-level, per email) |
+| **Purpose** | Send 6-digit password reset code |
 
 **Request Body:**
 ```json
@@ -127,46 +198,48 @@ The `message` field contains a human-readable success message (e.g., "registered
 }
 ```
 
-**Validation:** `forgotV`
+**Validation:** `resetPasswordV`
 
 **Response:**
 ```json
 {
   "success": true,
-  "message": "If that email exists, a reset link has been sent"
+  "data": null,
+  "message": "If the account exists, a reset code has been sent"
 }
 ```
 
-**Side Effect:** Generates and stores resetToken on User document
+**Side Effect:** For an existing, verified email, creates a PasswordResetToken row (SHA-256 hashed, 15-minute expiry); prior tokens for the user are deleted. For unknown or unverified emails, no token is created and no email is sent — the response is identical to prevent email enumeration.
 
 ---
 
-### POST `/auth/reset-password`
+### POST `/auth/confirm-password-reset`
 | Attribute | Value |
 |-----------|-------|
 | **Auth** | Public |
 | **Rate Limit** | 10/min |
-| **Purpose** | Complete password reset |
+| **Purpose** | Complete password reset with code |
 
 **Request Body:**
 ```json
 {
-  "token": "hashed-reset-token",
+  "email": "john@example.com",
+  "code": "123456",
   "password": "NewSecurePass123!"
 }
 ```
 
-**Validation:** `resetV`
+**Validation:** `confirmPasswordResetV`
 
 **Response:**
 ```json
 {
   "success": true,
-  "message": "Password updated"
+  "data": { "user": { "id": "...", "email": "john@example.com" } }
 }
 ```
 
-**Side Effect:** Clears resetToken fields on User
+**Side Effect:** Updates password (bcrypt cost 12), marks the PasswordResetToken as used (`usedAt`), and revokes all of the user's existing sessions.
 
 ---
 
@@ -188,7 +261,7 @@ The `message` field contains a human-readable success message (e.g., "registered
 
 ### Authentication Cookies
 
-All auth endpoints (`/register`, `/login`, `/verify`) set an httpOnly JWT cookie named `noteflow_token`. The cookie behavior varies by environment:
+The app uses opaque **server-session authentication** (no JWT). `POST /login` and `POST /auth/verify-email` set an httpOnly cookie named `noteflow_session`; the raw token is a 32-byte random hex value and only its SHA-256 hash is stored in the `UserSession` table. `POST /register` does **not** set a cookie. The cookie behavior varies by environment:
 
 | Attribute | Development (`NODE_ENV=development`) | Production (`NODE_ENV=production`) |
 |-----------|--------------------------------------|-------------------------------------|

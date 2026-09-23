@@ -13,17 +13,6 @@ export const loginV = [
   body("password").notEmpty().withMessage("Password required"),
 ];
 
-export const forgotV = [
-  body("email").isEmail().normalizeEmail().withMessage("Invalid email"),
-];
-
-export const resetV = [
-  body("token").notEmpty().withMessage("Token required"),
-  body("password")
-    .isLength({ min: 8 })
-    .withMessage("Password must be at least 8 characters"),
-];
-
 export const resendVerificationV = [
   body("email").isEmail().normalizeEmail().withMessage("Invalid email"),
 ];

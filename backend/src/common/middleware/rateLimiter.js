@@ -18,7 +18,7 @@ const skipTrustedIP = (req) => trustedIPs.includes(req.ip);
 export const generalLimiter = rateLimit({
   ...sharedOptions,
   max: 100,
-  skip: (req) => skipHealthCheck(req) || skipTrustedIP(req),
+  skip: (req) => req.path.startsWith("/api/v1/auth") || skipTrustedIP(req),
   store: new RedisStore({
     sendCommand: (...args) => redis.call(...args),
   }),

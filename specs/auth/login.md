@@ -20,7 +20,7 @@ Public (unauthenticated users)
 ## Preconditions
 
 - User is not already authenticated
-- Account exists and is not locked
+- Account exists, is verified, and is not locked
 
 ## Input
 
@@ -38,14 +38,15 @@ Public (unauthenticated users)
 1. Validate input fields
 2. Find user by email
 3. Verify password with bcrypt
-4. Generate JWT token
-5. Set httpOnly cookie with token
-6. Redirect to notes page
+4. Reject unverified users (401 "Email not verified")
+5. Reset the failed-attempt counter on success
+6. Create a server session and set the `noteflow_session` httpOnly cookie
+7. Redirect to the notes page
 
 ## Frontend
 
 - LoginPage component
-- authStore.auth mutation
+- authStore.login mutation
 
 ## API
 
@@ -69,18 +70,20 @@ Public endpoint (no authentication required)
 ## Errors
 
 - 400: Validation errors
-- 401: Invalid credentials
-- 404: User not found
+- 401: Invalid credentials / deleted account
+- 401: Email not verified (unverified accounts cannot log in)
+- 429: Account temporarily locked (5 failed attempts/hour)
 
 ## Side Effects
 
-- JWT token generated
-- httpOnly cookie set
+- Server session created
+- `noteflow_session` httpOnly cookie set
 
 ## Edge Cases
 
 - Email comparison is case-insensitive
-- Login attempts may be rate limited
+- Unverified users are blocked and routed to email verification
+- Failed attempts reset after a successful login
 
 ## Tests
 
@@ -89,15 +92,15 @@ Not found in test suite
 ## Source Evidence
 
 Frontend:
-- frontend/src/pages/auth/LoginPage.jsx
+- frontend/src/features/auth/pages/LoginPage.jsx
 - frontend/src/store/authStore.js
 
 Backend:
-- backend/src/routes/auth.routes.js
-- backend/src/controllers/auth.controller.js
-- backend/src/services/auth.service.js
-- backend/src/models/User.js
+- backend/src/modules/auth/auth.routes.js
+- backend/src/modules/auth/auth.controller.js
+- backend/src/modules/auth/auth.service.js
+- backend/prisma/schema.prisma (User / UserSession)
 
 ## Unknowns
 
-- Rate limiting details
+- None

@@ -36,6 +36,6 @@ Feature Map
 Notes
 -----
 - Search filters: search, dateFilter, notebookId, tagId, isArchived, isFavorite, isPinned, trashed
-- All endpoints require authentication except register/login
+- All endpoints require authentication except register, login, verify-email, resend-verification, reset-password-code, confirm-password-reset, and logout
 - Optimistic updates implemented via TanStack Query
 - Conflict detection returns 409 on stale updatedAt

@@ -11,11 +11,8 @@ PublicRoute → LoginPage (authStore.login)
 ### `/register`
 PublicRoute → RegisterPage (authStore.register)
 
-### `/forgot-password`
-PublicRoute → ForgotPasswordPage
-
-### `/reset-password`
-PublicRoute → ResetPasswordPage
+### `/update-password`
+PublicRoute → UpdatePasswordPage (authStore code-based reset)
 
 ### `/notes`
 PrivateRoute → NotesPage (all notes list)
@@ -182,8 +179,8 @@ Helper function that:
 Public Routes:
 - `/login`
 - `/register`
-- `/forgot-password`
-- `/reset-password`
+- `/verify-email`
+- `/update-password`
 
 Private Routes (require Auth):
 - `/notes`

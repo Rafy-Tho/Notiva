@@ -6,9 +6,9 @@ export async function createToken({ userId, tokenHash, expiresAt }) {
   });
 }
 
-export async function findByTokenHash(tokenHash, now = new Date()) {
+export async function findByUserIdAndTokenHash(userId, tokenHash, now = new Date()) {
   return prisma.passwordResetToken.findFirst({
-    where: { tokenHash, expiresAt: { gt: now }, usedAt: null },
+    where: { userId, tokenHash, expiresAt: { gt: now }, usedAt: null },
   });
 }
 
