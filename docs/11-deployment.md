@@ -32,7 +32,24 @@ npm run build
 ## Backend Deployment
 
 ### Build Process
-No build step required (native ESM, no transpilation)
+No build step required (native ESM, no transpilation). The Prisma client is generated automatically:
+
+- `npm start` runs `prisma generate` before booting (`"start": "prisma generate && node src/server.js"`), so generation is guaranteed on every start.
+- A `postinstall` script also runs `prisma generate` after `npm install`/`npm ci`.
+
+### Hostinger (cPanel Node.js)
+
+There is no separate build command in the Hostinger panel. Set the application start script to **`npm start`**; the `start` script above regenerates the Prisma client before the server boots. Ensure all required env vars (`DATABASE_URL`, `JWT_ACCESS_SECRET`, `CLOUDINARY_*`, `HOSTINGER_MAIL_*`, `MAIL_FROM`, `MAIL_FROM_NAME`) are set in the Node.js env panel **before the first start** — `prisma generate` fails if it cannot resolve `DATABASE_URL` (loaded via `backend/prisma.config.js`).
+
+### Other platforms (e.g. Render)
+
+With a separate build step (e.g. Render), set the **Build Command** to:
+
+```bash
+npm install && npx prisma generate
+```
+
+and the **Start Command** to `npm start`. If the environment previously cached a stale Prisma client, use **Clear build cache** before redeploying.
 
 ### Runtime Configuration
 | Variable | Purpose | Required |

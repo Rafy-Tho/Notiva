@@ -56,6 +56,13 @@ See `decisions/unresolved-questions.md` for additional unknowns that may represe
 
 ## Recent Changes
 
+**2026-09-23** - Fixed Prisma deploy crash (`SyntaxError: The requested module '@prisma/client' does not provide an export named 'PrismaClient'`):
+- Root cause: the Prisma client was never generated in the deployed environment, so `@prisma/client` exposed no `PrismaClient` (the import in `src/db/prisma.js` depends on `prisma generate` output in `node_modules/.prisma/client`; locally it existed, hence dev worked)
+- Added `"postinstall": "prisma generate"` to `backend/package.json` so generation runs on every `npm install`/`npm ci` (local + Render)
+- Changed `"start"` to `prisma generate && node src/server.js` so the client is regenerated before every boot (covers Hostinger cPanel, which has no separate build command — only `npm start`)
+- Updated `docs/11-deployment.md`: Hostinger sets the start script to `npm start` (env vars must exist in the panel before first start, since `prisma generate` resolves `DATABASE_URL` via `backend/prisma.config.js`); Render uses Build `npm install && npx prisma generate` + Start `npm start` with **Clear build cache** when a stale client was cached
+- Verified end-to-end locally: removed `node_modules/.prisma/client`, ran `npm install` (postinstall regenerated the client), then confirmed `npm start` regenerates the client and boots ("Connected to PostgreSQL", "Server running on port 5000")
+
 **2026-09-23** - Improved UX for loading states to match the NoteFlow design system:
 - Added shared `Loading` component (`frontend/src/components/common/Loading.jsx`) with a `Loader2` spinner (`text-primary`) and optional label
 - Replaced unimported/undefined `<Loading/>` usage in `routes/index.jsx` Suspense fallbacks with the shared component (fixes latent ReferenceError on lazy route loads)

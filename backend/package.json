@@ -4,12 +4,13 @@
   "main": "src/server.js",
   "type": "module",
   "scripts": {
-    "start": "node src/server.js",
+    "start": "prisma generate && node src/server.js",
     "dev": "node --watch src/server.js",
     "lint": "eslint src/",
     "test": "vitest run --pool=threads --maxWorkers=1",
     "backup": "node scripts/backup.js",
     "restore": "node scripts/restore.js",
+    "postinstall": "prisma generate",
     "prisma:generate": "prisma generate",
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy"
