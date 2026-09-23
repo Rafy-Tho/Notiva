@@ -15,13 +15,37 @@ const Avatar = React.forwardRef(({ className, ...props }, ref) => (
 ));
 Avatar.displayName = AvatarPrimitive.Root.displayName;
 
-const AvatarImage = React.forwardRef(({ className, ...props }, ref) => (
-  <AvatarPrimitive.Image
-    ref={ref}
-    className={cn("aspect-square h-full w-full", className)}
-    {...props}
-  />
-));
+const AvatarImage = React.forwardRef(
+  (
+    { className, src, onLoadingStatusChange, referrerPolicy = "no-referrer", ...props },
+    ref,
+  ) => {
+    const [retry, setRetry] = React.useState(0);
+    const MAX_RETRIES = 2;
+
+    const handleLoadingStatusChange = React.useCallback(
+      (status) => {
+        onLoadingStatusChange?.(status);
+        if (status === "error" && src && retry < MAX_RETRIES) {
+          window.setTimeout(() => setRetry((r) => r + 1), 500 * 2 ** retry);
+        }
+      },
+      [onLoadingStatusChange, retry, src],
+    );
+
+    return (
+      <AvatarPrimitive.Image
+        key={`${src}-${retry}`}
+        ref={ref}
+        className={cn("aspect-square h-full w-full", className)}
+        src={src}
+        referrerPolicy={referrerPolicy}
+        onLoadingStatusChange={handleLoadingStatusChange}
+        {...props}
+      />
+    );
+  },
+);
 AvatarImage.displayName = AvatarPrimitive.Image.displayName;
 
 const AvatarFallback = React.forwardRef(({ className, ...props }, ref) => (

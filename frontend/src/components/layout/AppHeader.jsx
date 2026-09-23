@@ -83,11 +83,9 @@ export function AppHeader() {
           {user?.avatar && (
             <AvatarImage src={user.avatar} alt={user.name || "Avatar"} />
           )}
-          {!user?.avatar && (
-            <AvatarFallback className="bg-primary/15 text-primary font-semibold text-sm">
-              {(user.name || user.email).slice(0, 2).toUpperCase()}
-            </AvatarFallback>
-          )}
+          <AvatarFallback className="bg-primary/15 text-primary font-semibold text-sm">
+            {(user.name || user.email).slice(0, 2).toUpperCase()}
+          </AvatarFallback>
         </Avatar>
       </div>
     </header>

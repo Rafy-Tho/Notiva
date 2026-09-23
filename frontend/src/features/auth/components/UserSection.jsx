@@ -1,6 +1,6 @@
 import { Settings } from "lucide-react";
 import { NavLink } from "react-router-dom";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useAuthStore } from "@/store/authStore";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +19,9 @@ export function UserSection() {
         }
       >
         <Avatar className="h-6 w-6">
+          {user?.avatar && (
+            <AvatarImage src={user.avatar} alt={user?.name || "Avatar"} />
+          )}
           <AvatarFallback className="text-[10px] bg-gradient-primary text-primary-foreground">
             {(user?.name || "?").slice(0, 1).toUpperCase()}
           </AvatarFallback>

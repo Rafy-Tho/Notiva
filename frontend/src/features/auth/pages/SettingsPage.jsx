@@ -188,11 +188,9 @@ function SettingsPage() {
               {user?.avatar && (
                 <AvatarImage src={user.avatar} alt={user.name || "Avatar"} />
               )}
-              {!user?.avatar && (
-                <AvatarFallback className="bg-primary/15 text-primary font-semibold text-base">
-                  {initials}
-                </AvatarFallback>
-              )}
+              <AvatarFallback className="bg-primary/15 text-primary font-semibold text-base">
+                {initials}
+              </AvatarFallback>
             </Avatar>
             <div className="min-w-0 flex-1">
               <div className="font-medium truncate">

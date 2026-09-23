@@ -56,6 +56,16 @@ See `decisions/unresolved-questions.md` for additional unknowns that may represe
 
 ## Recent Changes
 
+**2026-09-23** - Fixed Google avatar image not rendering on first login (needed manual reloads):
+- Root cause: Radix `AvatarImage` treats a failed image preload as terminal (`error` status) with no retry; no `referrerPolicy` was passed, and Google `lh3.googleusercontent.com` URLs can 403 based on `Referer`/fail on the first fresh-load request. Result: blank/initials avatar until a manual full reload happened to succeed
+- `ui/avatar.jsx` `AvatarImage` now defaults to `referrerPolicy="no-referrer"` and auto-retries up to 2 times (backoff) on load error by remounting the image with a fresh key, so the avatar appears on first login without manual reloads
+- Verified: frontend lint + build pass
+
+**2026-09-23** - Fixed user avatars not rendering in the frontend after Google login:
+- `user.repository.js` `create()` now passes through `emailVerifiedAt`/`avatar` (Google users persisted verified with avatar)
+- Frontend: `UserSection.jsx` (sidebar) now renders `AvatarImage` (previously only initials), and `AppHeader.jsx`/`SettingsPage.jsx` avatars always render the fallback alongside the image so a failing image degrades to initials instead of a blank circle
+- Verified: backend oauth tests (8/8), frontend build + lint pass
+
 **2026-09-23** - Fixed new Google users being saved as email-unverified:
 - Root cause: `src/modules/users/user.repository.js` `create()` destructured only `{ name, email, password }`, silently dropping the `emailVerifiedAt`/`avatar` fields that `oauth.service.js` passes on new-user creation. Result: new Google users were persisted with `emailVerifiedAt = NULL`, so `authenticate.js` rejected their fresh session with `EMAIL_NOT_VERIFIED` and the login appeared to fail
 - Fixed `user.repository.js:create()` to pass through optional `emailVerifiedAt` and `avatar`; backward compatible with password registration
