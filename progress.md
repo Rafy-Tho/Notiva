@@ -56,6 +56,12 @@ See `decisions/unresolved-questions.md` for additional unknowns that may represe
 
 ## Recent Changes
 
+**2026-09-23** - Documented the production deployment: **Vercel** (frontend) + **Hostinger** (backend):
+- Frontend: Vercel static SPA at `https://noteflow.rafytho.com/` (custom domain, `vercel.json` SPA rewrites, `VITE_BASE_API=https://api-noteflow.rafytho.com/api/v1`)
+- Backend: Hostinger cPanel Node.js at `https://api-noteflow.rafytho.com/` with `NODE_ENV=production`, `FRONTEND_ORIGIN=https://noteflow.rafytho.com` (no trailing slash), and `GOOGLE_CALLBACK_URL` pointing at the deployed backend
+- Documented cross-origin cookie requirements (`secure` + `SameSite=None`, HTTPS on both domains)
+- Rewrote `docs/11-deployment.md`, updated `docs/12-environment.md`, `ai/context.md`, and fixed stale "Brevo" references in `README.md`
+
 **2026-09-23** - Extended the health dashboard with third-party integration checks:
 - Added parallel live probes (3s timeout cap) in `checkHealth`: Hostinger email (`GET /api/v1/me` with bearer token — read-only, no email sent), Cloudinary (`api.ping()`), and Google OAuth (OIDC discovery; skipped as `Not configured` when `GOOGLE_*` absent)
 - Verdict is now `Operational` only when PostgreSQL + Redis + Hostinger + Cloudinary pass and Google is connected or not configured; otherwise `Degraded`

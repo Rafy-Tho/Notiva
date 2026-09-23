@@ -22,7 +22,9 @@
 **Backend:** Node.js, Express 5, Prisma 7, jsonwebtoken, bcrypt, express-validator, helmet, cors, cookie-parser, express-rate-limit, multer, cloudinary, sanitize-html, nodemailer
 
 **Database:** PostgreSQL (Prisma Client + `@prisma/adapter-pg`)  
-**Infrastructure:** Cloudinary (images), Brevo (email)
+**Infrastructure:** Cloudinary (images), Hostinger Mail (email), Redis (rate limiting)
+
+**Deployment:** Frontend on Vercel (`https://noteflow.rafytho.com/`), backend on Hostinger (`https://api-noteflow.rafytho.com/`)
 
 ---
 
@@ -208,7 +210,7 @@ User types query → SearchPage filters all notes client-side
 ```bash
 # Backend
 cd backend
-cp .env.example .env  # Fill in DATABASE_URL, JWT secrets, Cloudinary, Brevo
+cp .env.example .env  # Fill in DATABASE_URL, JWT secrets, Cloudinary, Hostinger mail
 npm install
 npx prisma migrate deploy   # apply migrations (or `npx prisma migrate dev`)
 npm run dev           # Port 5000

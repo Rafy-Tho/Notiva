@@ -106,8 +106,10 @@ External Services
 
 Deployment
 ----------
-- Backend: Node.js server (`server.js`)
-- Frontend: Vite static build
+- Frontend: Vercel (static Vite SPA, custom domain `https://noteflow.rafytho.com/`, `vercel.json` SPA rewrites, `VITE_BASE_API=https://api-noteflow.rafytho.com/api/v1`)
+- Backend: Hostinger (cPanel Node.js, start script `npm start` which regenerates the Prisma client, domain `https://api-noteflow.rafytho.com/`, `NODE_ENV=production`, `FRONTEND_ORIGIN=https://noteflow.rafytho.com`)
+- Cross-origin auth: production cookies are `secure` + `SameSite=None`; both domains must be HTTPS (see `docs/11-deployment.md`)
+- Database: PostgreSQL (cloud-hosted); migrations via `npx prisma migrate deploy`
 - Environment vars: DATABASE_URL, REDIS_URL, JWT_ACCESS_SECRET, HOSTINGER_MAIL_*, CLOUDINARY_*, GOOGLE_* (optional), etc.
 
 Important Constraints

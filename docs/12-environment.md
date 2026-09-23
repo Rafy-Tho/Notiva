@@ -85,10 +85,10 @@ VITE_BASE_API=http://localhost:5000/api/v1
 | Variable | Value |
 |----------|-------|
 | `NODE_ENV` | `production` |
-| `PORT` | Assigned by host |
-| `FRONTEND_ORIGIN` | `https://yourapp.onrender.com` |
-| `VITE_BASE_API` | `https://yourapp.onrender.com/api/v1` |
-| `NODE_ENV` | `production` |
+| `PORT` | Assigned by host (Hostinger panel) |
+| `FRONTEND_ORIGIN` | `https://noteflow.rafytho.com` |
+| `VITE_BASE_API` | `https://api-noteflow.rafytho.com/api/v1` |
+| `GOOGLE_CALLBACK_URL` | `https://api-noteflow.rafytho.com/api/v1/auth/google/callback` |
 
 ---
 
@@ -106,8 +106,8 @@ VITE_BASE_API=http://localhost:5000/api/v1
 
 | Aspect | Development | Production |
 |--------|-------------|------------|
-| API Base | localhost:5000 | Render domain |
-| Frontend Origin | localhost:5173 | Render domain |
+| API Base | localhost:5000 | api-noteflow.rafytho.com (Hostinger) |
+| Frontend Origin | localhost:5173 | noteflow.rafytho.com (Vercel) |
 | Cookie secure | false | true |
 | Database | PostgreSQL | PostgreSQL |
 | Logging | Verbose (httpLogger) | Minimal (logger, LOG_LEVEL) |
