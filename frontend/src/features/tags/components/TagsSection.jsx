@@ -2,6 +2,7 @@ import { Plus } from "lucide-react";
 import { useTags } from "@/features/tags/hooks/useTags";
 import TagRow from "./TagRow";
 import { Section, SectionHeader } from "@/features/notes/components/Section";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useNoteCountsStore } from "@/store/useNoteCountsStore";
 
 function getCount(tagsCounts, tagId) {
@@ -12,7 +13,20 @@ function getCount(tagsCounts, tagId) {
 export function TagsSection({ onEdit, onDelete, onCreateClick }) {
   const { data: tags, isLoading } = useTags();
   const tagsCounts = useNoteCountsStore((s) => s.tags);
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading) {
+    return (
+      <>
+        <SectionHeader label="Tags" />
+        <Section>
+          <div className="px-2 py-1.5 space-y-2">
+            <Skeleton className="h-6 w-full" />
+            <Skeleton className="h-6 w-3/4" />
+            <Skeleton className="h-6 w-1/2" />
+          </div>
+        </Section>
+      </>
+    );
+  }
   return (
     <>
       <SectionHeader

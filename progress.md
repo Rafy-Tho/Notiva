@@ -56,6 +56,12 @@ See `decisions/unresolved-questions.md` for additional unknowns that may represe
 
 ## Recent Changes
 
+**2026-09-23** - Improved UX for loading states to match the NoteFlow design system:
+- Added shared `Loading` component (`frontend/src/components/common/Loading.jsx`) with a `Loader2` spinner (`text-primary`) and optional label
+- Replaced unimported/undefined `<Loading/>` usage in `routes/index.jsx` Suspense fallbacks with the shared component (fixes latent ReferenceError on lazy route loads)
+- Branded the auth-restore bootstrap screen in `App.jsx` with the `Logo` mark and "Restoring session…" spinner
+- Replaced bare `Loading...` divs in `TagsSection` and `NotebooksSection` with `SectionHeader` + `Skeleton` rows
+
 **2026-09-23** - Fixed Google login not restoring the session after the OAuth callback redirect:
 - `restoreSession` only called `/auth/verify` when localStorage already claimed a logged-in user, so redirect-based Google login (which never populates local state) left the user logged out — `PrivateRoute` bounced `/` to `/login` despite a valid server session and cookie
 - `restoreSession` is now unconditional: it always verifies the session cookie on app mount (success → save user, failure → clear local state); added an `isRestoring` flag so `Bootstrap` shows the full-screen loader until the check resolves (prevents a login-page flash after the callback redirect; email-login button spinner unaffected)

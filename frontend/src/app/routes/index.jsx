@@ -1,24 +1,26 @@
-import {
-  createBrowserRouter,
-  useParams,
-} from "react-router-dom";
+import { createBrowserRouter, useParams } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { PublicRoute } from "@/features/auth/components/PublicRoute";
 import { PrivateRoute } from "@/features/auth/components/PrivateRoute";
 import AppLayout from "@/components/layout/AppLayout";
 import { ErrorOverlay } from "@/components/common/ErrorOverlay";
-
-const Loading = () => <div className="p-4 text-center text-muted-foreground">Loading...</div>;
+import { Loading } from "@/components/common/Loading";
 
 const LoginPage = lazy(() => import("@/features/auth/pages/LoginPage"));
 const RegisterPage = lazy(() => import("@/features/auth/pages/RegisterPage"));
-const RegistrationVerificationPage = lazy(() => import("@/features/auth/pages/RegistrationVerificationPage"));
-const UpdatePasswordPage = lazy(() => import("@/features/auth/pages/UpdatePasswordPage"));
+const RegistrationVerificationPage = lazy(
+  () => import("@/features/auth/pages/RegistrationVerificationPage"),
+);
+const UpdatePasswordPage = lazy(
+  () => import("@/features/auth/pages/UpdatePasswordPage"),
+);
 const SettingsPage = lazy(() => import("@/features/auth/pages/SettingsPage"));
 
 const Index = lazy(() => import("@/features/notes/pages/Index"));
 const NotesPage = lazy(() => import("@/features/notes/pages/NotesPage"));
-const NoteDetailPage = lazy(() => import("@/features/notes/pages/NoteDetailPage"));
+const NoteDetailPage = lazy(
+  () => import("@/features/notes/pages/NoteDetailPage"),
+);
 const SearchPage = lazy(() => import("@/features/notes/pages/SearchPage"));
 
 function NoteDetailPageWrapper() {
@@ -53,10 +55,38 @@ const router = createBrowserRouter([
     element: <PublicRoute />,
     errorElement: <ErrorOverlay />,
     children: [
-      { path: "/login", element: <Suspense fallback={<Loading />}><LoginPage /></Suspense> },
-      { path: "/register", element: <Suspense fallback={<Loading />}><RegisterPage /></Suspense> },
-      { path: "/verify-email", element: <Suspense fallback={<Loading />}><RegistrationVerificationPage /></Suspense> },
-      { path: "/update-password", element: <Suspense fallback={<Loading />}><UpdatePasswordPage /></Suspense> },
+      {
+        path: "/login",
+        element: (
+          <Suspense fallback={<Loading />}>
+            <LoginPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "/register",
+        element: (
+          <Suspense fallback={<Loading />}>
+            <RegisterPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "/verify-email",
+        element: (
+          <Suspense fallback={<Loading />}>
+            <RegistrationVerificationPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "/update-password",
+        element: (
+          <Suspense fallback={<Loading />}>
+            <UpdatePasswordPage />
+          </Suspense>
+        ),
+      },
     ],
   },
   {
@@ -67,7 +97,14 @@ const router = createBrowserRouter([
     ),
     errorElement: <ErrorOverlay />,
     children: [
-      { index: true, element: <Suspense fallback={<Loading />}><Index /></Suspense> },
+      {
+        index: true,
+        element: (
+          <Suspense fallback={<Loading />}>
+            <Index />
+          </Suspense>
+        ),
+      },
       {
         path: "notes",
         element: (
@@ -129,8 +166,22 @@ const router = createBrowserRouter([
         element: <TagRoute />,
         children: [{ path: ":id", element: <NoteDetailPageWrapper /> }],
       },
-      { path: "settings", element: <Suspense fallback={<Loading />}><SettingsPage /></Suspense> },
-      { path: "search", element: <Suspense fallback={<Loading />}><SearchPage /></Suspense> },
+      {
+        path: "settings",
+        element: (
+          <Suspense fallback={<Loading />}>
+            <SettingsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "search",
+        element: (
+          <Suspense fallback={<Loading />}>
+            <SearchPage />
+          </Suspense>
+        ),
+      },
     ],
   },
 ]);

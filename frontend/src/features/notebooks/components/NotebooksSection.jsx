@@ -2,6 +2,7 @@ import { Plus } from "lucide-react";
 import { useNotebooks } from "@/features/notebooks/hooks/useNotebooks";
 import NotebookRow from "./NotebookRow";
 import { Section, SectionHeader } from "@/features/notes/components/Section";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useNoteCountsStore } from "@/store/useNoteCountsStore";
 
 function getCount(notebooksCounts, notebookId) {
@@ -12,7 +13,20 @@ function getCount(notebooksCounts, notebookId) {
 export function NotebooksSection({ onEdit, onDelete, onCreateClick }) {
   const { data: notebooks, isLoading: notebooksLoading } = useNotebooks();
   const notebooksCounts = useNoteCountsStore((s) => s.notebooks);
-  if (notebooksLoading) return <div>Loading...</div>;
+  if (notebooksLoading) {
+    return (
+      <>
+        <SectionHeader label="Notebooks" />
+        <Section>
+          <div className="px-2 py-1.5 space-y-2">
+            <Skeleton className="h-6 w-full" />
+            <Skeleton className="h-6 w-3/4" />
+            <Skeleton className="h-6 w-1/2" />
+          </div>
+        </Section>
+      </>
+    );
+  }
   return (
     <>
       <SectionHeader

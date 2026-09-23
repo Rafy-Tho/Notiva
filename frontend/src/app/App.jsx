@@ -1,8 +1,10 @@
+import { Loader2 } from "lucide-react";
 import { useEffect } from "react";
 import { RouterProvider } from "react-router-dom";
 import { router } from "./routes";
 import { useAuthStore } from "@/store/authStore";
 import { Providers } from "./providers";
+import { Logo } from "@/components/common/Logo";
 
 function Bootstrap({ children }) {
   const restoreSession = useAuthStore((state) => state.restoreSession);
@@ -15,8 +17,12 @@ function Bootstrap({ children }) {
 
   if (isRestoring) {
     return (
-      <div className="flex h-screen items-center justify-center text-muted-foreground">
-        Loading…
+      <div className="flex h-screen flex-col items-center justify-center gap-4">
+        <Logo />
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+          Restoring session…
+        </div>
       </div>
     );
   }
