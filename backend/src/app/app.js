@@ -6,6 +6,8 @@ import crypto from "crypto";
 import { errorHandler, notFoundHandler } from "../common/errors/errorHandler.js";
 import { generalLimiter } from "../common/middleware/rateLimiter.js";
 import { httpLogger } from "../common/middleware/httpLogger.js";
+import { asyncHandler } from "../common/utils/response.js";
+import { checkHealth, renderHealthPage } from "./health.js";
 import { setupRoutes } from "./routes.js";
 
 export const app = express();
@@ -48,9 +50,13 @@ app.use((req, res, next) => {
   next();
 });
 
-app.get("/", (req, res) => {
-  res.send("<h1>API is healthy</h1>");
-});
+app.get(
+  "/",
+  asyncHandler(async (req, res) => {
+    const origin = `${req.protocol}://${req.get("host")}`;
+    res.type("html").send(renderHealthPage(await checkHealth(origin)));
+  }),
+);
 
 setupRoutes(app);
 

@@ -4,6 +4,27 @@ All endpoints are prefixed with `/api/v1`.
 
 ---
 
+## Root (`/`)
+
+| Attribute | Value |
+|-----------|-------|
+| **Auth** | Public |
+| **Purpose** | HTML health dashboard |
+
+`GET /` returns a self-contained HTML status page (not JSON) themed on a dark deep-green palette. It live-checks the core services and third-party integrations:
+
+- **Database** — `SELECT 1` through the shared Prisma client, with measured latency
+- **Redis** — `ioredis ping` (1.5s timeout cap), with measured latency
+- **Email (Hostinger)** — `GET {base}/api/v1/me` with the mail API bearer token (read-only; confirms credentials and mailbox scope, sends no email). 401/403 → `Bad credentials`
+- **Media (Cloudinary)** — `cloudinary.api.ping()` (Admin API `/ping`). 401/403 → `Bad credentials`
+- **Sign-in (Google OAuth)** — fetches Google's OIDC discovery endpoint; skipped as `Not configured` when `GOOGLE_*` env vars are absent (optional)
+- **Process** — service version (from `package.json`), environment, Node.js version, uptime, started-at, memory (RSS/heap)
+- **API surface** — route group map, HTTP method chips, dependency versions, and a `curl` probe snippet
+
+Checks run in parallel with a 3s timeout cap per provider. The verdict pill shows `Operational` only when PostgreSQL, Redis, Hostinger, and Cloudinary all respond **and** Google is either connected or not configured; otherwise `Degraded` (still HTTP 200, so uptime monitors keep seeing the server "up"). The page is rendered by `backend/src/app/health.js`; it renders `text/html` and is safe under the helmet CSP (no inline scripts, inline CSS only).
+
+---
+
 ## Response Format
 
 **Success Response:**

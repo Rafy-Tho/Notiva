@@ -93,13 +93,13 @@ AppLayout
 
 ### API Routes
 
-| Prefix              | Auth     | Rate Limit | Purpose                                                |
-| ------------------- | -------- | ---------- | ------------------------------------------------------ |
+| Prefix              | Auth     | Rate Limit | Purpose                                               |
+| ------------------- | -------- | ---------- | ----------------------------------------------------- |
 | `/api/v1/auth`      | Mixed    | 10/min     | register, login, logout, verify email, reset password |
-| `/api/v1/me`        | Required | —          | profile, password, avatar, delete account              |
-| `/api/v1/notebooks` | Required | —          | CRUD notebooks                                         |
-| `/api/v1/tags`      | Required | —          | CRUD tags                                              |
-| `/api/v1/notes`     | Required | —          | CRUD + pin/fav/archive/trash/purge/restore             |
+| `/api/v1/me`        | Required | —          | profile, password, avatar, delete account             |
+| `/api/v1/notebooks` | Required | —          | CRUD notebooks                                        |
+| `/api/v1/tags`      | Required | —          | CRUD tags                                             |
+| `/api/v1/notes`     | Required | —          | CRUD + pin/fav/archive/trash/purge/restore            |
 
 ### Middleware Chain
 
@@ -124,31 +124,31 @@ Request → helmet → cors → cookieParser → express.json (2MB) → httpLogg
 
 ## 7. KEY API ENDPOINTS
 
-| Method           | Endpoint                | Auth | Purpose                         |
-| ---------------- | ----------------------- | ---- | ------------------------------- |
-| POST             | `/auth/register`        | No   | Create account (sets cookie)    |
-| POST             | `/auth/login`           | No   | Sign in (sets cookie)           |
-| POST             | `/auth/logout`          | No   | Clear cookie                    |
-| GET              | `/auth/verify`          | Yes  | Restore session                 |
-| POST             | `/auth/reset-password-code` | No | Send 6-digit reset code         |
-| POST             | `/auth/confirm-password-reset` | No | Complete reset with code     |
-| GET              | `/me`                   | Yes  | Get profile                     |
-| PATCH            | `/me`                   | Yes  | Update name                     |
-| POST             | `/me/password`          | Yes  | Change password                 |
-| POST             | `/me/avatar`            | Yes  | Upload avatar (multipart)       |
-| DELETE           | `/me`                   | Yes  | Soft-delete account             |
-| GET/POST         | `/notes`                | Yes  | List/Create notes               |
-| GET/PATCH/DELETE | `/notes/:id`            | Yes  | Read/Update/Soft-delete note    |
-| POST             | `/notes/:id/pin`        | Yes  | Toggle pin                      |
-| POST             | `/notes/:id/favorite`   | Yes  | Toggle favorite                 |
-| POST             | `/notes/:id/archive`    | Yes  | Toggle archive                  |
-| POST             | `/notes/:id/restore`    | Yes  | Restore from trash              |
-| POST             | `/notes/:id/purge`      | Yes  | Permanent delete                |
-| GET              | `/notes/trash`          | Yes  | List trashed notes              |
-| GET/POST         | `/notebooks`            | Yes  | List/Create notebooks           |
-| PATCH/DELETE     | `/notebooks/:id`        | Yes  | Update/Soft-delete notebook     |
-| GET/POST         | `/tags`                 | Yes  | List/Create tags                |
-| PATCH/DELETE     | `/tags/:id`             | Yes  | Update/Soft-delete tag          |
+| Method           | Endpoint                       | Auth | Purpose                      |
+| ---------------- | ------------------------------ | ---- | ---------------------------- |
+| POST             | `/auth/register`               | No   | Create account (sets cookie) |
+| POST             | `/auth/login`                  | No   | Sign in (sets cookie)        |
+| POST             | `/auth/logout`                 | No   | Clear cookie                 |
+| GET              | `/auth/verify`                 | Yes  | Restore session              |
+| POST             | `/auth/reset-password-code`    | No   | Send 6-digit reset code      |
+| POST             | `/auth/confirm-password-reset` | No   | Complete reset with code     |
+| GET              | `/me`                          | Yes  | Get profile                  |
+| PATCH            | `/me`                          | Yes  | Update name                  |
+| POST             | `/me/password`                 | Yes  | Change password              |
+| POST             | `/me/avatar`                   | Yes  | Upload avatar (multipart)    |
+| DELETE           | `/me`                          | Yes  | Soft-delete account          |
+| GET/POST         | `/notes`                       | Yes  | List/Create notes            |
+| GET/PATCH/DELETE | `/notes/:id`                   | Yes  | Read/Update/Soft-delete note |
+| POST             | `/notes/:id/pin`               | Yes  | Toggle pin                   |
+| POST             | `/notes/:id/favorite`          | Yes  | Toggle favorite              |
+| POST             | `/notes/:id/archive`           | Yes  | Toggle archive               |
+| POST             | `/notes/:id/restore`           | Yes  | Restore from trash           |
+| POST             | `/notes/:id/purge`             | Yes  | Permanent delete             |
+| GET              | `/notes/trash`                 | Yes  | List trashed notes           |
+| GET/POST         | `/notebooks`                   | Yes  | List/Create notebooks        |
+| PATCH/DELETE     | `/notebooks/:id`               | Yes  | Update/Soft-delete notebook  |
+| GET/POST         | `/tags`                        | Yes  | List/Create tags             |
+| PATCH/DELETE     | `/tags/:id`                    | Yes  | Update/Soft-delete tag       |
 
 **Response Format:** `{ success: bool, data: any, code: string|null, message: string }`
 
@@ -227,6 +227,6 @@ npm run dev           # Port 5173
 
 ## 12. Frontend Preview
 
-- Link: [Visit App](https://notiva-new-2026.onrender.com/)
+- Link: [Visit App](https://noteflow.rafytho.com/)
 
   <img src="noteflow.png">

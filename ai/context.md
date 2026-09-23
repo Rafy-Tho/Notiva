@@ -118,6 +118,7 @@ Important Constraints
 - Service-layer pattern (business logic in services/)
 - Soft-delete pattern (check deletedAt before returning)
 - Logging via custom `logger` utility (`src/common/utils/logger.js`, `LOG_LEVEL` env); request logs via `httpLogger` middleware (dev only, `src/common/middleware/httpLogger.js`)
+- `GET /` serves an HTML health dashboard (`src/app/health.js`) that pings PostgreSQL (`SELECT 1`), Redis (`ioredis ping`, 1.5s), Hostinger email (`GET /api/v1/me`, read-only), Cloudinary (`api.ping()`), and Google OAuth (OIDC discovery; `Not configured` when `GOOGLE_*` missing) and renders `Operational`/`Degraded`; always HTTP 200, CSP-safe (inline CSS only, no inline scripts)
 - No top-level `await` in the server entry graph (LiteSpeed `lsnode` boots via `require()`)
 - Async handler wrapper for error handling
 - camelCase naming (ESLint enforced)

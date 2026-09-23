@@ -56,6 +56,19 @@ See `decisions/unresolved-questions.md` for additional unknowns that may represe
 
 ## Recent Changes
 
+**2026-09-23** - Extended the health dashboard with third-party integration checks:
+- Added parallel live probes (3s timeout cap) in `checkHealth`: Hostinger email (`GET /api/v1/me` with bearer token — read-only, no email sent), Cloudinary (`api.ping()`), and Google OAuth (OIDC discovery; skipped as `Not configured` when `GOOGLE_*` absent)
+- Verdict is now `Operational` only when PostgreSQL + Redis + Hostinger + Cloudinary pass and Google is connected or not configured; otherwise `Degraded`
+- Added an "Integrations" section to the rendered page (Connected / Unreachable / Bad credentials / Not configured tones)
+- Extended `backend/src/tests/health.test.js` to 14 vitest cases (mocked fetch + Cloudinary); backend lint + suite pass (2 pre-existing email.service failures unrelated)
+- Updated `docs/05-api.md` and `ai/context.md`
+
+**2026-09-23** - Replaced the plain `GET /` health text with a dark deep-green HTML health dashboard (`backend/src/app/health.js`):
+- Adds `checkHealth()` (live PostgreSQL `SELECT 1` + Redis `ioredis ping` with 1.5s timeout, measured latency, uptime, memory, versions from `package.json`) and `renderHealthPage()` (self-contained HTML/CSS, no inline JS, safe under helmet CSP, data-URI favicon, `prefers-reduced-motion` support)
+- `GET /` renders `text/html` and always returns 200; verdict is `Operational` when both connections respond, otherwise `Degraded`
+- Added `backend/src/tests/health.test.js` (7 vitest cases); backend lint + suite pass (2 pre-existing email.service failures unrelated to this change)
+- Updated `docs/05-api.md` (Root section) and `ai/context.md`
+
 **2026-09-23** - Fixed Google avatar image not rendering on first login (needed manual reloads):
 - Root cause: Radix `AvatarImage` treats a failed image preload as terminal (`error` status) with no retry; no `referrerPolicy` was passed, and Google `lh3.googleusercontent.com` URLs can 403 based on `Referer`/fail on the first fresh-load request. Result: blank/initials avatar until a manual full reload happened to succeed
 - `ui/avatar.jsx` `AvatarImage` now defaults to `referrerPolicy="no-referrer"` and auto-retries up to 2 times (backoff) on load error by remounting the image with a fresh key, so the avatar appears on first login without manual reloads
