@@ -1,4 +1,5 @@
 import { env } from "../../config/env.js";
+import { logger } from "../../common/utils/logger.js";
 
 const REQUEST_TIMEOUT_MS = 10_000;
 const MAX_ATTEMPTS = 20;
@@ -108,11 +109,11 @@ export async function send({ to, subject, text, html }) {
 
   try {
     await sendWithRetry(payload);
-    console.log("Email sent");
+    logger.info("Email sent");
     return { success: true };
   } catch (error) {
     // Non-sensitive metadata only; never the recipient, codes, or content.
-    console.error("Email error:", error.message);
+    logger.error("Email error:", error.message);
     throw error;
   }
 }

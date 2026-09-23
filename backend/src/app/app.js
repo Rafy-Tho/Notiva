@@ -5,6 +5,7 @@ import helmet from "helmet";
 import crypto from "crypto";
 import { errorHandler, notFoundHandler } from "../common/errors/errorHandler.js";
 import { generalLimiter } from "../common/middleware/rateLimiter.js";
+import { httpLogger } from "../common/middleware/httpLogger.js";
 import { setupRoutes } from "./routes.js";
 
 export const app = express();
@@ -37,8 +38,7 @@ app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ limit: "1mb", extended: true }));
 
 if (process.env.NODE_ENV === "development") {
-  const { default: morgan } = await import("morgan");
-  app.use(morgan("dev"));
+  app.use(httpLogger);
 }
 
 app.use(generalLimiter);

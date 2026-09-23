@@ -1,3 +1,5 @@
+import { logger } from "../utils/logger.js";
+
 export function notFoundHandler(req, res) {
   res.status(404).json({
     success: false,
@@ -117,10 +119,7 @@ export function errorHandler(err, req, res, next) {
   const { status, code, message } = normalizeError(err);
 
   if (status === 500 && process.env.NODE_ENV === "development") {
-    console.error(
-      `[${new Date().toISOString()}] ${req.method} ${req.url}`,
-      err.stack || err,
-    );
+    logger.error(`${req.method} ${req.url}`, err);
   }
 
   const responseMessage =

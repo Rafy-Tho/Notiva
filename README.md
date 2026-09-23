@@ -104,7 +104,7 @@ AppLayout
 ### Middleware Chain
 
 ```
-Request → helmet → cors → cookieParser → express.json (2MB) → morgan (dev) → generalLimiter (100/min)
+Request → helmet → cors → cookieParser → express.json (2MB) → httpLogger (dev) → generalLimiter (100/min)
 → Route-specific: authRequired | authLimiter | validate → Controller → Service → DB → Response
 → notFoundHandler (404) / errorHandler (global)
 ```

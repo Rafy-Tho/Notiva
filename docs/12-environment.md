@@ -24,6 +24,7 @@
 | `MAIL_FROM` | Email sender address | - |
 | `MAIL_FROM_NAME` | Email sender name | - |
 | `NODE_ENV` | Environment mode | `development` |
+| `LOG_LEVEL` | Logging threshold: `debug`, `info`, `warn`, `error` | `info` |
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID (Google Login) | - |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret (Google Login) | - |
 | `GOOGLE_CALLBACK_URL` | OAuth callback URL that must be whitelisted in the Google Cloud console (e.g. `http://localhost:5000/api/v1/auth/google/callback`) | - |
@@ -109,7 +110,7 @@ VITE_BASE_API=http://localhost:5000/api/v1
 | Frontend Origin | localhost:5173 | Render domain |
 | Cookie secure | false | true |
 | Database | PostgreSQL | PostgreSQL |
-| Logging | Verbose (morgan) | Minimal |
+| Logging | Verbose (httpLogger) | Minimal (logger, LOG_LEVEL) |
 
 ---
 

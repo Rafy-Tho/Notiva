@@ -1,7 +1,9 @@
+import { logger } from "../utils/logger.js";
+
 const LOG_PREFIX = "[security-audit]";
 
 function log(action, email, ip) {
-  console.log(`${LOG_PREFIX} ${action} - email: ${email}, ip: ${ip}`);
+  logger.info(`${LOG_PREFIX} ${action} - email: ${email}, ip: ${ip}`);
 }
 
 export const securityAudit = {

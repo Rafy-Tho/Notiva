@@ -109,7 +109,6 @@
 | Dependency | Purpose |
 |------------|---------|
 | `dotenv` | Environment variables |
-| `morgan` | Request logging |
 | `sanitize-html` | HTML sanitization |
 | `archiver` | ZIP compression |
 

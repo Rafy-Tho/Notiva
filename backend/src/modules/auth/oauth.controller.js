@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import * as oauthSvc from "./oauth.service.js";
 import { setAuthCookie } from "./auth.controller.js";
+import { logger } from "../../common/utils/logger.js";
 
 const STATE_COOKIE = "oauth_state";
 const STATE_TTL_MS = 10 * 60 * 1000;
@@ -60,7 +61,7 @@ export async function googleCallback(req, res) {
     return res.redirect(getFrontendOrigin());
   } catch (err) {
     if (process.env.NODE_ENV === "development") {
-      console.error("Google OAuth callback failed:", err.message);
+      logger.error("Google OAuth callback failed:", err.message);
     }
     return redirectToLogin(res, "google_failed");
   }

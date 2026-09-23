@@ -93,7 +93,7 @@ Middleware Chain
 ├── cors (CORS handling)
 ├── cookie-parser (JWT cookie)
 ├── express.json (body parsing, 2MB limit)
-├── morgan (dev logging)
+├── httpLogger (dev request logging)
 ├── generalLimiter (100/min)
 └── Route-specific middleware
     ├── authenticate (protected routes)
@@ -202,7 +202,7 @@ Browser → HTTPS
     ↓
 Backend Server (express/app.js)
     ↓
-Middleware: helmet, cors, cookie-parser, express.json, morgan
+Middleware: helmet, cors, cookie-parser, express.json, httpLogger
     ↓
 Rate Limiting (express-rate-limit)
     ↓

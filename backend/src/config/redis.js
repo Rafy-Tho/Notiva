@@ -1,4 +1,5 @@
 import { Redis } from "ioredis";
+import { logger } from "../common/utils/logger.js";
 
 const redis = new Redis(process.env.REDIS_URL || "redis://localhost:6379", {
   maxRetriesPerRequest: 3,
@@ -10,11 +11,11 @@ const redis = new Redis(process.env.REDIS_URL || "redis://localhost:6379", {
 });
 
 redis.on("error", (err) => {
-  console.error("Redis connection error:", err);
+  logger.error("Redis connection error:", err.message);
 });
 
 redis.on("close", () => {
-  console.log("Redis connection closed");
+  logger.info("Redis connection closed");
 });
 
 export function getRedisClient() {

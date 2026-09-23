@@ -3,6 +3,7 @@ import * as sessionSvc from "./session.service.js";
 import { me as getUser } from "../users/user.service.js";
 import { sendVerificationEmail, sendPasswordResetEmail } from "../email/email.service.js";
 import { ok } from "../../common/utils/response.js";
+import { logger } from "../../common/utils/logger.js";
 
 const COOKIE_NAME = "noteflow_session";
 const COOKIE_OPTS = {
@@ -29,7 +30,7 @@ export async function register(req, res) {
   try {
     await sendVerificationEmail(req.body.email, code);
   } catch (err) {
-    console.error("Verification email failed:", err.message);
+    logger.error("Verification email failed:", err.message);
   }
   return ok(res, { user }, "Verification code sent", 201);
 }
@@ -71,7 +72,7 @@ export async function resetPasswordCode(req, res) {
     try {
       await sendPasswordResetEmail(req.body.email, result.code);
     } catch (err) {
-      console.error("Password reset email failed:", err.message);
+      logger.error("Password reset email failed:", err.message);
     }
   }
   return ok(res, null, "If the account exists, a reset code has been sent");

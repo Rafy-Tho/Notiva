@@ -117,5 +117,7 @@ Important Constraints
 - Standard response format: `{success, data, code, message}`
 - Service-layer pattern (business logic in services/)
 - Soft-delete pattern (check deletedAt before returning)
+- Logging via custom `logger` utility (`src/common/utils/logger.js`, `LOG_LEVEL` env); request logs via `httpLogger` middleware (dev only, `src/common/middleware/httpLogger.js`)
+- No top-level `await` in the server entry graph (LiteSpeed `lsnode` boots via `require()`)
 - Async handler wrapper for error handling
 - camelCase naming (ESLint enforced)

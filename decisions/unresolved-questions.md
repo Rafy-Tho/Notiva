@@ -214,11 +214,11 @@
 **Status:** UNKNOWN
 
 **Why It Matters:**
-- Development uses morgan, production doesn't
+- Development uses the custom `httpLogger` request middleware and `logger` utility, production logs via `logger` only (threshold via `LOG_LEVEL`)
 - Error monitoring strategy not documented
 
 **Evidence Checked:**
-- `backend/src/app.js` - morgan only in development
+- `backend/src/app/app.js` - httpLogger only in development; `backend/src/common/utils/logger.js`
 - `backend/src/middleware/arror.js` - global error handler
 - No logging service (Winston, LogRocket, etc.)
 

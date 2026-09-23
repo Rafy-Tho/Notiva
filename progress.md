@@ -56,6 +56,14 @@ See `decisions/unresolved-questions.md` for additional unknowns that may represe
 
 ## Recent Changes
 
+**2026-09-23** - Replaced morgan with a custom logger (also fixes LiteSpeed boot crash on Hostinger):
+- Added `src/common/utils/logger.js` (zero-dep, levels debug/info/warn/error, threshold via `LOG_LEVEL` env, ISO timestamps, Error→stack)
+- Added `src/common/middleware/httpLogger.js` (dev-only request logger: `METHOD path status - ms`, 4xx→warn, 5xx→error)
+- Removed the top-level `await import("morgan")` in `src/app/app.js` (the module graph now has no top-level await, so Hostinger LiteSpeed `lsnode`, which boots via `require()`, no longer throws `ERR_REQUIRE_ASYNC_MODULE`)
+- Migrated all 14 `console.*` call sites in `src/` (server, prisma, redis, errorHandler, securityAudit, email.service, auth/oauth controllers) to the logger
+- Deleted orphaned legacy `src/app.js` (dead duplicate with broken imports) and removed the `morgan` dependency (deps + devDeps + lockfile)
+- Updated README/docs (`03-architecture`, `08-security`, `11-deployment`, `12-environment`, `reverse-engineering/dependencies`, `decisions/unresolved-questions`, `ai/context.md`), added `LOG_LEVEL` to `.env.example`
+
 **2026-09-23** - Fixed Prisma deploy crash (`SyntaxError: The requested module '@prisma/client' does not provide an export named 'PrismaClient'`):
 - Root cause: the Prisma client was never generated in the deployed environment, so `@prisma/client` exposed no `PrismaClient` (the import in `src/db/prisma.js` depends on `prisma generate` output in `node_modules/.prisma/client`; locally it existed, hence dev worked)
 - Added `"postinstall": "prisma generate"` to `backend/package.json` so generation runs on every `npm install`/`npm ci` (local + Render)

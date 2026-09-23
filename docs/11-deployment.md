@@ -137,7 +137,7 @@ FRONTEND_ORIGIN=https://yourapp.onrender.com
 
 | Aspect | Development | Production |
 |--------|-------------|------------|
-| Logging | morgan (detailed) | Minimal |
+| Logging | Custom logger + httpLogger (detailed) | Custom logger (minimal) |
 | Error stack | Included | Excluded |
 | CORS | Localhost | Specific domain |
 | Database | Atlas (dev/prod) | Atlas (prod) |

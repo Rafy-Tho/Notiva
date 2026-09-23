@@ -112,7 +112,7 @@
 
 | Type | Implementation |
 |------|----------------|
-| **Request logging** | morgan in development mode |
+| **Request logging** | Custom `httpLogger` middleware in development mode |
 | **Security events** | Not explicitly logged |
 | **Error logging** | Global error handler |
 

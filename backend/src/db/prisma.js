@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
+import { logger } from "../common/utils/logger.js";
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -25,7 +26,7 @@ if (process.env.NODE_ENV !== "production") {
 
 export async function connectPostgres() {
   await prisma.$connect();
-  console.log("Connected to PostgreSQL");
+  logger.info("Connected to PostgreSQL");
 }
 
 export async function shutdownPostgres() {

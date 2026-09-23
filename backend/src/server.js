@@ -3,13 +3,14 @@ import { validateEnv } from "./config/env.js";
 import { connectPostgres, shutdownPostgres } from "./db/prisma.js";
 import { shutdownRedis } from "./config/redis.js";
 import { app } from "./app/app.js";
+import { logger } from "./common/utils/logger.js";
 
 const PORT = process.env.PORT;
 
 validateEnv();
 
 async function shutdown() {
-  console.log("Shutting down...");
+  logger.info("Shutting down...");
   await Promise.all([shutdownPostgres(), shutdownRedis()]);
   process.exit(0);
 }
@@ -21,14 +22,14 @@ async function server() {
   try {
     await connectPostgres();
     const server = app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+      logger.info(`Server running on port ${PORT}`);
     });
     server.on("error", (err) => {
-      console.error("Server error:", err);
+      logger.error("Server error:", err);
       process.exit(1);
     });
   } catch (err) {
-    console.error("Error starting server:", err.message);
+    logger.error("Error starting server:", err.message);
     process.exit(1);
   }
 }
