@@ -1,7 +1,14 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "@/store/authStore";
-import { Link } from "react-router-dom";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Logo } from "@/components/common/Logo";
+
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+
 function UpdatePasswordPage() {
   const [searchParams] = useSearchParams();
   const initialEmail = searchParams.get("email") || "";
@@ -10,6 +17,7 @@ function UpdatePasswordPage() {
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [step, setStep] = useState(1); // 1 = enter email, 2 = enter code, 3 = enter password
   const { isLoading, error, resetPasswordCode, confirmPasswordReset } =
     useAuthStore();
@@ -47,137 +55,160 @@ function UpdatePasswordPage() {
     }
   };
 
+  const subtitle =
+    step === 1
+      ? "Enter your email and we'll send a reset code."
+      : step === 2
+        ? `Enter the 6-digit code sent to ${email}`
+        : "Choose a new password for your account.";
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
-      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow">
+    <div className="min-h-dvh grid place-items-center bg-background p-6">
+      <div className="w-full max-w-sm panel p-6 space-y-5">
+        <Logo />
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Reset Your Password
-          </h2>
+          <h1 className="text-xl font-semibold">Reset your password</h1>
+          <p className="text-sm text-muted-foreground">{subtitle}</p>
         </div>
 
         {step === 1 && (
-          <form onSubmit={handleSendCode} className="mt-8 space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
-              <input
+          <form onSubmit={handleSendCode} className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Enter your email"
               />
             </div>
 
             {error && (
-              <div className="text-red-600 text-sm text-center">{error}</div>
+              <div className="text-destructive text-sm text-center">{error}</div>
             )}
 
-            <button
+            <Button
               type="submit"
+              className="w-full bg-gradient-primary text-primary-foreground"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             >
-              {isLoading ? "Sending..." : "Send Reset Code"}
-            </button>
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Send reset code"
+              )}
+            </Button>
           </form>
         )}
 
         {step === 2 && (
-          <form onSubmit={handleVerifyCode} className="mt-8 space-y-6">
-            <p className="text-center text-sm text-gray-600">
-              Enter the 6-digit code sent to {email}
-            </p>
-
-            <div>
-              <input
+          <form onSubmit={handleVerifyCode} className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="code">Verification code</Label>
+              <Input
+                id="code"
                 type="text"
+                inputMode="numeric"
                 maxLength={6}
                 value={code}
                 onChange={(e) =>
                   setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
                 }
                 required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-center text-xl tracking-widest"
+                className="text-center text-xl tracking-widest"
                 placeholder="000000"
               />
             </div>
 
             {error && (
-              <div className="text-red-600 text-sm text-center">{error}</div>
+              <div className="text-destructive text-sm text-center">{error}</div>
             )}
 
-            <button
+            <Button
               type="submit"
+              className="w-full bg-gradient-primary text-primary-foreground"
               disabled={isLoading || code.length !== 6}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             >
-              {isLoading ? "Verifying..." : "Verify Code"}
-            </button>
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Verify code"
+              )}
+            </Button>
           </form>
         )}
 
         {step === 3 && (
-          <form onSubmit={handleResetPassword} className="mt-8 space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                New Password
-              </label>
-              <input
-                type="password"
+          <form onSubmit={handleResetPassword} className="space-y-3">
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">New password</Label>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-3.5 w-3.5" />
+                  ) : (
+                    <Eye className="h-3.5 w-3.5" />
+                  )}
+                </button>
+              </div>
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={8}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 placeholder="New password"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Confirm Password
-              </label>
-              <input
-                type="password"
+            <div className="space-y-1.5">
+              <Label htmlFor="confirm-password">Confirm password</Label>
+              <Input
+                id="confirm-password"
+                type={showPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
                 placeholder="Confirm password"
               />
               {confirmPassword && password !== confirmPassword && (
-                <p className="text-red-600 text-sm mt-1">
+                <p className="text-destructive text-sm">
                   Passwords do not match
                 </p>
               )}
             </div>
 
             {error && (
-              <div className="text-red-600 text-sm text-center">{error}</div>
+              <div className="text-destructive text-sm text-center">{error}</div>
             )}
 
-            <button
+            <Button
               type="submit"
+              className="w-full bg-gradient-primary text-primary-foreground"
               disabled={isLoading || password !== confirmPassword}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
             >
-              {isLoading ? "Resetting..." : "Reset Password"}
-            </button>
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Reset password"
+              )}
+            </Button>
           </form>
         )}
 
-        <div className="text-center">
-          <Link
-            to="/login"
-            className="text-sm text-blue-600 hover:text-blue-500"
-          >
+        <p className="text-xs text-center text-muted-foreground">
+          <Link to="/login" className="text-primary hover:underline">
             Back to sign in
           </Link>
-        </div>
+        </p>
       </div>
     </div>
   );
