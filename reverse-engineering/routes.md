@@ -199,7 +199,6 @@ All routes are prefixed with `/api/v1`.
 - `content` (string, HTML)
 - `notebookId` (ObjectId)
 - `tagIds` (array of ObjectId)
-- `cover` (object with color, emoji)
 - `isFavorite` (boolean)
 
 **Validation:** `notes.create`  
@@ -226,7 +225,7 @@ All routes are prefixed with `/api/v1`.
 **Purpose:** Update note  
 
 **Request Body:**
-- `title`, `content`, `notebookId`, `tagIds`, `cover`, `isPinned`, `isArchived`, `isFavorite`
+- `title`, `content`, `notebookId`, `tagIds`, `isPinned`, `isArchived`, `isFavorite`
 
 **Validation:** `notes.update`  
 **Handler:** `notes.controller.update`  

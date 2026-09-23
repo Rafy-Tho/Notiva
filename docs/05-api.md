@@ -442,7 +442,6 @@ The app uses opaque **server-session authentication** (no JWT). `POST /login` an
   "content": "<p>HTML content...</p>",
   "notebookId": "notebook_id",
   "tagIds": ["tag_id_1", "tag_id_2"],
-  "cover": { "color": "245 80% 66%", "emoji": "📝" },
   "isFavorite": true
 }
 ```

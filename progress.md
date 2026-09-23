@@ -103,6 +103,12 @@ See `decisions/unresolved-questions.md` for additional unknowns that may represe
 - `useAutoSave` now syncs `saveFnRef`, `onSavedRef`, and `enabledRef` after render to avoid stale closures.
 - Added `frontend/src/lib/fetchWithAuth.test.js` covering real-signal passing, caller-abort propagation, keepalive behavior, and retry.
 
+**2026-09-23** - Removed the note cover feature (coverColor/coverEmoji):
+- Dropped `coverColor` and `coverEmoji` columns from the `Note` model (Prisma schema + migration)
+- Removed the `cover: { color, emoji }` mapping from `toNoteResponse`, the `cover` write in `createNote`/`updateNote`, and the `cover` validation rules
+- Removed the frontend icon/cover UI (EmojiPicker popover, cover color picker, cover banner, card emoji) and the `emoji-picker-react` dependency
+- Updated docs, reverse-engineering notes, ai/ context, and tests
+
 **2026-09-22** - Fixed lazy-loaded route crash (frontend):
 - Seven page modules imported via `React.lazy` lacked default exports, so `module.default` was `undefined` and React logged the lazy resolution warning with the ES module namespace object (null prototype), producing `TypeError: Cannot convert object to primitive value` in the React DevTools console hook and crashing the route tree
 - Added `export default` to `LoginPage`, `RegisterPage`, `ForgotPasswordPage`, `ResetPasswordPage`, `SettingsPage`, `NotesPage`, and `NoteDetailPage`, matching the existing pattern in `Index.jsx` and `SearchPage.jsx`

@@ -31,8 +31,6 @@ describe("updateNote", () => {
   it("updates explicit empty, false, null, and metadata values atomically", async () => {
     const updatedNote = {
       id: "note-1",
-      coverColor: "",
-      coverEmoji: "",
       tags: [],
       updatedAt: "2026-09-04T00:00:01.000Z",
     };
@@ -43,15 +41,12 @@ describe("updateNote", () => {
       content: "",
       notebookId: null,
       tagIds: [],
-      cover: { color: null, emoji: null },
       isFavorite: false,
     });
 
     expect(noteRepository.updateById).toHaveBeenCalledWith("user-1", "note-1", {
       data: {
         content: "",
-        coverColor: "",
-        coverEmoji: "",
         isFavorite: false,
         notebookId: null,
         title: "",
@@ -61,7 +56,6 @@ describe("updateNote", () => {
       expectedUpdatedAt: undefined,
     });
     expect(result.tagIds).toEqual([]);
-    expect(result.cover).toEqual({ color: "", emoji: "" });
   });
 
   it("returns a conflict when the expected version is stale", async () => {
@@ -99,8 +93,6 @@ describe("listNotes", () => {
         id: "note-1",
         title: "Test Note",
         content: "<p>Hello world</p>",
-        coverColor: "",
-        coverEmoji: "",
         tags: [],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -124,8 +116,6 @@ describe("listNotes", () => {
         id: "note-1",
         title: "Test Note",
         content: "<p>Hello world</p>",
-        coverColor: "",
-        coverEmoji: "",
         tags: [],
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -151,8 +141,6 @@ describe("createNote", () => {
       id: "note-1",
       title: "Test Note",
       content: "<p>Hello world</p>",
-      coverColor: "",
-      coverEmoji: "",
       tags: [],
       wordCount: 2,
       createdAt: new Date(),
@@ -175,8 +163,6 @@ describe("createNote", () => {
       id: "note-1",
       title: "Untitled",
       content: "",
-      coverColor: "",
-      coverEmoji: "",
       tags: [],
       wordCount: 0,
       createdAt: new Date(),
@@ -201,8 +187,6 @@ describe("getNote", () => {
       id: "note-1",
       title: "Test Note",
       content: "<p>Hello world</p>",
-      coverColor: "245 80% 66%",
-      coverEmoji: "📝",
       tags: [{ tagId: "tag-1" }],
     };
 
@@ -212,7 +196,6 @@ describe("getNote", () => {
 
     expect(result).toMatchObject({ id: "note-1", title: "Test Note" });
     expect(result.tagIds).toEqual(["tag-1"]);
-    expect(result.cover).toEqual({ color: "245 80% 66%", emoji: "📝" });
   });
 
   it("throws NotFoundError when note not found", async () => {
@@ -233,8 +216,6 @@ describe("softDelete", () => {
     const mockNote = {
       id: "note-1",
       title: "Test Note",
-      coverColor: "",
-      coverEmoji: "",
       tags: [],
       deletedAt: null,
     };

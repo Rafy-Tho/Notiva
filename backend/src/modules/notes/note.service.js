@@ -7,10 +7,9 @@ import { ConflictError } from "../../common/errors/ConflictError.js";
 
 export function toNoteResponse(note) {
   if (!note) return note;
-  const { coverColor, coverEmoji, tags, ...rest } = note;
+  const { tags, ...rest } = note;
   return {
     ...rest,
-    cover: { color: coverColor ?? "", emoji: coverEmoji ?? "" },
     tagIds: tags ? tags.map((tag) => tag.tagId) : [],
   };
 }
@@ -130,7 +129,6 @@ export async function createNote(userId, data) {
     content,
     notebookId: data.notebookId || null,
     tagIds: data.tagIds || [],
-    cover: data.cover || {},
     isFavorite: data.isFavorite || false,
     wordCount: wordCount(content) || 0,
   });
@@ -150,11 +148,6 @@ export async function updateNote(userId, id, data, opts = {}) {
 
   for (const field of ["notebookId", "isPinned", "isArchived", "isFavorite"]) {
     if (Object.hasOwn(data, field)) updates[field] = data[field];
-  }
-
-  if (Object.hasOwn(data, "cover")) {
-    updates.coverColor = data.cover?.color ?? "";
-    updates.coverEmoji = data.cover?.emoji ?? "";
   }
 
   const tagIds = Object.hasOwn(data, "tagIds") ? data.tagIds || [] : undefined;

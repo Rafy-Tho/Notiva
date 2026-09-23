@@ -69,7 +69,7 @@ Database Patterns
 - Check deletedAt before returning records
 - Use `include`/`select` for relations (replaces populate())
 - Indexes: (userId, updatedAt), (userId, name) unique, etc.
-- Map Prisma fields to the API shape in services (e.g. cover, tagIds)
+- Map Prisma fields to the API shape in services (e.g. tagIds)
 
 Frontend Patterns
 -----------------

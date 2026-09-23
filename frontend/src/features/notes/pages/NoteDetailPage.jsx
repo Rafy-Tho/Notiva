@@ -1,20 +1,16 @@
 /* eslint-disable no-unused-vars */
-import EmojiPicker, { Theme as EmojiTheme } from "emoji-picker-react";
 import {
   Archive,
   BookOpen,
   Check,
-  Image as ImageIcon,
   MoreHorizontal,
   Pin,
   RotateCcw,
-  Smile,
   Star,
   Tag as TagIcon,
   Trash2,
   X,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useBlocker, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -116,8 +112,6 @@ function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
     title: note.title ?? "",
     content: note.content ?? "",
   });
-  const [icon, setIcon] = useState(note.cover?.emoji ?? null);
-  const [cover, setCover] = useState(note.cover?.color ?? null);
   const [isLeaving, setIsLeaving] = useState(false);
   const [selectNotebook, setSelectNotebook] = useState(
     note.notebookId ?? "__none__",
@@ -232,8 +226,6 @@ function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
   );
 
   const {
-    handleIcon,
-    handleCover,
     handleNotebook,
     handleTags,
     handleTogglePin,
@@ -368,17 +360,6 @@ function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
           </div>
         )}
 
-        {cover && (
-          <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 md:px-10 lg:px-12 pt-4">
-            <div
-              className="h-32 w-full rounded-lg border border-border bg-cover bg-center"
-              style={{
-                backgroundColor: cover ? `hsl(${cover})` : undefined,
-              }}
-            />
-          </div>
-        )}
-
         <div className="flex flex-wrap items-center justify-between gap-y-2 gap-x-2 px-4 sm:px-6 md:px-10 lg:px-12 pt-6 max-w-3xl mx-auto w-full">
           <div className="flex items-center gap-2">
             <SaveBadge
@@ -407,104 +388,6 @@ function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
             )}
           </div>
           <div className="flex items-center gap-1 flex-wrap">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={actionPending}
-                  className="h-7 px-2 text-[11px] border border-border bg-transparent hover:bg-muted/40 gap-1.5"
-                >
-                  {icon ? (
-                    <span className="text-sm leading-none">{icon}</span>
-                  ) : (
-                    <Smile className="h-3 w-3 text-muted-foreground" />
-                  )}
-                  <span className="text-muted-foreground">Icon</span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="p-0 w-auto border-border">
-                <EmojiPicker
-                  theme={EmojiTheme.AUTO}
-                  onEmojiClick={(d) =>
-                    handleIcon(d.emoji, { emoji: icon, color: cover })
-                  }
-                  width={320}
-                  height={360}
-                />
-                {icon && (
-                  <div className="border-t border-border p-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      disabled={actionPending}
-                      className="w-full h-7 text-[11px]"
-                      onClick={() => setIcon(null)}
-                    >
-                      Remove icon
-                    </Button>
-                  </div>
-                )}
-              </PopoverContent>
-            </Popover>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={actionPending}
-                  className="h-7 px-2 text-[11px] border border-border bg-transparent hover:bg-muted/40 gap-1.5"
-                >
-                  <ImageIcon className="h-3 w-3 text-muted-foreground" />
-                  <span className="text-muted-foreground">Cover</span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="w-64 p-3 space-y-3">
-                <div>
-                  <div className="text-[11px] font-medium text-muted-foreground mb-1.5">
-                    Color
-                  </div>
-                  <div className="grid grid-cols-6 gap-1.5">
-                    {[
-                      "245 80% 66%",
-                      "200 80% 60%",
-                      "38 92% 60%",
-                      "142 65% 50%",
-                      "0 70% 60%",
-                      "280 70% 65%",
-                    ].map((c) => (
-                      <button
-                        key={c}
-                        type="button"
-                        onClick={() =>
-                          handleCover(c, { emoji: icon, color: cover })
-                        }
-                        disabled={actionPending}
-                        className={cn(
-                          "h-7 rounded-md border-2",
-                          cover === c
-                            ? "border-foreground"
-                            : "border-transparent",
-                        )}
-                        style={{ backgroundColor: `hsl(${c})` }}
-                        aria-label={`color ${c}`}
-                      />
-                    ))}
-                  </div>
-                </div>
-                {cover && (
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="w-full h-7 text-[11px]"
-                    onClick={() => setCover(null)}
-                    disabled={actionPending}
-                  >
-                    Remove cover
-                  </Button>
-                )}
-              </PopoverContent>
-            </Popover>
             <Select
               value={selectNotebook ?? "__none__"}
               disabled={actionPending}

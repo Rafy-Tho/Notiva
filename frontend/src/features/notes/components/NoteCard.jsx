@@ -27,9 +27,6 @@ export const NoteCard = ({ note, active, onClick, basePath = "/notes" }) => {
             {note.isFavorite && (
               <Star className="h-3 w-3 text-warning fill-warning" />
             )}
-            {note.cover?.emoji && (
-              <span className="text-xs leading-none">{note.cover.emoji}</span>
-            )}
             <h3 className="text-sm font-medium truncate">
               {note.title || "Untitled"}
             </h3>

@@ -42,7 +42,6 @@ Completed audit and refactoring of backend codebase to improve maintainability.
   - `contentRules`
   - `notebookIdRules`
   - `tagIdsRules`
-  - `coverRules`
   - `booleanFlags`
   - `expectedUpdatedAt`
 - Both exports use composition to build final rules

@@ -40,28 +40,6 @@ const tagIdsRules = [
   body("tagIds.*").optional().isUUID().withMessage("Invalid tag id").bail(),
 ];
 
-const coverRules = [
-  body("cover")
-    .optional({ nullable: true })
-    .isObject()
-    .withMessage("Invalid cover")
-    .bail(),
-  body("cover.color")
-    .optional({ nullable: true })
-    .isString()
-    .withMessage("Invalid cover color")
-    .bail()
-    .isLength({ max: 50 })
-    .withMessage("Cover color is too long"),
-  body("cover.emoji")
-    .optional({ nullable: true })
-    .isString()
-    .withMessage("Invalid cover emoji")
-    .bail()
-    .isLength({ max: 20 })
-    .withMessage("Cover emoji is too long"),
-];
-
 const booleanFlags = [
   body("isPinned")
     .optional()
@@ -100,7 +78,6 @@ export const update = [
   ...contentRules,
   ...notebookIdRules,
   ...tagIdsRules,
-  ...coverRules,
   ...booleanFlags,
   ...expectedUpdatedAt,
 ];

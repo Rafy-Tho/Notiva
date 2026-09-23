@@ -64,7 +64,7 @@ Database
 
 **Key Fields:**
 - User: id (UUID), email (unique), password (bcrypt), avatar
-- Note: id (UUID), title, content (HTML), userId, notebookId, coverColor/coverEmoji, wordCount
+- Note: id (UUID), title, content (HTML), userId, notebookId, wordCount
 - Notebook: id (UUID), name (unique per user), color, userId
 - Tag: id (UUID), name (unique per user), color, userId
 - NoteTag: noteId + tagId (composite PK)
@@ -74,7 +74,7 @@ Database
 - User ownership via `userId` field on all user-specific entities
 - Search via case-insensitive `contains` on title/content
 - Unique compound constraints: (userId, name) on Notebook and Tag
-- API maps `coverColor`/`coverEmoji` → `cover`, and NoteTag rows → `tagIds`
+- API maps NoteTag rows → `tagIds`
 
 Authentication
 --------------

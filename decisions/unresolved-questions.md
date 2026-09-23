@@ -47,7 +47,7 @@
 **Status:** UNKNOWN
 
 **Why It Matters:**
-- Avatar and note cover images need proper handling
+- Avatar images need proper handling
 - Cloudinary credentials and transformation settings unknown
 
 **Evidence Checked:**
@@ -81,27 +81,6 @@
 **Suggested Verification:**
 - Check deployment scripts for scheduled commands
 - Review server startup for any interval/setInterval jobs
-
----
-
-## What Determines Note Cover Color Palette?
-
-**Status:** UNKNOWN
-
-**Why It Matters:**
-- Frontend UI should match available cover colors
-- Default values may differ between frontend and backend
-
-**Evidence Checked:**
-- `Note.cover.color` field is string
-- Default in schema: empty string
-- Frontend color picker logic not fully visible
-
-**Current Status:** UNKNOWN
-
-**Suggested Verification:**
-- Check `frontend/src/components/note/` for color picker component
-- Look for Tailwind color palette constants
 
 ---
 

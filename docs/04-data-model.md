@@ -49,8 +49,6 @@ All primary keys are UUIDs (`String @id @default(uuid())`).
 | `isPinned` | Boolean | Yes | false | |
 | `isFavorite` | Boolean | Yes | false | |
 | `isArchived` | Boolean | Yes | false | |
-| `coverColor` | String | Yes | "" | Cover background color |
-| `coverEmoji` | String | Yes | "" | Cover emoji |
 | `wordCount` | Int | Yes | 0 | Estimated word count |
 | `deletedAt` | Timestamp | No | null | Soft delete marker |
 | `createdAt` | Timestamp | Yes | `now()` | |
@@ -66,7 +64,6 @@ All primary keys are UUIDs (`String @id @default(uuid())`).
 - `deletedAt`
 
 **API serialization (`toNoteResponse`):**
-- `coverColor` + `coverEmoji` → `cover: { color, emoji }`
 - `NoteTag` rows → `tagIds: string[]`
 - `contentPreview` added on list responses (first 50 chars of plain text)
 

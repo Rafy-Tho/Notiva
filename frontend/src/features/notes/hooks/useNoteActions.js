@@ -17,34 +17,6 @@ export function useNoteActions({
     serverUpdatedAtRef.current = value;
   }, []);
 
-  const handleIcon = useCallback(
-    async (emoji, currentCover) => {
-      const previous = currentCover?.emoji;
-      try {
-        await saveMetadata({ cover: { emoji, color: currentCover?.color } });
-        return { success: true };
-      } catch (error) {
-        toast.error(error.message);
-        return { success: false, previous };
-      }
-    },
-    [saveMetadata],
-  );
-
-  const handleCover = useCallback(
-    async (color, currentCover) => {
-      const previous = currentCover?.color;
-      try {
-        await saveMetadata({ cover: { color, emoji: currentCover?.emoji } });
-        return { success: true };
-      } catch (error) {
-        toast.error(error.message);
-        return { success: false, previous };
-      }
-    },
-    [saveMetadata],
-  );
-
   const handleNotebook = useCallback(
     async (notebookId) => {
       const normalizedNotebookId = notebookId === "__none__" ? null : notebookId;
@@ -169,8 +141,6 @@ export function useNoteActions({
   return {
     serverUpdatedAtRef,
     setServerUpdatedAt,
-    handleIcon,
-    handleCover,
     handleNotebook,
     handleTags,
     handleTogglePin,

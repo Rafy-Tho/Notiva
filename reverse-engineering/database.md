@@ -42,7 +42,6 @@
 | `isPinned` | Boolean | No | false | |
 | `isFavorite` | Boolean | No | false | |
 | `isArchived` | Boolean | No | false | |
-| `cover` | Object | No | {} | `{color: string, emoji: string}` |
 | `wordCount` | Number | No | 0 | |
 | `deletedAt` | Date | No | null | Soft delete marker |
 | `createdAt` | Date | Yes | auto | timestamps |

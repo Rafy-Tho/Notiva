@@ -146,8 +146,6 @@ Note
 ├── isPinned (Boolean)
 ├── isFavorite (Boolean)
 ├── isArchived (Boolean)
-├── coverColor (String)
-├── coverEmoji (String)
 ├── wordCount (Int)
 ├── deletedAt (Timestamp, soft delete)
 ├── createdAt (Timestamp)
