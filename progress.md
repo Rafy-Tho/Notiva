@@ -56,6 +56,11 @@ See `decisions/unresolved-questions.md` for additional unknowns that may represe
 
 ## Recent Changes
 
+**2026-09-24** - Added optimistic updates with rollback to notebook/tag CRUD (frontend only, no backend/API changes):
+- `frontend/src/features/notebooks/hooks/useNotebooks.js` and `frontend/src/features/tags/hooks/useTags.js`: replaced all `invalidateQueries(["notebooks"])` / `invalidateQueries(["tags"])` refetch-on-settle with the no-refetch optimistic pattern already used by notes. Each mutation now `onMutate`s into the cached list (create inserts a `temp-*` placeholder and cancels in-flight list queries; update patches the item in place; delete filters it out), snapshots `previousList`, and restores it in `onError`. `onSuccess` writes the authoritative server object into the cache (create replaces the temp object; notebook update re-sorts by name to match the backend `orderBy name asc`; delete filters the soft-deleted row out). Updates only touch the cache when the list is already loaded; otherwise the query refetches on next mount.
+- Verified: `npm run lint` (0 errors, 1 pre-existing warning in CommandPalette), `npm run test` all pass.
+- Docs updated: `docs/16-error-handling.md`, `ai/context.md`, `progress.md`.
+
 **2026-09-24** - Note list cards now update instantly on title/content edits (frontend only, no backend/API changes):
 - Root cause: `patchNoteInLists` only merged `META_FIELDS` (notebookId/tagIds/isPinned/isFavorite/isArchived/deletedAt) into cached list entries, so autosave responses never updated the card's title, content preview, word count, or "Xm ago" last-update — stale until a `/notes` refetch.
 - `noteListCache.js`: added `title`/`updatedAt`/`wordCount` to `META_FIELDS`; `pickMeta` now derives `contentPreview = htmlToText(content).slice(0, 50)` (exact parity with backend `listNotes`) and never stores full `content` in list entries; a new `shouldHoist` (pin **or** `updatedAt` change) hoists the edited note to the top of default-ordered lists via the existing `hoistToTop`/`hoistNote`, matching the backend `updatedAt desc` sort. Title-sorted and search/date-filtered lists are never reordered.

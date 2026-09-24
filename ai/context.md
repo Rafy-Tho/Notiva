@@ -76,6 +76,7 @@ Database
 - Search via case-insensitive `contains` on title/content
 - Unique compound constraints: (userId, name) on Notebook and Tag
 - API maps NoteTag rows → `tagIds`
+- Notebook/tag CRUD (`["notebooks"]` / `["tags"]`) is fully optimistic with rollback — create inserts a `temp-*` placeholder replaced on `onSuccess`, update patches/re-sorts in cache, delete filters the entry out; no `invalidateQueries` refetch (see `frontend/src/features/notebooks/hooks/useNotebooks.js`, `frontend/src/features/tags/hooks/useTags.js`)
 
 Authentication
 --------------

@@ -36,8 +36,41 @@ export function useCreateTag() {
       const { data } = await res.json();
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tags"] });
+    onMutate: async ({ name, color }) => {
+      await queryClient.cancelQueries({ queryKey: ["tags"] });
+      const previousList = queryClient.getQueryData(["tags"]);
+      if (Array.isArray(previousList)) {
+        const tempId = `temp-${crypto.randomUUID()}`;
+        const now = new Date().toISOString();
+        queryClient.setQueryData(["tags"], (old) => [
+          ...old,
+          {
+            id: tempId,
+            name,
+            color,
+            deletedAt: null,
+            createdAt: now,
+            updatedAt: now,
+          },
+        ]);
+        return { previousList, tempId };
+      }
+      return { previousList };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousList) {
+        queryClient.setQueryData(["tags"], context.previousList);
+      }
+    },
+    onSuccess: (data, variables, context) => {
+      queryClient.setQueryData(["tags"], (old) => {
+        if (!Array.isArray(old)) return old;
+        const idx = old.findIndex((x) => x.id === context?.tempId);
+        if (idx === -1) return old;
+        const copy = [...old];
+        copy[idx] = data;
+        return copy;
+      });
     },
   });
 }
@@ -57,8 +90,26 @@ export function useUpdateTag() {
       const { data } = await res.json();
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tags"] });
+    onMutate: async ({ id, name, color }) => {
+      await queryClient.cancelQueries({ queryKey: ["tags"] });
+      const previousList = queryClient.getQueryData(["tags"]);
+      if (Array.isArray(previousList)) {
+        queryClient.setQueryData(["tags"], (old) =>
+          old.map((x) => (x.id === id ? { ...x, name, color } : x)),
+        );
+        return { previousList };
+      }
+      return { previousList };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousList) {
+        queryClient.setQueryData(["tags"], context.previousList);
+      }
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(["tags"], (old) =>
+        Array.isArray(old) ? old.map((x) => (x.id === data.id ? data : x)) : old,
+      );
     },
   });
 }
@@ -77,8 +128,26 @@ export function useDeleteTag() {
       const { data } = await res.json();
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tags"] });
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ["tags"] });
+      const previousList = queryClient.getQueryData(["tags"]);
+      if (Array.isArray(previousList)) {
+        queryClient.setQueryData(["tags"], (old) =>
+          old.filter((x) => x.id !== id),
+        );
+        return { previousList };
+      }
+      return { previousList };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousList) {
+        queryClient.setQueryData(["tags"], context.previousList);
+      }
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(["tags"], (old) =>
+        Array.isArray(old) ? old.filter((x) => x.id !== data.id) : old,
+      );
     },
   });
 }

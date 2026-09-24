@@ -196,6 +196,12 @@ Optimistic writes update **both** the single-note query (`["note", id]`) and eve
 
 Sidebar counts (`useNoteCountsStore`) are updated via pure delta calculations in `frontend/src/features/notes/lib/noteCounts.js` (`noteCountsDelta`, `notePurgeDelta`) applied with `applyCounts`. **Count deltas are applied only in `onMutate`; re-applying them in `onSuccess` would double-count.** On error, the store is restored from the pre-mutation snapshot with `setState(previousCounts, true)`. Deltas are only applied when the previous note is known from cache (a `previousCounts`/`previousNote` snapshot is always taken). List caches are snapshotted before the mutation and restored on error (`snapshotNotesLists`/`restoreNotesLists`).
 
+**Notebook and tag lists** (`["notebooks"]` / `["tags"]`, cached by `useNotebooks`/`useTags`) use the same no-refetch optimistic pattern in `frontend/src/features/notebooks/hooks/useNotebooks.js` and `frontend/src/features/tags/hooks/useTags.js`:
+
+- **Create** - A placeholder with a client-generated `temp-*` id is inserted into the cached list in `onMutate`; `onSuccess` swaps in the authoritative server object (notebooks are inserted by `name` order, matching the backend sort; tags are appended in server insertion order).
+- **Update** - The cached entry is patched in place in `onMutate`; `onSuccess` replaces it with the server response and re-sorts notebooks by name.
+- **Delete** - The entry is removed from the cache in `onMutate`; `onSuccess` filters it out (the soft-deleted row never reappears). All three keep a `previousList` snapshot and restore it in `onError`. These updates only run when the list is already cached; otherwise the query refetches on next mount. No `invalidateQueries(["notebooks"])` / `invalidateQueries(["tags"])` refetch happens for these actions.
+
 **Example: useTogglePin**
 ```jsx
 onMutate: async () => {
