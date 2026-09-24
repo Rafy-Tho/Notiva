@@ -15,7 +15,7 @@ All operations are **synchronous**:
 | User registration | Sync |
 | User login | Sync |
 | Note CRUD | Sync |
-| Email sending | Sync (via nodemailer) |
+| Email sending | Sync (Hostinger mail API) |
 | Avatar upload | Sync (via Cloudinary API) |
 
 ---

@@ -96,7 +96,7 @@
 ### Email
 | Dependency | Purpose |
 |------------|---------|
-| `nodemailer` | Email delivery |
+| _none_ — via Hostinger mail HTTP API | Email delivery |
 
 ### Rate Limiting
 | Dependency | Purpose |
@@ -141,7 +141,7 @@
 |---------|---------|
 | MongoDB Atlas | Database hosting |
 | Cloudinary | Image hosting |
-| Brevo (via nodemailer) | Email delivery |
+| Hostinger mail API | Email delivery |
 
 ---
 

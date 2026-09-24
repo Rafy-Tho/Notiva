@@ -73,7 +73,6 @@ Technical Dependencies
 - helmet: Security headers
 - express-rate-limit: Rate limiting
 - multer: File uploads
-- nodemailer: Email sending
 
 **Frontend:**
 - React: UI framework

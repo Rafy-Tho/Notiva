@@ -19,7 +19,7 @@
 
 **Frontend:** React 19, Vite 8, Tailwind CSS 3, Zustand 5, TanStack Query 5, React Router 7, TipTap 3, Radix UI, Lucide, cmdk, date-fns, DOMPurify, JSZip
 
-**Backend:** Node.js, Express 5, Prisma 7, jsonwebtoken, bcrypt, express-validator, helmet, cors, cookie-parser, express-rate-limit, multer, cloudinary, sanitize-html, nodemailer
+**Backend:** Node.js, Express 5, Prisma 7, jsonwebtoken, bcrypt, express-validator, helmet, cors, cookie-parser, express-rate-limit, multer, cloudinary, sanitize-html
 
 **Database:** PostgreSQL (Prisma Client + `@prisma/adapter-pg`)  
 **Infrastructure:** Cloudinary (images), Hostinger Mail (email), Redis (rate limiting)

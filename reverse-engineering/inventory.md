@@ -82,7 +82,7 @@
 |---------|---------|
 | **MongoDB Atlas** | Primary database |
 | **Cloudinary** | Avatar uploads |
-| **Brevo** | Email delivery (via nodemailer) |
+| **Hostinger mail API** | Email delivery |
 
 ## Background Jobs
 
