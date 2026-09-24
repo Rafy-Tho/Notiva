@@ -82,6 +82,7 @@ Authenticated users only; returns only user's trashed notes
 
 - Note restoration updates fields
 - Note purging deletes document
+- Frontend (no refetch): restore/delete toggle the `deletedAt` transition in every cached list (`patchNoteInLists`); purge removes the note everywhere (`removeNoteFromAllLists`); `Trash` count updates via `noteCountsDelta` / `notePurgeDelta`
 
 ## Edge Cases
 

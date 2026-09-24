@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import {
   Archive,
   BookOpen,
@@ -49,8 +48,10 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { NoteEditor } from "../components/NoteEditor";
 import { SaveBadge } from "../components/SaveBadge";
+import { NoteStatusBar } from "../components/NoteStatusBar";
 import { useAutoSave } from "@/hooks/useAutosave";
 import { useCreateNoteContext } from "@/hooks/useCreateNoteContext";
+import { useUIStore } from "@/store/useUIStore";
 import { useNotebooks } from "@/features/notebooks/hooks/useNotebooks";
 import {
   useNote,
@@ -64,7 +65,8 @@ import {
 } from "../hooks/useNotes";
 import { useTags } from "@/features/tags/hooks/useTags";
 import { useNoteActions } from "../hooks/useNoteActions";
-import { wordCount } from "@/lib/sanitize";
+import { readingTime, wordCount } from "@/lib/sanitize";
+import { format, formatDistanceToNow } from "date-fns";
 function NoteDetailPage() {
   const { id } = useParams();
   const { data: note, isLoading: noteLoading, error: noteError } = useNote(id);
@@ -76,10 +78,17 @@ function NoteDetailPage() {
 
   if (noteLoading || tagsLoading || notebooksLoading) {
     return (
-      <div className="p-8 max-w-3xl mx-auto space-y-3">
-        <Skeleton className="h-8 w-2/3" />
-        <Skeleton className="h-4 w-1/3" />
-        <Skeleton className="h-40 w-full" />
+      <div className="p-8 max-w-3xl mx-auto w-full">
+        <div className="h-7 rounded-md bg-muted animate-pulse w-36" />
+        <div className="space-y-3 pt-8">
+          <Skeleton className="h-9 w-3/5" />
+          <Skeleton className="h-4 w-2/5" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+          <Skeleton className="h-4 w-4/5" />
+          <Skeleton className="h-40 w-full" />
+        </div>
       </div>
     );
   }
@@ -113,15 +122,14 @@ function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
     content: note.content ?? "",
   });
   const [isLeaving, setIsLeaving] = useState(false);
-  const [selectNotebook, setSelectNotebook] = useState(
-    note.notebookId ?? "__none__",
-  );
-  const [selectTags, setSelectTags] = useState(note.tagIds ?? []);
-  const [isPinned, setIsPinned] = useState(note.isPinned ?? false);
-  const [isFav, setIsFav] = useState(note.isFavorite ?? false);
+  const selectNotebook = note.notebookId ?? "__none__";
+  const selectTags = useMemo(() => note.tagIds ?? [], [note.tagIds]);
 
   const path = useCreateNoteContext();
   const editorRef = useRef(null);
+
+  const focusMode = useUIStore((s) => s.focusMode);
+  const setFocusMode = useUIStore((s) => s.setFocusMode);
 
   const { mutateAsync: updateNote, isPending: isUpdating } = useUpdateNote(id);
   const { mutateAsync: togglePin, isPending: isPinning } = useTogglePin(id);
@@ -193,6 +201,24 @@ function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
     ({ currentLocation, nextLocation }) =>
       isDirty && currentLocation.pathname !== nextLocation.pathname,
   );
+
+  useEffect(() => {
+    setFocusMode(false);
+  }, [id, setFocusMode]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "/") {
+        e.preventDefault();
+        setFocusMode(!focusMode);
+      } else if (e.key === "Escape" && focusMode) {
+        e.preventDefault();
+        setFocusMode(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [focusMode, setFocusMode]);
 
   const handleTitleBlur = useCallback(() => {
     void flush();
@@ -361,7 +387,8 @@ function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
           </div>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-y-2 gap-x-2 px-4 sm:px-6 md:px-10 lg:px-12 pt-6 max-w-3xl mx-auto w-full">
+        {!focusMode && (
+          <div className="flex flex-wrap items-center justify-between gap-y-2 gap-x-2 px-4 sm:px-6 md:px-10 lg:px-12 pt-6 max-w-3xl mx-auto w-full">
           <div className="flex items-center gap-2">
             <SaveBadge
               status={actionPending ? "updating" : status}
@@ -488,7 +515,7 @@ function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
               aria-label="Pin"
             >
               <Pin
-                className={`h-3.5 w-3.5 ${isPinned ? "fill-primary text-primary" : ""}`}
+                className={`h-3.5 w-3.5 ${note?.isPinned ? "fill-primary text-primary" : ""}`}
               />
             </Button>
             <Button
@@ -500,7 +527,7 @@ function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
               aria-label="Favorite"
             >
               <Star
-                className={`h-3.5 w-3.5 ${isFav ? "fill-warning text-warning" : ""}`}
+                className={`h-3.5 w-3.5 ${note?.isFavorite ? "fill-warning text-warning" : ""}`}
               />
             </Button>
             <DropdownMenu>
@@ -528,8 +555,13 @@ function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
             </DropdownMenu>
           </div>
         </div>
+        )}
 
-        <div className="px-4 sm:px-6 md:px-10 lg:px-12 pt-2 pb-0 max-w-3xl mx-auto w-full">
+        <div
+          className={`px-4 sm:px-6 md:px-10 lg:px-12 pb-0 max-w-3xl mx-auto w-full ${
+            focusMode ? "pt-10" : "pt-2"
+          }`}
+        >
           <input
             value={draft.title}
             onChange={(e) =>
@@ -545,9 +577,23 @@ function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
             placeholder="Untitled"
             className="w-full bg-transparent text-3xl font-semibold tracking-tight outline-none placeholder:text-muted-foreground/40"
           />
-          <div className="mt-1 text-[11px] text-muted-foreground">
-            {wc} words
-          </div>
+          {note && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-muted-foreground">
+              <span>
+                Edited{" "}
+                {formatDistanceToNow(new Date(note.updatedAt), {
+                  addSuffix: true,
+                })}
+              </span>
+              <span aria-hidden="true">·</span>
+              <span>
+                Created{" "}
+                {format(new Date(note.createdAt), "MMM d, yyyy")}
+              </span>
+              <span aria-hidden="true">·</span>
+              <span>{readingTime(wc)}</span>
+            </div>
+          )}
           {selectTags.length > 0 && (
             <div className="mt-2 flex flex-wrap gap-1.5">
               {selectTags.map((tid) => {
@@ -588,8 +634,18 @@ function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
           }
           onCmdS={saveNow}
           editorRef={editorRef}
+          showToolbar={!focusMode}
         />
       </div>
+      <NoteStatusBar
+        content={draft.content}
+        focusing={focusMode}
+        onToggleFocus={() => setFocusMode(!focusMode)}
+        status={status}
+        isDirty={isDirty}
+        lastSavedAt={lastSaved}
+        actionPending={actionPending}
+      />
 
       <AlertDialog
         open={blocker.state === "blocked"}

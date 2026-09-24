@@ -53,9 +53,18 @@ Authenticated users
 ## Frontend
 
 - NoteActions component
-- useNotes.togglePin mutation
-- useNotes.toggleFavorite mutation
-- useNotes.toggleArchive mutation
+- NoteDetailPage action buttons (pin/star, archive)
+- useNotes.togglePin / toggleFavorite / toggleArchive mutations (optimistic, no refetch)
+- frontend/src/features/notes/lib/noteListCache.js (list cache patching)
+- frontend/src/features/notes/lib/noteCounts.js (count deltas)
+- frontend/src/store/useNoteCountsStore.js (sidebar count rows)
+
+All three toggles are fully optimistic and require **no refetch** of `/notes` or `/notes/counts`:
+
+- The single-note cache `["note", id]` and every cached list (`["notes", …]`, `["notes", "infinite", …]`) are patched in place; notes leave/enter filtered lists (favorites/pinned/archive) instantly.
+- Pinning hoists the note to the top of default-ordered lists and intentionally changes **no** sidebar count.
+- Favorite/archive adjust the `Favorites` / `Archive` count rows via `noteCountsDelta`, applied **only in `onMutate`** (`onSuccess` only writes the authoritative server note, so deltas are never double-counted).
+- On error, the note, list snapshots, and the previous count state are all restored.
 
 ## API
 
@@ -99,13 +108,15 @@ Authenticated users only; note must belong to user
 
 ## Tests
 
-Not found in test suite
+- frontend/src/features/notes/lib/noteListCache.test.js (list membership, pin reorder, trash transitions, insert/remove helpers)
+- frontend/src/features/notes/lib/noteCounts.test.js (favorite/archive deltas via noteCountsDelta)
 
 ## Source Evidence
 
 Frontend:
-- frontend/src/components/note/NoteActions.jsx
-- frontend/src/store/notesStore.js
+- frontend/src/features/notes/hooks/useNotes.js
+- frontend/src/features/notes/pages/NoteDetailPage.jsx
+- frontend/src/store/useNoteCountsStore.js
 
 Backend:
 - backend/src/routes/notes.routes.js

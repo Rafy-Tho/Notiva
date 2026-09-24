@@ -17,6 +17,7 @@ export const useUIStore = create(
         sidebarOpen: initialSidebarOpen,
         cmdkOpen: false,
         noteListOpen: true,
+        focusMode: false,
         // Actions
         setTheme: (theme) =>
           set(
@@ -88,6 +89,15 @@ export const useUIStore = create(
             },
             false,
             "ui/setNoteList",
+          ),
+
+        setFocusMode: (focusMode) =>
+          set(
+            (s) => {
+              s.focusMode = focusMode;
+            },
+            false,
+            "ui/setFocusMode",
           ),
       })),
       {

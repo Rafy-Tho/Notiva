@@ -23,6 +23,7 @@ function NotesPage({ filter, title = "All notes", emptyTitle, emptyHint }) {
   const location = useLocation();
   const noteListOpen = useUIStore((s) => s.noteListOpen);
   const toggleNoteList = useUIStore((s) => s.toggleNoteList);
+  const focusMode = useUIStore((s) => s.focusMode);
 
   const [searchInput, setSearchInput] = useState("");
   const [dateFilter, setDateFilter] = useState("");
@@ -81,6 +82,7 @@ function NotesPage({ filter, title = "All notes", emptyTitle, emptyHint }) {
           "w-full",
           noteListOpen ? "md:w-72 md:shrink-0" : "md:w-0 md:border-r-0",
           id ? "hidden md:flex" : "flex",
+          focusMode && "hidden",
         )}
       >
         <div className="h-12 px-3 flex items-center justify-between border-b border-border shrink-0 min-w-[18rem]">
@@ -140,7 +142,7 @@ function NotesPage({ filter, title = "All notes", emptyTitle, emptyHint }) {
           id ? "flex" : "hidden md:flex",
         )}
       >
-        {!noteListOpen && (
+        {!noteListOpen && !focusMode && (
           <div className="h-10 px-3 flex items-center gap-2 border-b border-border hidden md:flex">
             <Button
               variant="ghost"
@@ -153,7 +155,7 @@ function NotesPage({ filter, title = "All notes", emptyTitle, emptyHint }) {
             </Button>
           </div>
         )}
-        {id && (
+        {id && !focusMode && (
           <div className="h-10 px-3 flex items-center gap-2 border-b border-border md:hidden">
             <Button
               variant="ghost"

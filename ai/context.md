@@ -55,7 +55,7 @@ Major Features
 - **Notebooks**: Organize notes in notebooks with colors
 - **Tags**: Tag-based organization with color coding
 - **Search**: Full-text search across note titles and content
-- **Rich Editor**: TipTap with tables (toolbar row/column manipulation), code blocks, task lists, and hyperlinks (Link extension; URL popover in toolbar, `autolink`/`linkOnPaste`, opens new tab)
+- **Rich Editor**: TipTap with tables (toolbar "Table options" dropdown while the cursor is inside a table: insert/delete rows & columns, merge/split cells, toggle header row/column, delete table; cell text alignment works; selected cells highlighted), code blocks, task lists, and hyperlinks (Link extension; URL popover in toolbar, `autolink`/`linkOnPaste`, opens new tab)
 - **Trash**: Soft delete with restore capability
 - **Profile**: Avatar upload, password management
 

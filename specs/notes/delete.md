@@ -81,7 +81,7 @@ Authenticated users only; note must belong to user
 ## Side Effects
 
 - Note document updated or deleted
-- Note count updated in frontend
+- Frontend (no refetch): soft delete transitions `deletedAt` optimistically — note leaves all-notes/favorites/archive lists, prepends into the trash list, counts move into `Trash` via `noteCountsDelta`; restore reverses this; purge removes the note from every cached list (`removeNoteFromAllLists`) and decrements `Trash` (`notePurgeDelta`)
 
 ## Edge Cases
 

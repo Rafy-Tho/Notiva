@@ -6,15 +6,16 @@ NoteFlow is a **note-taking and knowledge management web application** that enab
 
 ## Users
 
-| User Category | Needs Addressed |
-|---------------|-----------------|
-| **Students** | Lecture notes, research organization, study materials |
-| **Developers** | Code snippets, technical documentation, debugging notes |
-| **Professionals** | Meeting notes, project tracking, reference materials |
+| User Category     | Needs Addressed                                         |
+| ----------------- | ------------------------------------------------------- |
+| **Students**      | Lecture notes, research organization, study materials   |
+| **Developers**    | Code snippets, technical documentation, debugging notes |
+| **Professionals** | Meeting notes, project tracking, reference materials    |
 
 ## Main Workflows
 
 ### 1. Note Creation and Editing
+
 ```
 1. Click "New Note" button or use ⌘K command palette
 2. Enter title and compose content in rich-text editor
@@ -23,6 +24,7 @@ NoteFlow is a **note-taking and knowledge management web application** that enab
 ```
 
 ### 2. Note Organization
+
 ```
 1. Create notebooks for broad categorization
 2. Apply tags for cross-cutting concerns
@@ -32,6 +34,7 @@ NoteFlow is a **note-taking and knowledge management web application** that enab
 ```
 
 ### 3. Search and Retrieval
+
 ```
 1. Type in global search or open ⌘K
 2. Filter by: text, notebook, tag, date range, pinned status
@@ -40,6 +43,7 @@ NoteFlow is a **note-taking and knowledge management web application** that enab
 ```
 
 ### 4. Account Management
+
 ```
 1. Register with email, name, and secure password
 2. Login establishes session via JWT cookie
@@ -51,21 +55,21 @@ NoteFlow is a **note-taking and knowledge management web application** that enab
 
 ### Core Features (IMPLEMENTED)
 
-| Feature | Implementation Status | Evidence |
-|---------|----------------------|----------|
-| User authentication | ✅ Fully implemented | `/auth/*` routes, JWT cookies, bcrypt |
-| Rich-text note creation | ✅ Fully implemented | TipTap editor + Note model |
-| Note CRUD operations | ✅ Fully implemented | `/notes/*` routes |
-| Notebooks (CRUD) | ✅ Fully implemented | `/notebooks/*` routes |
-| Tags (CRUD) | ✅ Fully implemented | `/tags/*` routes |
-| Pin/Favorite/Archive | ✅ Fully implemented | Toggle endpoints |
-| Trash system | ✅ Fully implemented | Soft-delete + restore/purge |
-| Full-text search | ✅ Fully implemented | Case-insensitive search on title/content |
-| Auto-save | ✅ Fully implemented | `useAutosave` hook |
-| Command palette | ✅ Fully implemented | cmdk integration |
-| Avatar upload | ✅ Fully implemented | Cloudinary service |
-| Password reset | ✅ Fully implemented | Token-based email flow |
-| Theme switching | ✅ Fully implemented | next-themes hook |
+| Feature                 | Implementation Status | Evidence                                 |
+| ----------------------- | --------------------- | ---------------------------------------- |
+| User authentication     | ✅ Fully implemented  | `/auth/*` routes, JWT cookies, bcrypt    |
+| Rich-text note creation | ✅ Fully implemented  | TipTap editor + Note model               |
+| Note CRUD operations    | ✅ Fully implemented  | `/notes/*` routes                        |
+| Notebooks (CRUD)        | ✅ Fully implemented  | `/notebooks/*` routes                    |
+| Tags (CRUD)             | ✅ Fully implemented  | `/tags/*` routes                         |
+| Pin/Favorite/Archive    | ✅ Fully implemented  | Toggle endpoints                         |
+| Trash system            | ✅ Fully implemented  | Soft-delete + restore/purge              |
+| Full-text search        | ✅ Fully implemented  | Case-insensitive search on title/content |
+| Auto-save               | ✅ Fully implemented  | `useAutosave` hook                       |
+| Command palette         | ✅ Fully implemented  | cmdk integration                         |
+| Avatar upload           | ✅ Fully implemented  | Cloudinary service                       |
+| Password reset          | ✅ Fully implemented  | Token-based email flow                   |
+| Theme switching         | ✅ Fully implemented  | next-themes hook                         |
 
 ### UI Components (IMPLEMENTED)
 
@@ -80,7 +84,6 @@ NoteFlow is a **note-taking and knowledge management web application** that enab
 - Tables and table manipulation
 - Code blocks with syntax highlighting
 - Task lists and task items
-- Image embedding
 - Link support
 - Placeholder text
 - Underline formatting
@@ -89,22 +92,22 @@ NoteFlow is a **note-taking and knowledge management web application** that enab
 
 ### Current Limitations
 
-| Limitation | Description |
-|------------|-------------|
-| No real-time collaboration | Notes are personal to each user |
-| No version history | Only current note content is stored |
-| No offline mode | Requires active internet connection |
-| Limited file uploads | Images only via avatar upload (no general file storage) |
-| No shared notebooks | Notebooks are user-scoped |
-| No markdown export | Only rich-text HTML content |
+| Limitation                 | Description                                             |
+| -------------------------- | ------------------------------------------------------- |
+| No real-time collaboration | Notes are personal to each user                         |
+| No version history         | Only current note content is stored                     |
+| No offline mode            | Requires active internet connection                     |
+| Limited file uploads       | Images only via avatar upload (no general file storage) |
+| No shared notebooks        | Notebooks are user-scoped                               |
+| No markdown export         | Only rich-text HTML content                             |
 
 ### Technical Constraints
 
-| Constraint | Impact |
-|------------|--------|
-| PostgreSQL hosting | Hosted database (e.g. Neon, RDS), no embedded DB |
-| Single-user data model | No multi-tenancy or team features |
-| Sync-based auto-save | No real-time sync across devices |
+| Constraint             | Impact                                           |
+| ---------------------- | ------------------------------------------------ |
+| PostgreSQL hosting     | Hosted database (e.g. Neon, RDS), no embedded DB |
+| Single-user data model | No multi-tenancy or team features                |
+| Sync-based auto-save   | No real-time sync across devices                 |
 
 ## Not Implemented (Future Features Not Claimed)
 

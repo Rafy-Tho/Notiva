@@ -140,37 +140,48 @@
 @layer components {
   .tiptap {
     @apply outline-none min-h-[60vh] text-[15px] leading-7;
+    caret-color: hsl(var(--primary));
+  }
+  .tiptap ::selection {
+    @apply bg-primary/20;
   }
   .tiptap p.is-editor-empty:first-child::before {
     content: attr(data-placeholder);
     @apply text-muted-foreground float-left h-0 pointer-events-none;
   }
   .tiptap h1 {
-    @apply text-3xl font-semibold mt-8 mb-3 tracking-tight;
+    @apply text-3xl font-semibold mt-8 mb-3 tracking-tight scroll-mt-6;
   }
   .tiptap h2 {
-    @apply text-2xl font-semibold mt-6 mb-2 tracking-tight;
+    @apply text-2xl font-semibold mt-6 mb-2 tracking-tight scroll-mt-6;
   }
   .tiptap h3 {
-    @apply text-xl font-semibold mt-5 mb-2 tracking-tight;
+    @apply text-xl font-semibold mt-5 mb-2 tracking-tight scroll-mt-6;
   }
   .tiptap p {
     @apply my-2;
   }
   .tiptap ul {
-    @apply list-disc pl-6 my-2;
+    @apply list-disc pl-6 my-2 space-y-1;
   }
   .tiptap ol {
-    @apply list-decimal pl-6 my-2;
+    @apply list-decimal pl-6 my-2 space-y-1;
+  }
+  .tiptap ul > li::marker,
+  .tiptap ol > li::marker {
+    @apply text-muted-foreground;
   }
   .tiptap blockquote {
-    @apply border-l-2 border-primary/60 pl-4 italic text-muted-foreground my-3;
+    @apply border-l-2 border-primary/60 pl-4 pr-2 italic text-muted-foreground my-3 bg-muted/20 rounded-r-md;
   }
   .tiptap code:not(pre code) {
-    @apply bg-muted px-1.5 py-0.5 rounded text-[0.85em] font-mono;
+    @apply bg-muted px-1.5 py-0.5 rounded text-[0.85em] font-mono border border-border/60;
   }
   .tiptap pre {
     @apply bg-muted/60 border border-border rounded-md p-3 my-3 overflow-x-auto text-[13px] font-mono;
+  }
+  .tiptap pre code {
+    @apply bg-transparent p-0 border-0;
   }
   .tiptap a {
     @apply text-primary underline underline-offset-2 hover:text-primary/80 cursor-pointer;
@@ -183,19 +194,36 @@
   }
   .tiptap th,
   .tiptap td {
-    @apply border border-border px-2 py-1 align-top;
+    @apply border border-border px-2 py-1 align-top relative;
+  }
+  .tiptap tr:hover td {
+    @apply bg-muted/40;
   }
   .tiptap th {
     @apply bg-muted font-semibold;
   }
+  .tiptap .selectedCell::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    @apply bg-primary/10 z-[1];
+  }
   .tiptap ul[data-type="taskList"] {
-    @apply list-none pl-0;
+    @apply list-none pl-0 space-y-1;
   }
   .tiptap ul[data-type="taskList"] li {
     @apply flex gap-2 items-start;
   }
   .tiptap ul[data-type="taskList"] li > label {
     @apply mt-1.5;
+  }
+  .tiptap ul[data-type="taskList"] li > label input[type="checkbox"] {
+    @apply size-3.5 cursor-pointer;
+    accent-color: hsl(var(--primary));
+  }
+  .tiptap ul[data-type="taskList"] li > div {
+    @apply flex-1;
   }
   .tiptap .ProseMirror-selectednode {
     @apply outline outline-2 outline-primary;

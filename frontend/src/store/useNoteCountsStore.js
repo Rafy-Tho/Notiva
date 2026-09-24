@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { fetchWithAuth } from "../lib/fetchWithAuth";
+import { applyCountsToState } from "../features/notes/lib/noteCounts";
 
 const BASE_URL = import.meta.env.VITE_BASE_API;
 
@@ -11,6 +12,8 @@ export const useNoteCountsStore = create((set) => ({
   notebooks: [],
   tags: [],
   loading: false,
+  applyCounts: (deltas) =>
+    set((state) => applyCountsToState(state, deltas)),
   fetchCounts: async () => {
     set({ loading: true });
     try {

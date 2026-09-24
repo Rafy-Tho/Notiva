@@ -7,6 +7,17 @@ import {
 import { fetchWithAuth } from "@/lib/fetchWithAuth";
 import { useAuthStore } from "@/store/authStore";
 import { getApiUrl } from "@/config/api";
+import { wordCount } from "@/lib/sanitize";
+import { useNoteCountsStore } from "@/store/useNoteCountsStore";
+import { noteCountsDelta, notePurgeDelta } from "../lib/noteCounts";
+import {
+  findCachedNote,
+  insertNoteIntoLists,
+  patchNoteInLists,
+  removeNoteFromAllLists,
+  restoreNotesLists,
+  snapshotNotesLists,
+} from "../lib/noteListCache";
 
 async function throwResponseError(response, fallback) {
   let body = null;
@@ -123,8 +134,10 @@ export function useCreateNote() {
       const { data } = await res.json();
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
+    onSuccess: (data) => {
+      queryClient.setQueryData(["note", data.id], data);
+      insertNoteIntoLists(queryClient, data);
+      applyCountsIfAny(noteCountsDelta(null, data));
     },
   });
 }
@@ -145,8 +158,40 @@ export function useUpdateNote(id) {
       const { data } = await res.json();
       return data;
     },
+    onMutate: async (variables = {}) => {
+      await queryClient.cancelQueries({ queryKey: ["note", id] });
+      await queryClient.cancelQueries({ queryKey: ["notes"] });
+      const previousNote = queryClient.getQueryData(["note", id]);
+      const previousLists = snapshotNotesLists(queryClient);
+      const previousCounts = snapshotCounts();
+      const optimisticPatch = { ...variables };
+      delete optimisticPatch.signal;
+      delete optimisticPatch.keepalive;
+      delete optimisticPatch.expectedUpdatedAt;
+      if (Object.hasOwn(optimisticPatch, "content")) {
+        optimisticPatch.wordCount = wordCount(optimisticPatch.content);
+      }
+      queryClient.setQueryData(["note", id], (old) =>
+        old ? { ...old, ...optimisticPatch } : old,
+      );
+      patchNoteInLists(queryClient, id, optimisticPatch);
+      if (previousNote) {
+        applyCountsIfAny(
+          noteCountsDelta(previousNote, { ...previousNote, ...optimisticPatch }),
+        );
+      }
+      return { previousNote, previousLists, previousCounts };
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousNote) {
+        queryClient.setQueryData(["note", id], context.previousNote);
+      }
+      restoreNotesLists(queryClient, context?.previousLists);
+      restoreCounts(context?.previousCounts);
+    },
     onSuccess: (data) => {
       queryClient.setQueryData(["note", id], data);
+      patchNoteInLists(queryClient, id, data);
     },
   });
 }
@@ -166,21 +211,27 @@ export function useTogglePin(id) {
     },
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ["note", id] });
-      const previous = queryClient.getQueryData(["note", id]);
-      queryClient.setQueryData(["note", id], (old) => ({
-        ...old,
-        isPinned: !old?.isPinned,
-      }));
-      return { previous };
+      await queryClient.cancelQueries({ queryKey: ["notes"] });
+      const previousNote = queryClient.getQueryData(["note", id]);
+      const previousLists = snapshotNotesLists(queryClient);
+      const previousCounts = snapshotCounts();
+      const nextValue = !previousNote?.isPinned;
+      queryClient.setQueryData(["note", id], (old) =>
+        old ? { ...old, isPinned: nextValue } : old,
+      );
+      patchNoteInLists(queryClient, id, { isPinned: nextValue });
+      return { previousNote, previousLists, previousCounts };
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(["note", id], data);
+      patchNoteInLists(queryClient, id, data);
     },
     onError: (err, _, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(["note", id], context.previous);
+      if (context?.previousNote) {
+        queryClient.setQueryData(["note", id], context.previousNote);
       }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["note", id] });
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      restoreNotesLists(queryClient, context?.previousLists);
+      restoreCounts(context?.previousCounts);
     },
   });
 }
@@ -200,21 +251,32 @@ export function useToggleFavorite(id) {
     },
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ["note", id] });
-      const previous = queryClient.getQueryData(["note", id]);
-      queryClient.setQueryData(["note", id], (old) => ({
-        ...old,
-        isFavorite: !old?.isFavorite,
-      }));
-      return { previous };
+      await queryClient.cancelQueries({ queryKey: ["notes"] });
+      const previousNote = queryClient.getQueryData(["note", id]);
+      const previousLists = snapshotNotesLists(queryClient);
+      const previousCounts = snapshotCounts();
+      const nextValue = !previousNote?.isFavorite;
+      queryClient.setQueryData(["note", id], (old) =>
+        old ? { ...old, isFavorite: nextValue } : old,
+      );
+      patchNoteInLists(queryClient, id, { isFavorite: nextValue });
+      if (previousNote) {
+        applyCountsIfAny(
+          noteCountsDelta(previousNote, { ...previousNote, isFavorite: nextValue }),
+        );
+      }
+      return { previousNote, previousLists, previousCounts };
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(["note", id], data);
+      patchNoteInLists(queryClient, id, data);
     },
     onError: (err, _, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(["note", id], context.previous);
+      if (context?.previousNote) {
+        queryClient.setQueryData(["note", id], context.previousNote);
       }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["note", id] });
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      restoreNotesLists(queryClient, context?.previousLists);
+      restoreCounts(context?.previousCounts);
     },
   });
 }
@@ -234,21 +296,32 @@ export function useToggleArchive(id) {
     },
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ["note", id] });
-      const previous = queryClient.getQueryData(["note", id]);
-      queryClient.setQueryData(["note", id], (old) => ({
-        ...old,
-        isArchived: !old?.isArchived,
-      }));
-      return { previous };
+      await queryClient.cancelQueries({ queryKey: ["notes"] });
+      const previousNote = queryClient.getQueryData(["note", id]);
+      const previousLists = snapshotNotesLists(queryClient);
+      const previousCounts = snapshotCounts();
+      const nextValue = !previousNote?.isArchived;
+      queryClient.setQueryData(["note", id], (old) =>
+        old ? { ...old, isArchived: nextValue } : old,
+      );
+      patchNoteInLists(queryClient, id, { isArchived: nextValue });
+      if (previousNote) {
+        applyCountsIfAny(
+          noteCountsDelta(previousNote, { ...previousNote, isArchived: nextValue }),
+        );
+      }
+      return { previousNote, previousLists, previousCounts };
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(["note", id], data);
+      patchNoteInLists(queryClient, id, data);
     },
     onError: (err, _, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(["note", id], context.previous);
+      if (context?.previousNote) {
+        queryClient.setQueryData(["note", id], context.previousNote);
       }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["note", id] });
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      restoreNotesLists(queryClient, context?.previousLists);
+      restoreCounts(context?.previousCounts);
     },
   });
 }
@@ -268,18 +341,31 @@ export function useRemove(id) {
     },
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ["note", id] });
-      const previous = queryClient.getQueryData(["note", id]);
-      queryClient.removeQueries({ queryKey: ["note", id] });
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
-      return { previous };
+      await queryClient.cancelQueries({ queryKey: ["notes"] });
+      const previousNote = queryClient.getQueryData(["note", id]);
+      const previousLists = snapshotNotesLists(queryClient);
+      const previousCounts = snapshotCounts();
+      const deletedAt = new Date().toISOString();
+      const nextNote = { ...previousNote, deletedAt };
+      queryClient.setQueryData(["note", id], (old) =>
+        old ? { ...old, deletedAt } : old,
+      );
+      patchNoteInLists(queryClient, id, { deletedAt });
+      if (previousNote) {
+        applyCountsIfAny(noteCountsDelta(previousNote, nextNote));
+      }
+      return { previousNote, previousLists, previousCounts };
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(["note", id], data);
+      patchNoteInLists(queryClient, id, data);
     },
     onError: (err, _, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(["note", id], context.previous);
+      if (context?.previousNote) {
+        queryClient.setQueryData(["note", id], context.previousNote);
       }
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      restoreNotesLists(queryClient, context?.previousLists);
+      restoreCounts(context?.previousCounts);
     },
   });
 }
@@ -297,8 +383,26 @@ export function usePurge(id) {
       const { data } = await res.json();
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["note", id] });
+      await queryClient.cancelQueries({ queryKey: ["notes"] });
+      const previousNote =
+        queryClient.getQueryData(["note", id]) ?? findCachedNote(queryClient, id);
+      const previousLists = snapshotNotesLists(queryClient);
+      const previousCounts = snapshotCounts();
+      queryClient.removeQueries({ queryKey: ["note", id] });
+      removeNoteFromAllLists(queryClient, id);
+      if (previousNote) {
+        applyCountsIfAny(notePurgeDelta(previousNote));
+      }
+      return { previousNote, previousLists, previousCounts };
+    },
+    onError: (err, _, context) => {
+      if (context?.previousNote) {
+        queryClient.setQueryData(["note", id], context.previousNote);
+      }
+      restoreNotesLists(queryClient, context?.previousLists);
+      restoreCounts(context?.previousCounts);
     },
   });
 }
@@ -317,11 +421,55 @@ export function useRestore(id) {
       return data;
     },
     onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["note", id] });
       await queryClient.cancelQueries({ queryKey: ["notes"] });
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
+      const previousNote =
+        queryClient.getQueryData(["note", id]) ?? findCachedNote(queryClient, id);
+      const previousLists = snapshotNotesLists(queryClient);
+      const previousCounts = snapshotCounts();
+      const nextNote = { ...previousNote, deletedAt: null };
+      queryClient.setQueryData(["note", id], (old) =>
+        old ? { ...old, deletedAt: null } : old,
+      );
+      patchNoteInLists(queryClient, id, { deletedAt: null });
+      if (previousNote) {
+        applyCountsIfAny(noteCountsDelta(previousNote, nextNote));
+      }
+      return { previousNote, previousLists, previousCounts };
     },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
+    onSuccess: (data) => {
+      queryClient.setQueryData(["note", id], data);
+      patchNoteInLists(queryClient, id, data);
+    },
+    onError: (err, _, context) => {
+      if (context?.previousNote) {
+        queryClient.setQueryData(["note", id], context.previousNote);
+      }
+      restoreNotesLists(queryClient, context?.previousLists);
+      restoreCounts(context?.previousCounts);
     },
   });
+}
+
+function snapshotCounts() {
+  return { ...useNoteCountsStore.getState() };
+}
+
+function restoreCounts(previous) {
+  if (previous) useNoteCountsStore.setState(previous, true);
+}
+
+function applyCountsIfAny(deltas) {
+  if (!deltas) return;
+  if (
+    deltas.all === 0 &&
+    deltas.favorites === 0 &&
+    deltas.archive === 0 &&
+    deltas.trash === 0 &&
+    Object.keys(deltas.notebooks).length === 0 &&
+    Object.keys(deltas.tags).length === 0
+  ) {
+    return;
+  }
+  useNoteCountsStore.getState().applyCounts(deltas);
 }

@@ -180,28 +180,47 @@ try {
 
 ## Optimistic Updates with Rollback
 
-Mutations that modify note state now support optimistic updates with automatic rollback on failure:
+Mutations that modify note state now support optimistic updates with automatic rollback on failure. **No `/notes` list or `/notes/counts` refetch happens for these actions** — everything is derived from the cache and mutation responses:
 
-- **Pin/Unpin** - Immediately updates UI, rolls back on error
-- **Favorite/Unfavorite** - Immediately updates UI, rolls back on error  
-- **Archive/Unarchive** - Immediately updates UI, rolls back on error
-- **Delete** - Immediately removes from list, restores on error
+- **Create** - New note is written to `["note", id]` and prepended into every cached list it matches (`insertNoteIntoLists`); sidebar counts incremented. No list refetch.
+- **Pin/Unpin** - Immediately updates UI and hoists the pin to the top of default-ordered lists; rolls back on error. Pin has no effect on counts.
+- **Favorite/Unfavorite** - Immediately updates UI, list membership and counts; rolls back on error
+- **Archive/Unarchive** - Immediately updates UI, list membership and counts; rolls back on error
+- **Notebook / Tags** - Immediately updates editor controls, list membership and counts; rolls back on error
+- **Title / Content edits** - List cards update instantly (title, `contentPreview` derived from content via `htmlToText(...).slice(0, 50)` mirroring the backend, `wordCount`, `updatedAt` in `onSuccess`) and the edited note hoists to the top of default-ordered lists; full `content` is never stored in list entries
+- **Delete** - Immediately transitions the note to `deletedAt` (removed from all-notes/favorites/archive lists, prepended into trash, counts moved to trash); restores on error
+- **Restore** - Reverse of delete: removed from trash, back into matching lists, counts restored
+- **Purge** - Permanently removes the note from `["note", id]` and every cached list (`removeNoteFromAllLists`); trash count decremented
+
+Optimistic writes update **both** the single-note query (`["note", id]`) and every cached note list in place (`["notes", …]` and `["notes", "infinite", …]`) via `patchNoteInLists` (see `frontend/src/features/notes/lib/noteListCache.js`). Notes are removed from a filtered list when they stop matching its filter (favorites/pinned/notebook/tag/archive/trash) and prepended when they newly match. Pinned notes are hoisted to the top of default-ordered lists. The mutation response is written into the cache on `onSuccess`, keeping `updatedAt` accurate without a network refetch.
+
+Sidebar counts (`useNoteCountsStore`) are updated via pure delta calculations in `frontend/src/features/notes/lib/noteCounts.js` (`noteCountsDelta`, `notePurgeDelta`) applied with `applyCounts`. **Count deltas are applied only in `onMutate`; re-applying them in `onSuccess` would double-count.** On error, the store is restored from the pre-mutation snapshot with `setState(previousCounts, true)`. Deltas are only applied when the previous note is known from cache (a `previousCounts`/`previousNote` snapshot is always taken). List caches are snapshotted before the mutation and restored on error (`snapshotNotesLists`/`restoreNotesLists`).
 
 **Example: useTogglePin**
 ```jsx
 onMutate: async () => {
   await queryClient.cancelQueries({ queryKey: ["note", id] });
-  const previous = queryClient.getQueryData(["note", id]);
-  queryClient.setQueryData(["note", id], (old) => ({
-    ...old,
-    isPinned: !old?.isPinned,
-  }));
-  return { previous };
+  await queryClient.cancelQueries({ queryKey: ["notes"] });
+  const previousNote = queryClient.getQueryData(["note", id]);
+  const previousLists = snapshotNotesLists(queryClient);
+  const previousCounts = snapshotCounts();
+  const nextValue = !previousNote?.isPinned;
+  queryClient.setQueryData(["note", id], (old) =>
+    old ? { ...old, isPinned: nextValue } : old,
+  );
+  patchNoteInLists(queryClient, id, { isPinned: nextValue });
+  return { previousNote, previousLists, previousCounts };
+},
+onSuccess: (data) => {
+  queryClient.setQueryData(["note", id], data);
+  patchNoteInLists(queryClient, id, data);
 },
 onError: (err, _, context) => {
-  if (context?.previous) {
-    queryClient.setQueryData(["note", id], context.previous);
+  if (context?.previousNote) {
+    queryClient.setQueryData(["note", id], context.previousNote);
   }
+  restoreNotesLists(queryClient, context?.previousLists);
+  restoreCounts(context?.previousCounts);
 },
 ```
 

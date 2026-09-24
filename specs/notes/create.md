@@ -77,7 +77,7 @@ Authenticated users only; note must belong to user
 ## Side Effects
 
 - Note document created
-- Updated note count in frontend
+- Frontend: the created note is written to `["note", id]`, prepended into every cached list it matches (`insertNoteIntoLists`), and sidebar counts increment via `noteCountsDelta(null, data)` — **no `/notes` list refetch**
 
 ## Edge Cases
 

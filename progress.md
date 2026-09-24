@@ -56,6 +56,49 @@ See `decisions/unresolved-questions.md` for additional unknowns that may represe
 
 ## Recent Changes
 
+**2026-09-24** - Note list cards now update instantly on title/content edits (frontend only, no backend/API changes):
+- Root cause: `patchNoteInLists` only merged `META_FIELDS` (notebookId/tagIds/isPinned/isFavorite/isArchived/deletedAt) into cached list entries, so autosave responses never updated the card's title, content preview, word count, or "Xm ago" last-update — stale until a `/notes` refetch.
+- `noteListCache.js`: added `title`/`updatedAt`/`wordCount` to `META_FIELDS`; `pickMeta` now derives `contentPreview = htmlToText(content).slice(0, 50)` (exact parity with backend `listNotes`) and never stores full `content` in list entries; a new `shouldHoist` (pin **or** `updatedAt` change) hoists the edited note to the top of default-ordered lists via the existing `hoistToTop`/`hoistNote`, matching the backend `updatedAt desc` sort. Title-sorted and search/date-filtered lists are never reordered.
+- `useUpdateNote.onMutate` now computes an optimistic `wordCount` from the draft content so the card's word count updates instantly while typing; `onSuccess` writes the authoritative server note (title/contentPreview/wordCount/updatedAt) into list cards.
+- Tests: replaced the old "content-only patches don't touch lists" case with card-field-update + no-content-storage assertions; added updatedAt hoist + no-reorder tests.
+- Verified: `npm run lint` (0 errors, 1 pre-existing warning), `npm run test` (44 tests), `npm run build` all pass.
+- Docs updated: `docs/16-error-handling.md`, `specs/notes/edit.md`, `progress.md`.
+
+**2026-09-24** - Extended the no-refetch optimistic updates to sidebar counts, pin-to-top reorder, create/delete/restore/purge (frontend only, no backend/API changes):
+- **`frontend/src/features/notes/lib/noteCounts.js`** (new, pure): `noteCountsDelta(prev, next)` computes count deltas from field diffs (`all/favorites/archive/trash` + per-notebook/per-tag), `notePurgeDelta(prev)` handles permanent delete, and `applyCountsToState(state, deltas)` applies them reducer-style (clamps at 0, adds missing rows, removes zeroed rows, never mutates input). A `null` prev note means "didn't exist" (create); pin toggles produce all-zero deltas by design.
+- **`useNoteCountsStore.js`**: added `applyCounts`. `fetchCounts` still runs on nav; the point is actions no longer depend on it.
+- **`useNotes.js`**: every mutation is now fully no-refetch — count deltas applied **only in `onMutate`** (re-applying in `onSuccess` would double-count), `onError` restores the note, list snapshots, and the count state (`setState(previousCounts, true)`); `onSuccess` writes the authoritative server note + patches lists only. `useCreateNote` writes the new note into `["note", id]`, `insertNoteIntoLists`, and applies `noteCountsDelta(null, data)`. `useRemove`/`useRestore` transition `deletedAt` (list membership + counts). `usePurge` removes the note from `["note", id]` and every list (`removeNoteFromAllLists`) + `notePurgeDelta`. All `invalidateQueries(["notes"])` refetches removed.
+- **`noteListCache.js`**: `matchesListFilters` now rejects any `deletedAt`-set note from non-trash lists (favorites/archive/all); `patchNoteInLists` gained pin hoist-to-top for default-ordered lists (non-search/date-filtered, not title-sorted), `deletedAt` in `META_FIELDS`, plus `insertNoteIntoLists`, `removeNoteFromAllLists`, and `findCachedNote`.
+- Counts semantics verified against backend `getNoteCounts`: `all` excludes trashed (includes archived/pinned/favorites), `favorites`/`archive` exclude trashed, trash = deleted, notebook/tag counts exclude trashed, pin changes nothing.
+- Added `noteCounts.test.js` (14 cases) and extended `noteListCache.test.js` (+15 cases for pin reorder, trash transitions, insert/remove helpers).
+- Verified: `npm run lint` (0 errors, 1 pre-existing warning), `npm run test` (42 tests), `npm run build` all pass.
+- Docs updated: `docs/16-error-handling.md`, `specs/notes/edit.md`, `specs/notes/organize.md`, `specs/notes/create.md`, `specs/notes/delete.md`, `specs/notes/trash.md`, `progress.md`.
+
+**2026-09-24** - Fixed editor actions (notebook/tag/pin/favorite) not updating the UI immediately (frontend only, no backend/API changes):
+- Root cause: `NoteDetailEditor` kept `selectNotebook`/`selectTags`/`isPinned`/`isFav` in local `useState` seeded once from the note, so clicking the controls changed nothing until a full reload; pin/fav/archive mutations only patched the single-note cache and refetched the whole `/notes` list on settle (`invalidateQueries({ queryKey: ["notes"] })`), which was inefficient and left the sidebar lagging.
+- Notebook selector, tag popover/chips, and pin/star buttons now render directly from the cached note (`["note", id]`), so optimistic cache writes update the editor instantly.
+- New `frontend/src/features/notes/lib/noteListCache.js`: `patchNoteInLists` merges metadata (`notebookId`, `tagIds`, `isPinned`, `isFavorite`, `isArchived`) into every cached list (`["notes", …]` and `["notes","infinite",…]`), removing notes that stop matching a filter and prepending ones that newly match; `snapshotNotesLists`/`restoreNotesLists` enable rollback.
+- `useTogglePin`/`useToggleFavorite`/`useToggleArchive` and `useUpdateNote` now `onMutate` into note + list caches, write the authoritative server response in `onSuccess` (no refetch), and restore snapshots in `onError`. Removed the `["notes"]` list refetch from `onSettled` for these mutations. Search/date-filtered lists are only merged, never pruned (membership can't be evaluated client-side).
+- Added `noteListCache.test.js` (12 vitest cases).
+- Verified: `npm run lint` (0 errors, 1 pre-existing warning), `npm run test` (18 tests), `npm run build` all pass.
+- Docs updated: `docs/16-error-handling.md`, `specs/notes/edit.md`, `progress.md`.
+
+**2026-09-24** - Completed the table editor (frontend only, no backend/API changes):
+- **Fixed toolbar dropdown/popover triggers**: `Btn` in `EditorToolbar.jsx` only destructured `{ on, active, children, label }`, so it silently dropped the `onClick`/`onPointerDown`/`ref` props Radix injects through `DropdownMenuTrigger asChild` / `PopoverTrigger asChild`. Every menu whose trigger was `Btn` (block-type, text-alignment, table options, and the link/image popovers) never opened. `Btn` now `forwardRef`s and spreads extra props while composing a passed-in `onClick` with its own `on` handler, restoring all of them.
+- **Extended "Table options" menu**: added merge cells (`mergeCells`), split cell (`splitCell`), toggle header row (`toggleHeaderRow`), toggle header column (`toggleHeaderColumn`), alongside the existing insert/delete row/column and delete-table actions.
+- **Cell-selection styling** (`index.css`): `td/th.selectedCell::after` overlay highlights cells while multi-selecting for merge.
+- Verified: `npm run lint`, `npm run build`, `npm run test` pass.
+- Docs updated: `docs/UI_DESIGN.md`, `specs/notes/edit.md`, `progress.md`.
+
+**2026-09-24** - Editor screen UI/UX overhaul (frontend only, no backend/API changes):
+- **Toolbar upgrades** (`EditorToolbar.jsx`, `NoteEditor.jsx`): H1/H2/H3 buttons replaced with a block-type dropdown (Paragraph/H1/H2/H3/Blockquote/Code block); added inline-code, horizontal-rule, text-alignment dropdown (left/center/right/justify + unset, via new `@tiptap/extension-text-align` dep), and image insert (URL popover — wires the previously-unused `@tiptap/extension-image`, now with `allowBase64` so pasted image files embed as data URLs). Tooltips show keyboard shortcuts; toolbar has `role="toolbar"` + `aria-label`.
+- **New status bar** (`NoteStatusBar.jsx`): sticky bottom hairline with live word/character counts, reading time, compact save state, and a Focus-mode toggle.
+- **Focus / distraction-free mode**: new `useUIStore.focusMode` (session-only) — `⌘/` or the status-bar toggle enters/exits, `Esc` exits; hides the app header (`AppLayout`), note list column (`NotesPage`), meta/actions row, and toolbar, leaving a full-height writing surface.
+- **Editor metadata line**: under the title — "Edited Xm ago · Created date · X min read" (client-side, uses existing `updatedAt`/`createdAt`).
+- **Prose polish** (`index.css`): primary caret + selection tint, task-checkbox accent color, table row hover, tightened list spacing with muted markers, refined blockquote/inline-code, `scroll-mt` on headings, nicer editor loading skeleton.
+- Verified: `npm run lint` (0 errors, 1 pre-existing warning), `npm run build`, `npm run test` (6 tests) all pass.
+- Docs updated: `docs/UI_DESIGN.md`, `specs/notes/edit.md` (images/alignment/horizontal-rule/inline-code now actually implemented), `progress.md`.
+
 **2026-09-24** - Frontend UX/bug-fix pass over the editor and note pages (frontend only, no backend/API changes):
 - Fixed **link support**: `NoteEditor` now registers the TipTap `Link` extension (`autolink`, `linkOnPaste`, `openOnClick: false`, `rel="noopener noreferrer nofollow"`, `target="_blank"`); toolbar gained a Link button/Popover (URL input with auto-`https://` prefix, Apply / Remove) so links can actually be inserted/edited.
 - Added **table manipulation controls**: when the cursor is inside a table the toolbar shows a "Table options" dropdown (insert row above/below, insert column left/right, delete row/column/table).

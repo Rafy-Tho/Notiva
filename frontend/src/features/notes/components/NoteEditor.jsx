@@ -10,6 +10,8 @@ import { TableRow } from "@tiptap/extension-table-row";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { TableCell } from "@tiptap/extension-table-cell";
 import { CodeBlockLowlight } from "@tiptap/extension-code-block-lowlight";
+import { Image } from "@tiptap/extension-image";
+import { TextAlign } from "@tiptap/extension-text-align";
 import { common, createLowlight } from "lowlight";
 import { useEffect, useRef } from "react";
 import { EditorToolbar } from "./EditorToolbar";
@@ -22,6 +24,7 @@ export function NoteEditor({
   onCmdS,
   editorRef,
   placeholder = "Start writing… (markdown shortcuts supported)",
+  showToolbar = true,
 }) {
   const editor = useEditor({
     extensions: [
@@ -40,6 +43,8 @@ export function NoteEditor({
       TaskList,
       TaskItem.configure({ nested: true }),
       CodeBlockLowlight.configure({ lowlight }),
+      Image.configure({ allowBase64: true }),
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
       Table.configure({ resizable: false }),
       TableRow,
       TableHeader,
@@ -89,7 +94,7 @@ export function NoteEditor({
 
   return (
     <div className="flex flex-col">
-      <EditorToolbar editor={editor} />
+      {showToolbar && <EditorToolbar editor={editor} />}
 
       <div className="max-w-3xl mx-auto w-full py-5 sm:py-6">
         <EditorContent editor={editor} />
