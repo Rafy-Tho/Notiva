@@ -56,6 +56,18 @@ See `decisions/unresolved-questions.md` for additional unknowns that may represe
 
 ## Recent Changes
 
+**2026-09-24** - Security: reduced backend `npm audit` from 5 high to 0 vulnerabilities (backend only, no runtime code changes):
+- Removed the unused `nodemailer` dependency (email is sent via the Hostinger mail HTTP API in `email.service.js`, so nodemailer was dead weight and its advisories applied to nothing in use).
+- Added `overrides` in `backend/package.json` forcing `deepmerge-ts@8.0.2` and `mysql2@3.24.4`, patching the Prisma CLI's pinned vulnerable transitive deps (`@prisma/config` pinned `deepmerge-ts@7.1.5`; `prisma` pinned `mysql2@3.15.3`). `npm audit fix --force` is not viable: it downgrades prisma to 6.19.3, which is itself inside the affected range. deepmerge-ts 8 keeps the `deepmerge` export `@prisma/config` imports; mysql2 is unused by this project (PostgreSQL via `@prisma/adapter-pg` + `pg`).
+- Verified: `npm audit` → 0 vulnerabilities; `npx prisma generate` works with the overridden deps; `npm run lint` passes (0 errors, 1 pre-existing warning); `npm test` passes 38/40 (the 2 `email.service.test.js` timeout failures are pre-existing and unrelated — they mock `fetch`).
+- Docs updated: `README.md`, `docs/14-background-jobs.md`, `reverse-engineering/dependencies.md`, `reverse-engineering/inventory.md`, `ai/dependency-map.md`, `progress.md`.
+
+**2026-09-24** - Security: upgraded all frontend TipTap packages from 3.23.6 to 3.31.3 (frontend only, no backend/API changes):
+- Fixes 34 `npm audit` vulnerabilities (1 high, 33 moderate) in `@tiptap/core <=3.30.4`: prototype pollution via `mergeAttributes()` `__proto__` key ([GHSA-cp6q-959q-f8rh](https://github.com/advisories/GHSA-cp6q-959q-f8rh)) and quadratic ReDoS in Markdown attribute parsing ([GHSA-j95f-988m-3j2f](https://github.com/advisories/GHSA-j95f-988m-3j2f)); all other affected `@tiptap/*` packages were transitive dependents.
+- `frontend/package.json`: bumped the 14 direct `@tiptap/*` deps from `^3.23.6` to `^3.31.3`, then `npm install`. `npm audit fix` alone was insufficient (ERESOLVE peer conflicts — the tree already had `extension-bubble-menu`/`extension-floating-menu` at 3.31.3 against `@tiptap/core` 3.23.6, marked `invalid` by `npm ls`).
+- Verified: `npm audit` → 0 vulnerabilities; `npm ls @tiptap/core` → all 3.31.3 deduped, no invalid entries; `npm run lint`, `npm run build`, `npm run test` (45 tests) all pass.
+- Docs updated: `progress.md`.
+
 **2026-09-24** - Frontend architecture refactor (frontend only, behavior-preserving; no API/route/schema changes). Plan: `docs/frontend-architecture-audit.md` §17, all 6 phases done:
 - **1.1** Broke the `lib/fetchWithAuth.js ↔ store/authStore.js` circular import via `setOnUnauthorizedHandler(cb)`, wired once in `app/providers.jsx` (401 path is unchanged: session cleared, never retried). Added a regression test in `fetchWithAuth.test.js`.
 - **1.2** `features/notes/lib/noteCounts.js` (+ test) → `lib/noteCounts.js`; repointed `useNoteCountsStore.js` + `useNotes.js`.
