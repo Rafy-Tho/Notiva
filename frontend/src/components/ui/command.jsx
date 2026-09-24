@@ -66,6 +66,20 @@ const CommandEmpty = React.forwardRef((props, ref) => (
   />
 ));
 
+function CommandLoading({ progress, children, label = "Loading...", className, ...props }) {
+  return (
+    <CommandPrimitive.Loading
+      progress={progress}
+      label={label}
+      className={cn("py-3 text-center text-sm", className)}
+      {...props}
+    >
+      {children || label}
+    </CommandPrimitive.Loading>
+  );
+}
+CommandLoading.displayName = CommandPrimitive.Loading.displayName;
+
 CommandEmpty.displayName = CommandPrimitive.Empty.displayName;
 
 const CommandGroup = React.forwardRef(({ className, ...props }, ref) => (
@@ -94,7 +108,7 @@ const CommandItem = React.forwardRef(({ className, ...props }, ref) => (
   <CommandPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-selected:bg-accent aria-selected:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none aria-[selected='true']:bg-accent aria-[selected='true']:text-accent-foreground data-[disabled='true']:pointer-events-none data-[disabled='true']:opacity-50",
       className,
     )}
     {...props}
@@ -124,6 +138,7 @@ export {
   CommandEmpty,
   CommandGroup,
   CommandItem,
+  CommandLoading,
   CommandShortcut,
   CommandSeparator,
 };
