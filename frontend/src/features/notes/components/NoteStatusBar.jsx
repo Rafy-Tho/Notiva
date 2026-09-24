@@ -6,7 +6,7 @@ import {
   Minimize2,
 } from "lucide-react";
 import { useMemo } from "react";
-import { htmlToText, readingTime, wordCount } from "@/lib/sanitize";
+import { htmlToText, readingTime } from "@/lib/sanitize";
 
 export function NoteStatusBar({
   content,
@@ -16,11 +16,11 @@ export function NoteStatusBar({
   isDirty,
   lastSavedAt,
   actionPending,
+  words,
 }) {
   const stats = useMemo(() => {
     const text = htmlToText(content || "").trim();
     return {
-      words: wordCount(content || ""),
       chars: text.replace(/\s+/g, "").length,
     };
   }, [content]);
@@ -29,7 +29,7 @@ export function NoteStatusBar({
     <div className="shrink-0 flex items-center justify-between gap-3 border-t border-border bg-background/80 backdrop-blur px-4 sm:px-6 md:px-10 lg:px-12">
       <div className="flex h-8 items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground overflow-hidden">
         <span className="tabular-nums whitespace-nowrap">
-          {stats.words.toLocaleString()} words
+          {(words || 0).toLocaleString()} words
         </span>
         <span aria-hidden="true">·</span>
         <span className="tabular-nums whitespace-nowrap">
@@ -39,7 +39,7 @@ export function NoteStatusBar({
           ·
         </span>
         <span className="hidden sm:inline whitespace-nowrap">
-          {readingTime(stats.words)}
+          {readingTime(words || 0)}
         </span>
       </div>
       <div className="flex items-center gap-2.5">

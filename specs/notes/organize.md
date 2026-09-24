@@ -56,7 +56,7 @@ Authenticated users
 - NoteDetailPage action buttons (pin/star, archive)
 - useNotes.togglePin / toggleFavorite / toggleArchive mutations (optimistic, no refetch)
 - frontend/src/features/notes/lib/noteListCache.js (list cache patching)
-- frontend/src/features/notes/lib/noteCounts.js (count deltas)
+- frontend/src/lib/noteCounts.js (count deltas)
 - frontend/src/store/useNoteCountsStore.js (sidebar count rows)
 
 All three toggles are fully optimistic and require **no refetch** of `/notes` or `/notes/counts`:
@@ -109,7 +109,7 @@ Authenticated users only; note must belong to user
 ## Tests
 
 - frontend/src/features/notes/lib/noteListCache.test.js (list membership, pin reorder, trash transitions, insert/remove helpers)
-- frontend/src/features/notes/lib/noteCounts.test.js (favorite/archive deltas via noteCountsDelta)
+- frontend/src/lib/noteCounts.test.js (favorite/archive deltas via noteCountsDelta)
 
 ## Source Evidence
 

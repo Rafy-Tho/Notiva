@@ -1,7 +1,7 @@
 import { Plus } from "lucide-react";
 import { useNotebooks } from "@/features/notebooks/hooks/useNotebooks";
 import NotebookRow from "./NotebookRow";
-import { Section, SectionHeader } from "@/features/notes/components/Section";
+import { Section, SectionHeader } from "@/components/common/Section";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNoteCountsStore } from "@/store/useNoteCountsStore";
 

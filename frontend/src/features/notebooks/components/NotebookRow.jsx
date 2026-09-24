@@ -1,5 +1,5 @@
 import { BookOpen, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
-import { NavItem } from "@/features/notes/components/NavItem";
+import { NavItem } from "@/components/common/NavItem";
 import {
   ContextMenu,
   ContextMenuContent,

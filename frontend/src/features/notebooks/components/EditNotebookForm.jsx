@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { DialogFooter } from "@/components/ui/dialog";
 import { useUpdateNotebook } from "@/features/notebooks/hooks/useNotebooks";
-import NameColorForm from "@/features/notebooks/sidebars/NameColorForm";
+import NameColorForm from "@/components/common/NameColorForm";
 function EditNotebookForm({ notebook, onClose }) {
   const [n, setN] = useState(notebook.name);
   const [c, setC] = useState(notebook.color);

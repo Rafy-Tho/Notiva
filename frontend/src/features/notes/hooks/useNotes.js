@@ -9,7 +9,7 @@ import { useAuthStore } from "@/store/authStore";
 import { getApiUrl } from "@/config/api";
 import { wordCount } from "@/lib/sanitize";
 import { useNoteCountsStore } from "@/store/useNoteCountsStore";
-import { noteCountsDelta, notePurgeDelta } from "../lib/noteCounts";
+import { noteCountsDelta, notePurgeDelta } from "@/lib/noteCounts";
 import {
   findCachedNote,
   insertNoteIntoLists,

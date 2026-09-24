@@ -1,5 +1,12 @@
-import { useAuthStore } from "../store/authStore";
 import { config, isRetryableStatus } from "../config/api";
+
+let onUnauthorizedHandler = null;
+
+// Lets the app clear session state when any request hits a 401 without this
+// lib importing the auth store (avoids a circular dependency).
+export function setOnUnauthorizedHandler(handler) {
+  onUnauthorizedHandler = handler;
+}
 
 function buildHeaders(options) {
   const headers = { ...options.headers };
@@ -63,7 +70,7 @@ export async function fetchWithAuth(url, options = {}) {
       // A 401 (expired/invalid session) is a permanent condition: never
       // retry it, otherwise boot-time session checks hammer the server.
       if (response.status === 401) {
-        useAuthStore.getState().setUser(null);
+        onUnauthorizedHandler?.();
         const { message } = await parseError(response);
         lastError = new Error(message ?? "Session expired");
         break;

@@ -6,7 +6,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
-import { NavItem } from "@/features/notes/components/NavItem";
+import { NavItem } from "@/components/common/NavItem";
 
 function TagRow({ tag, count, onEdit, onDelete }) {
   return (

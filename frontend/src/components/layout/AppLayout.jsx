@@ -3,7 +3,7 @@ import { Sidebar } from "./Sidebar";
 import { AppHeader } from "./AppHeader";
 import { useTheme } from "@/hooks/useTheme";
 import { useUIStore } from "@/store/useUIStore";
-import { CommandPalette } from "@/features/notes/components/CommandPalette";
+import { CommandPalette } from "@/components/common/CommandPalette";
 
 function AppLayout() {
   useTheme();

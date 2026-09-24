@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { fetchWithAuth } from "../lib/fetchWithAuth";
-import { applyCountsToState } from "../features/notes/lib/noteCounts";
+import { applyCountsToState } from "../lib/noteCounts";
 
 const BASE_URL = import.meta.env.VITE_BASE_API;
 

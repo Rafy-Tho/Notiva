@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Archive, FileText, Star, Trash2 } from "lucide-react";
-import { NavItem } from "./NavItem";
-import { Section } from "./Section";
+import { NavItem } from "@/components/common/NavItem";
+import { Section } from "@/components/common/Section";
 import { useNoteCountsStore } from "@/store/useNoteCountsStore";
 
 export function NavSections() {

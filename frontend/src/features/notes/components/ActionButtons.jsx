@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { useCreateNoteContext } from "@/hooks/useCreateNoteContext";
+import { useCreateNoteContext } from "../hooks/useCreateNoteContext";
 import { useCreateNote } from "@/features/notes/hooks/useNotes";
 import { Button } from "@/components/ui/button";
 import { Plus, Search } from "lucide-react";

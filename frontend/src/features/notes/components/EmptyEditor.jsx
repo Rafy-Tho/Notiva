@@ -1,7 +1,7 @@
 import { FileText, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { useCreateNoteContext } from "@/hooks/useCreateNoteContext";
+import { useCreateNoteContext } from "../hooks/useCreateNoteContext";
 import { useCreateNote } from "../hooks/useNotes";
 import { Button } from "@/components/ui/button";
 export function EmptyEditor() {

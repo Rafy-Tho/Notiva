@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Logo } from "@/components/common/Logo";
-import { ActionButtons } from "./ActionButtons";
-import { NavSections } from "./NavSections";
+import { ActionButtons } from "@/features/notes/components/ActionButtons";
+import { NavSections } from "@/features/notes/components/NavSections";
 import { NotebooksSection } from "@/features/notebooks/components/NotebooksSection";
 import { TagsSection } from "@/features/tags/components/TagsSection";
 import { UserSection } from "@/features/auth/components/UserSection";

@@ -1,7 +1,7 @@
 import { Plus } from "lucide-react";
 import { useTags } from "@/features/tags/hooks/useTags";
 import TagRow from "./TagRow";
-import { Section, SectionHeader } from "@/features/notes/components/Section";
+import { Section, SectionHeader } from "@/components/common/Section";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNoteCountsStore } from "@/store/useNoteCountsStore";
 

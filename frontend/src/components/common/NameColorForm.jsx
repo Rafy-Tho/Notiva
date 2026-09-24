@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { COLORS } from "@/lib/colors";
 
 function ColorPicker({ color, setColor, colors }) {
   return (
@@ -20,16 +21,13 @@ function ColorPicker({ color, setColor, colors }) {
   );
 }
 
-export default function NameColorForm({ name, setName, color, setColor, placeholder }) {
-  const COLORS = [
-    "245 80% 66%",
-    "200 80% 60%",
-    "38 92% 60%",
-    "142 65% 50%",
-    "0 70% 60%",
-    "280 70% 65%",
-  ];
-
+export default function NameColorForm({
+  name,
+  setName,
+  color,
+  setColor,
+  placeholder,
+}) {
   return (
     <div className="space-y-3">
       <input

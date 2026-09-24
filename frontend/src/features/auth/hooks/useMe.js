@@ -52,6 +52,20 @@ export const useChangePassword = () => {
   });
 };
 
+export const useDeleteUser = () => {
+  return useMutation({
+    mutationFn: async () => {
+      const res = await fetchWithAuth(getApiUrl("/me"), {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const { message } = await res.json();
+        throw new Error(message ?? "Something went wrong");
+      }
+    },
+  });
+};
+
 export const useRemoveAvatar = () => {
   return useMutation({
     mutationFn: async () => {

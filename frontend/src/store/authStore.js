@@ -85,11 +85,6 @@ export const useAuthStore = create((set) => ({
     return restorePromise;
   },
 
-  delete: async () => {
-    await fetchJson(getApiUrl("/me"), { method: "DELETE" });
-    set({ user: null, isAuthenticated: false });
-  },
-
   verifyEmailCode: async (email, code) => {
     set({ isLoading: true, error: null });
     try {

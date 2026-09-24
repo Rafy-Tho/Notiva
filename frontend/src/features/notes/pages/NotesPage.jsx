@@ -11,6 +11,7 @@ import { useUIStore } from "@/store/useUIStore";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ErrorState } from "@/components/common/ErrorState";
 import { NoteList } from "../components/NoteList";
 import { EmptyEditor } from "../components/EmptyEditor";
 import { useNotesInfinite } from "../hooks/useNotes";
@@ -57,14 +58,14 @@ function NotesPage({ filter, title = "All notes", emptyTitle, emptyHint }) {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-        <h3 className="text-lg font-semibold mb-2">Failed to load notes</h3>
-        <p className="text-muted-foreground mb-4 text-sm">
-          {error.message ||
-            "Unable to fetch notes. Please check your connection."}
-        </p>
-        <Button onClick={() => window.location.reload()}>Reload</Button>
-      </div>
+      <ErrorState
+        title="Failed to load notes"
+        message={
+          error.message || "Unable to fetch notes. Please check your connection."
+        }
+        actionLabel="Reload"
+        onAction={() => window.location.reload()}
+      />
     );
   }
 

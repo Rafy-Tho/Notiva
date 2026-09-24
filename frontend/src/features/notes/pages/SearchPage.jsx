@@ -8,7 +8,7 @@ import {
   Search as SearchIcon,
   X,
 } from "lucide-react";
-import { useEffect, memo, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,34 +17,13 @@ import { useNotebooks } from "@/features/notebooks/hooks/useNotebooks";
 import { useNotes } from "../hooks/useNotes";
 import { useTags } from "@/features/tags/hooks/useTags";
 import { useDebounce } from "@/hooks/useDebounce";
-import { htmlToText } from "@/lib/sanitize";
+import {
+  highlight,
+  loadRecentSearches,
+  saveRecentSearch,
+  snippet,
+} from "@/lib/searchText";
 import { cn } from "@/lib/utils";
-
-const RECENT_KEY = "noteflow_recent_searches";
-
-const highlight = memo(({ text, q }) => {
-  if (!q) return text;
-  const idx = text.toLowerCase().indexOf(q.toLowerCase());
-  if (idx < 0) return text;
-  return (
-    <>
-      {text.slice(0, idx)}
-      <mark className="bg-primary/30 text-foreground rounded px-0.5">
-        {text.slice(idx, idx + q.length)}
-      </mark>
-      {text.slice(idx + q.length)}
-    </>
-  );
-});
-
-const snippet = memo(({ html, q }) => {
-  const text = htmlToText(html);
-  if (!q) return text.slice(0, 200);
-  const i = text.toLowerCase().indexOf(q.toLowerCase());
-  if (i < 0) return text.slice(0, 200);
-  const start = Math.max(0, i - 60);
-  return (start > 0 ? "… " : "") + text.slice(start, i + q.length + 140) + "…";
-});
 
 function SearchPage() {
   const [params, setParams] = useSearchParams();
@@ -56,13 +35,7 @@ function SearchPage() {
   const [to, setTo] = useState(params.get("to") || "");
   const [pinned, setPinned] = useState(params.get("pinned") === "1");
   const [page, setPage] = useState(parseInt(params.get("page") || "1", 10));
-  const [recents, setRecents] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
-    } catch {
-      return [];
-    }
-  });
+  const [recents, setRecents] = useState(loadRecentSearches);
   const debouncedQ = useDebounce(q, 1000);
 
   const apiParams = useMemo(() => {
@@ -94,9 +67,7 @@ function SearchPage() {
 
   const saveRecent = (term) => {
     if (!term.trim()) return;
-    const next = [term, ...recents.filter((x) => x !== term)].slice(0, 8);
-    setRecents(next);
-    localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+    setRecents(saveRecentSearch(term, recents));
   };
 
   const { data: notesResult = {} } = useNotes(apiParams);

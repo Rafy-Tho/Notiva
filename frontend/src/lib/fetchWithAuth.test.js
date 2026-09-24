@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchWithAuth } from "./fetchWithAuth";
+import { fetchWithAuth, setOnUnauthorizedHandler } from "./fetchWithAuth";
 
 function jsonResponse(body, status = 200) {
   return {
@@ -100,5 +100,22 @@ describe("fetchWithAuth", () => {
 
     expect(response.status).toBe(200);
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("invokes the onUnauthorized handler on 401 without retrying", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ message: "Session expired" }, 401));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const onUnauthorized = vi.fn();
+    setOnUnauthorizedHandler(onUnauthorized);
+
+    await expect(fetchWithAuth("/api/v1/notes")).rejects.toThrow(
+      "Session expired",
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(onUnauthorized).toHaveBeenCalledTimes(1);
   });
 });

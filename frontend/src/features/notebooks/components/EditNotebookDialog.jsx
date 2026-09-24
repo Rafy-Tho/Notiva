@@ -9,11 +9,7 @@ export function EditNotebookDialog({ notebook, onClose }) {
           <DialogTitle>Edit notebook</DialogTitle>
         </DialogHeader>
         {notebook && (
-          <EditNotebookForm
-            notebook={notebook}
-            onClose={onClose}
-            onSaved={() => {}}
-          />
+          <EditNotebookForm notebook={notebook} onClose={onClose} />
         )}
       </DialogContent>
     </Dialog>

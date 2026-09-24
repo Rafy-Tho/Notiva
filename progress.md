@@ -56,6 +56,21 @@ See `decisions/unresolved-questions.md` for additional unknowns that may represe
 
 ## Recent Changes
 
+**2026-09-24** - Frontend architecture refactor (frontend only, behavior-preserving; no API/route/schema changes). Plan: `docs/frontend-architecture-audit.md` §17, all 6 phases done:
+- **1.1** Broke the `lib/fetchWithAuth.js ↔ store/authStore.js` circular import via `setOnUnauthorizedHandler(cb)`, wired once in `app/providers.jsx` (401 path is unchanged: session cleared, never retried). Added a regression test in `fetchWithAuth.test.js`.
+- **1.2** `features/notes/lib/noteCounts.js` (+ test) → `lib/noteCounts.js`; repointed `useNoteCountsStore.js` + `useNotes.js`.
+- **1.3** `Section.jsx`/`NavItem.jsx` → `components/common/`.
+- **2.4** `CommandPalette.jsx` → `components/common/`; shared `highlight`/`snippet`/recents extracted to `lib/searchText.jsx` and adopted by `SearchPage.jsx`; fixed the CommandPalette exhaustive-deps warning (lint is now 0/0).
+- **2.5** `SidebarInner.jsx` → `components/layout/`.
+- **2.6** New-note flow extracted from `AppHeader.jsx` into `features/notes/components/NewNoteButton.jsx`.
+- **2.7** `NoteDetailPage.jsx` (692 lines) split into fetch+compose page + `features/notes/hooks/useNoteEditing.js` + `NoteToolbar`/`DraftBanner`/`TrashBanner`/`UnsavedDialog`. `useAutosave`/`useNoteActions` contracts unchanged.
+- **3.8** `useCreateNoteContext.js` → `features/notes/hooks/`. **3.9** `use-mobile.jsx` → `use-mobile.js`. **3.10** deleted `app/routes.jsx` barrel. **3.11** consolidated the two byte-identical `NameColorForm.jsx` + 4× `COLORS` copies into `components/common/NameColorForm.jsx` + `lib/colors.js`.
+- **4.12** Dependency scan after moves: `store/` has zero feature imports; `components/` only composes features via layout composition roots + the documented CommandPalette exception. **4.13** `/me` DELETE moved from `authStore` into `useDeleteUser` (`features/auth/hooks/useMe.js`); `SettingsPage` clears session via `setUser(null)` after delete.
+- **5.14** `ReactQueryDevtools` gated to `import.meta.env.DEV` (out of prod bundle). **5.15** Single retry owner: query layer `retry: 0`, `fetchWithAuth` own status/network retries. **5.16** `wordCount` computed once in `useNoteEditing`, passed to `NoteStatusBar` as `words`.
+- **6.17** Removed dead `onSaved={() => {}}` prop (`EditNotebookDialog`). `DeleteNotebookDialog` `mode` radio kept pending product/API decision (flagged in the audit, not silently removed). **6.18** Shared `components/common/ErrorState.jsx` unifies NotesPage/NoteDetailPage error UIs.
+- Verified: `npm run lint` (0 errors, 0 warnings), `npm run test` (45 tests, 4 files), `npm run build` all pass.
+- Docs updated: `docs/03-architecture.md`, `docs/16-error-handling.md`, `docs/frontend-architecture-audit.md` (§19 implementation status), `specs/notes/organize.md`, `specs/notes/edit.md`, `progress.md`.
+
 **2026-09-24** - Added optimistic updates with rollback to notebook/tag CRUD (frontend only, no backend/API changes):
 - `frontend/src/features/notebooks/hooks/useNotebooks.js` and `frontend/src/features/tags/hooks/useTags.js`: replaced all `invalidateQueries(["notebooks"])` / `invalidateQueries(["tags"])` refetch-on-settle with the no-refetch optimistic pattern already used by notes. Each mutation now `onMutate`s into the cached list (create inserts a `temp-*` placeholder and cancels in-flight list queries; update patches the item in place; delete filters it out), snapshots `previousList`, and restores it in `onError`. `onSuccess` writes the authoritative server object into the cache (create replaces the temp object; notebook update re-sorts by name to match the backend `orderBy name asc`; delete filters the soft-deleted row out). Updates only touch the cache when the list is already loaded; otherwise the query refetches on next mount.
 - Verified: `npm run lint` (0 errors, 1 pre-existing warning in CommandPalette), `npm run test` all pass.

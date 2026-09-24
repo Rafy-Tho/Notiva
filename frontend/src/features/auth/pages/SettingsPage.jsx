@@ -36,6 +36,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import {
   useChangePassword,
+  useDeleteUser,
   useRemoveAvatar,
   useUpdateAvatar,
   useUpdateUser,
@@ -50,7 +51,6 @@ function SettingsPage() {
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   const logout = useAuthStore((s) => s.logout);
-  const deleteAccount = useAuthStore((s) => s.delete);
   const theme = useUIStore((s) => s.theme);
   const fontPref = useUIStore((s) => s.fontPref);
   const setFontPref = useUIStore((s) => s.setFontPref);
@@ -67,6 +67,7 @@ function SettingsPage() {
   const { mutateAsync: updateMe, isPending: namePending } = useUpdateUser();
   const { mutateAsync: changePassword, isPending: pwPending } =
     useChangePassword();
+  const { mutateAsync: deleteUser } = useDeleteUser();
   const { data: notes } = useNotes();
 
   if (!user) return null;
@@ -107,7 +108,8 @@ function SettingsPage() {
 
   const handleDelete = async () => {
     try {
-      await deleteAccount();
+      await deleteUser();
+      setUser(null);
       toast.success("Account deleted");
     } catch (err) {
       toast.error(err.message);

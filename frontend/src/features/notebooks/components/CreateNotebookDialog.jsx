@@ -8,17 +8,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import NameColorForm from "@/features/notebooks/sidebars/NameColorForm";
+import NameColorForm from "@/components/common/NameColorForm";
+import { COLORS } from "@/lib/colors";
 import { useCreateNotebook } from "@/features/notebooks/hooks/useNotebooks";
-
-const COLORS = [
-  "245 80% 66%",
-  "200 80% 60%",
-  "38 92% 60%",
-  "142 65% 50%",
-  "0 70% 60%",
-  "280 70% 65%",
-];
 
 export function CreateNotebookDialog({ open, onOpenChange }) {
   const [name, setName] = useState("");

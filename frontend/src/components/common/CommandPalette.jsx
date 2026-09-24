@@ -24,39 +24,19 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useNotebooks } from "@/features/notebooks/hooks/useNotebooks";
-import { useCreateNote, useNotes } from "../hooks/useNotes";
+import { useCreateNote, useNotes } from "@/features/notes/hooks/useNotes";
 import { useTags } from "@/features/tags/hooks/useTags";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useUIStore } from "@/store/useUIStore";
 import { toast } from "sonner";
-import { htmlToText } from "@/lib/sanitize";
-
-const RECENT_KEY = "noteflow_recent_searches";
-const MAX_RECENTS = 8;
-
-function highlight({ text, q }) {
-  if (!q || !text) return text;
-  const idx = text.toLowerCase().indexOf(q.toLowerCase());
-  if (idx < 0) return text;
-  return (
-    <>
-      {text.slice(0, idx)}
-      <mark className="bg-primary/30 text-foreground rounded px-0.5">
-        {text.slice(idx, idx + q.length)}
-      </mark>
-      {text.slice(idx + q.length)}
-    </>
-  );
-}
-
-function snippet({ html, q }) {
-  const text = htmlToText(html);
-  if (!q) return text.slice(0, 200);
-  const i = text.toLowerCase().indexOf(q.toLowerCase());
-  if (i < 0) return text.slice(0, 200);
-  const start = Math.max(0, i - 60);
-  return (start > 0 ? "… " : "") + text.slice(start, i + q.length + 140) + "…";
-}
+import {
+  clearRecentSearches,
+  highlight,
+  loadRecentSearches,
+  removeRecentSearch,
+  saveRecentSearch,
+  snippet,
+} from "@/lib/searchText";
 
 function RecentChip({ term, onRemove, onSelect }) {
   return (
@@ -83,17 +63,11 @@ export function CommandPalette() {
   const setCmdk = useUIStore((s) => s.setCmdk);
   const navigate = useNavigate();
   const [q, setQ] = useState("");
-  const [recents, setRecents] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
-    } catch {
-      return [];
-    }
-  });
+  const [recents, setRecents] = useState(loadRecentSearches);
   const debouncedQ = useDebounce(q, 200);
   const params = debouncedQ ? { search: debouncedQ } : {};
   const { data, isFetching } = useNotes(params);
-  const notes = data?.notes ?? [];
+  const notes = useMemo(() => data?.notes ?? [], [data]);
   const { data: notebooks = [] } = useNotebooks();
   const { data: tags = [] } = useTags();
   const { mutateAsync: createNote, isPending: isCreating } = useCreateNote();
@@ -119,12 +93,7 @@ export function CommandPalette() {
 
   const go = (path, term) => {
     if (term) {
-      const next = [term, ...recents.filter((x) => x !== term)].slice(
-        0,
-        MAX_RECENTS,
-      );
-      setRecents(next);
-      localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+      setRecents(saveRecentSearch(term, recents));
     }
     setCmdk(false);
     setQ("");
@@ -176,14 +145,12 @@ export function CommandPalette() {
   };
 
   const removeRecent = (term) => {
-    const next = recents.filter((x) => x !== term);
-    setRecents(next);
-    localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+    setRecents(removeRecentSearch(term, recents));
   };
 
-  const clearRecents = () => {
+  const clearAllRecents = () => {
     setRecents([]);
-    localStorage.removeItem(RECENT_KEY);
+    clearRecentSearches();
   };
 
   const showMore = Boolean(trimmed && notes.length > filteredNotes.length);
@@ -216,7 +183,7 @@ export function CommandPalette() {
                   />
                 ))}
                 <CommandItem
-                  onSelect={clearRecents}
+                  onSelect={clearAllRecents}
                   className="cursor-pointer text-muted-foreground"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />

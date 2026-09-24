@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useUpdateTag } from "@/features/tags/hooks/useTags";
-import NameColorForm from "@/features/tags/sidebars/NameColorForm";
+import NameColorForm from "@/components/common/NameColorForm";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 

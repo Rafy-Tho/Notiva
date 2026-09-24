@@ -1,8 +1,6 @@
-import { PanelLeft, Plus, Search } from "lucide-react";
+import { PanelLeft, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { useCreateNoteContext } from "@/hooks/useCreateNoteContext";
-import { useCreateNote } from "@/features/notes/hooks/useNotes";
+import { NewNoteButton } from "@/features/notes/components/NewNoteButton";
 import { useUIStore } from "@/store/useUIStore";
 import { Logo } from "@/components/common/Logo";
 import { Button } from "@/components/ui/button";
@@ -15,19 +13,7 @@ export function AppHeader() {
   const toggleSidebar = useUIStore((state) => state.toggleSidebar);
   const setCmdk = useUIStore((state) => state.setCmdk);
 
-  const { mutateAsync: createNote, isPending: isCreating } = useCreateNote();
-  const { defaults, basePath } = useCreateNoteContext();
   const navigate = useNavigate();
-
-  const handleCreate = async () => {
-    try {
-      const note = await createNote(defaults);
-      navigate(`${basePath}/${note.id}`);
-      toast.success("Note created");
-    } catch (err) {
-      toast.error(err.message);
-    }
-  };
 
   return (
     <header className="h-12 shrink-0 flex items-center gap-1 px-2 sm:px-3 border-b border-border bg-background/80 backdrop-blur">
@@ -63,19 +49,7 @@ export function AppHeader() {
           <Search className="h-4 w-4" />
           <span className="hidden sm:inline text-xs">Search</span>
         </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleCreate}
-          disabled={isCreating}
-          className="h-8 gap-1.5"
-          aria-label="New note"
-        >
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline text-xs">
-            {isCreating ? "Creating..." : "New"}
-          </span>
-        </Button>
+        <NewNoteButton />
         <Avatar
           className="h-8 w-8 cursor-pointer"
           onClick={() => navigate("/settings")}

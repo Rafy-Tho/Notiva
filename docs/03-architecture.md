@@ -55,21 +55,28 @@ Server State (TanStack Query)
 **Feature-based organization:**
 | Location | Purpose |
 |----------|---------|
-| `features/notes/` | Note-related pages, components, and hooks |
+| `features/notes/` | Note pages, components, and hooks (incl. `useNoteEditing`, `useCreateNoteContext`, `NewNoteButton`) |
 | `features/notebooks/` | Notebook UI and hooks |
 | `features/tags/` | Tag UI and hooks |
-| `features/auth/` | Authentication pages and hooks |
-| `components/layout/` | App-level layout components |
-| `components/common/` | Reusable UI primitives (shadcn) |
+| `features/auth/` | Authentication pages and hooks (incl. `/me` HTTP mutations in `useMe.js`) |
+| `components/layout/` | App-level layout components (AppLayout, AppHeader, Sidebar, SidebarInner) |
+| `components/common/` | Reusable, feature-agnostic UI + composition roots (CommandPalette, ErrorState, NameColorForm, Section, NavItem, Logo) |
+| `components/ui/` | Presentational shadcn primitives (no feature/store imports) |
 
 **Shared resources:**
 | File | Purpose |
 |------|---------|
 | `app/App.jsx` | Root entry point with router |
-| `store/authStore.js` | Global authentication state |
+| `store/authStore.js` | Client session state + auth lifecycle (`setUser`, `login`, `logout`, `restoreSession`, verification actions) |
 | `store/useUIStore.js` | UI settings persistence |
-| `hooks/useNotes.js` | Note CRUD hooks (in features/notes/) |
-| `hooks/useAutosave.js` | Auto-save logic |
+| `lib/fetchWithAuth.js` | Credentialed fetch wrapper; owns status/network retries; fires `onUnauthorized` (wired in `app/providers.jsx`) on 401 |
+| `lib/noteCounts.js` | Pure count-delta helpers for the sidebar counts store |
+| `lib/searchText.js` | Shared search `highlight`/`snippet`/recents helpers (CommandPalette + SearchPage) |
+| `lib/colors.js` | Shared notebook/tag `COLORS` palette |
+| `hooks/useAutosave.js` | Generic auto-save logic |
+| `hooks/useDebounce.js`, `hooks/use-mobile.js`, `hooks/useTheme.js` | Generic hooks |
+
+**Frontend data flow:** `fetchWithAuth` is the only HTTP entry point. Server state lives in TanStack Query (`retry: 0` — `fetchWithAuth` is the single retry owner); client state lives in Zustand (`authStore`, `useUIStore`, `useNoteCountsStore`).
 
 ---
 
