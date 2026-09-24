@@ -173,7 +173,7 @@
     @apply bg-muted/60 border border-border rounded-md p-3 my-3 overflow-x-auto text-[13px] font-mono;
   }
   .tiptap a {
-    @apply text-primary underline underline-offset-2 hover:text-primary/80;
+    @apply text-primary underline underline-offset-2 hover:text-primary/80 cursor-pointer;
   }
   .tiptap img {
     @apply rounded-md border border-border my-3 max-w-full;

@@ -1,6 +1,13 @@
 import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export function SaveBadge({ status, lastSavedAt, isDirty }) {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 10000);
+    return () => clearInterval(timer);
+  }, []);
   if (status === "updating") {
     return (
       <span className="text-[11px] text-muted-foreground flex items-center gap-1">
@@ -45,7 +52,7 @@ export function SaveBadge({ status, lastSavedAt, isDirty }) {
     return (
       <span className="text-[11px] text-muted-foreground flex items-center gap-1">
         <CheckCircle2 className="h-3 w-3 text-success" /> Saved{" "}
-        {lastSavedAt ? `· ${timeAgo(lastSavedAt)}` : ""}
+        {lastSavedAt ? `· ${timeAgo(lastSavedAt, now)}` : ""}
       </span>
     );
   }
@@ -53,8 +60,8 @@ export function SaveBadge({ status, lastSavedAt, isDirty }) {
   return <span className="text-[11px] text-muted-foreground">Draft</span>;
 }
 
-function timeAgo(d) {
-  const sec = Math.round((Date.now() - d.getTime()) / 1000);
+function timeAgo(d, now = Date.now()) {
+  const sec = Math.round((now - d.getTime()) / 1000);
   if (sec < 5) return "just now";
   if (sec < 60) return `${sec}s ago`;
   return `${Math.round(sec / 60)}m ago`;

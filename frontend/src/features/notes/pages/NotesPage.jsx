@@ -140,30 +140,30 @@ function NotesPage({ filter, title = "All notes", emptyTitle, emptyHint }) {
           id ? "flex" : "hidden md:flex",
         )}
       >
-        {(id || !noteListOpen) && (
-          <div className="h-10 px-3 flex items-center gap-2 border-b border-border">
-            {!noteListOpen && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleNoteList}
-                className="hidden md:inline-flex gap-1.5 text-muted-foreground"
-                aria-label="Show notes list"
-              >
-                <PanelLeftOpen className="h-4 w-4" /> Notes
-              </Button>
-            )}
-            {id && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate(listPath)}
-                className="md:hidden gap-1.5 text-muted-foreground"
-                aria-label="Back to notes"
-              >
-                <ArrowLeft className="h-4 w-4" /> Notes
-              </Button>
-            )}
+        {!noteListOpen && (
+          <div className="h-10 px-3 flex items-center gap-2 border-b border-border hidden md:flex">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleNoteList}
+              className="gap-1.5 text-muted-foreground"
+              aria-label="Show notes list"
+            >
+              <PanelLeftOpen className="h-4 w-4" /> Notes
+            </Button>
+          </div>
+        )}
+        {id && (
+          <div className="h-10 px-3 flex items-center gap-2 border-b border-border md:hidden">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(listPath)}
+              className="gap-1.5 text-muted-foreground"
+              aria-label="Back to notes"
+            >
+              <ArrowLeft className="h-4 w-4" /> Notes
+            </Button>
           </div>
         )}
         <div className="flex-1 overflow-y-auto">

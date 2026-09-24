@@ -49,8 +49,15 @@ Authenticated users
 
 - NoteDetailPage component
 - NoteEditor component (TipTap)
+- EditorToolbar component (toolbar with link Popover + table "options" DropdownMenu)
 - useAutosave hook
 - useNotes.update mutation
+
+#### Rich text capabilities
+
+- Paragraphs, H1/H2/H3 headings, bold, italic, underline, strikethrough, code, code blocks, blockquote, task lists, ordered/unordered lists, tables, horizontal rules, images (paste/URL), alignment
+- **Links**: TipTap `Link` extension with `autolink`, `linkOnPaste`, `openOnClick: false`; rendered as `text-primary underline` + `cursor-pointer`, opening in a new tab (`target="_blank"`, `rel="noopener noreferrer nofollow"`)
+- **Table manipulation**: inserting a table adds a table toolbar button; while the cursor is inside a table, a "Table options" dropdown offers add/delete row/column operations and delete table
 
 ## API
 
@@ -94,15 +101,15 @@ Authenticated users only; note must belong to user
 ## Source Evidence
 
 Frontend:
-- frontend/src/pages/NoteDetailPage.jsx
-- frontend/src/components/note/NoteEditor.jsx
+- frontend/src/features/notes/pages/NoteDetailPage.jsx
+- frontend/src/features/notes/components/NoteEditor.jsx
+- frontend/src/features/notes/components/EditorToolbar.jsx
 - frontend/src/hooks/useAutosave.js
-- frontend/src/store/notesStore.js
 
 Backend:
-- backend/src/routes/notes.routes.js
-- backend/src/controllers/notes.controller.js
-- backend/src/services/notes.service.js
+- backend/src/modules/notes/note.routes.js
+- backend/src/modules/notes/note.controller.js
+- backend/src/modules/notes/note.service.js
 
 ## Unknowns
 

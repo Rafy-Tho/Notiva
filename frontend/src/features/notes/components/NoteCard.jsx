@@ -14,7 +14,7 @@ export const NoteCard = ({ note, active, onClick, basePath = "/notes" }) => {
       to={to}
       onClick={onClick}
       className={cn(
-        "group block px-3 py-3 border-b border-border hover:bg-muted/40 transition-colors select-none",
+        "group block px-3 py-3 border-b border-border hover:bg-muted/40 transition-colors select-none focus-visible:bg-muted/60 focus-visible:outline-none",
         active && "bg-muted/60",
       )}
     >

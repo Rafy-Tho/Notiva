@@ -1,6 +1,7 @@
 import { useEditor, EditorContent } from "@tiptap/react";
 import { StarterKit } from "@tiptap/starter-kit";
 import { Underline } from "@tiptap/extension-underline";
+import { Link } from "@tiptap/extension-link";
 import { Placeholder } from "@tiptap/extension-placeholder";
 import { TaskList } from "@tiptap/extension-task-list";
 import { TaskItem } from "@tiptap/extension-task-item";
@@ -19,12 +20,22 @@ export function NoteEditor({
   content,
   onChange,
   onCmdS,
+  editorRef,
   placeholder = "Start writing… (markdown shortcuts supported)",
 }) {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ codeBlock: false }),
       Underline,
+      Link.configure({
+        openOnClick: false,
+        autolink: true,
+        linkOnPaste: true,
+        HTMLAttributes: {
+          rel: "noopener noreferrer nofollow",
+          target: "_blank",
+        },
+      }),
       Placeholder.configure({ placeholder }),
       TaskList,
       TaskItem.configure({ nested: true }),
@@ -72,11 +83,15 @@ export function NoteEditor({
     return () => window.removeEventListener("keydown", onKey);
   }, [onCmdS]);
 
+  useEffect(() => {
+    if (editorRef) editorRef.current = editor;
+  }, [editor, editorRef]);
+
   return (
     <div className="flex flex-col">
       <EditorToolbar editor={editor} />
 
-      <div className="px-4 sm:px-6 md:px-10 lg:px-12 py-5 sm:py-6 max-w-3xl mx-auto w-full">
+      <div className="max-w-3xl mx-auto w-full py-5 sm:py-6">
         <EditorContent editor={editor} />
       </div>
     </div>

@@ -9,7 +9,7 @@ export function NoteList({
   notes,
   loading,
   emptyTitle = "No notes",
-  emptyHint = "Create your first note with ⌘N",
+  emptyHint = "Create your first note with the New note button.",
   fetchNextPage,
   hasNextPage,
   isFetchingNextPage,

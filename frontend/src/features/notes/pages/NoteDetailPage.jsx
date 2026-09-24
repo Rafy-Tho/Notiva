@@ -121,6 +121,7 @@ function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
   const [isFav, setIsFav] = useState(note.isFavorite ?? false);
 
   const path = useCreateNoteContext();
+  const editorRef = useRef(null);
 
   const { mutateAsync: updateNote, isPending: isUpdating } = useUpdateNote(id);
   const { mutateAsync: togglePin, isPending: isPinning } = useTogglePin(id);
@@ -387,13 +388,13 @@ function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
               </Button>
             )}
           </div>
-          <div className="flex items-center gap-1 flex-wrap">
+          <div className="flex items-center gap-1 overflow-x-auto">
             <Select
               value={selectNotebook ?? "__none__"}
               disabled={actionPending}
               onValueChange={(v) => handleNotebook(v)}
             >
-              <SelectTrigger className="h-7 gap-1.5 px-2 text-[11px] border-border bg-transparent hover:bg-muted/40 w-auto min-w-0">
+              <SelectTrigger className="h-7 gap-1.5 px-2 text-[11px] border-border bg-transparent hover:bg-muted/40 w-auto min-w-0 shrink-0">
                 <BookOpen className="h-3 w-3 text-muted-foreground" />
                 <SelectValue placeholder="No notebook" />
               </SelectTrigger>
@@ -418,7 +419,7 @@ function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
                   variant="ghost"
                   size="sm"
                   disabled={actionPending}
-                  className="h-7 gap-1.5 px-2 text-[11px] border border-border bg-transparent hover:bg-muted/40"
+                  className="h-7 gap-1.5 px-2 text-[11px] border border-border bg-transparent hover:bg-muted/40 shrink-0"
                 >
                   <TagIcon className="h-3 w-3 text-muted-foreground" />
                   {selectTags.length === 0 ? (
@@ -483,7 +484,7 @@ function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
               size="icon"
               onClick={handleTogglePin}
               disabled={actionPending}
-              className="h-7 w-7"
+              className="h-7 w-7 shrink-0"
               aria-label="Pin"
             >
               <Pin
@@ -495,7 +496,7 @@ function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
               size="icon"
               onClick={handleToggleFav}
               disabled={actionPending}
-              className="h-7 w-7"
+              className="h-7 w-7 shrink-0"
               aria-label="Favorite"
             >
               <Star
@@ -504,7 +505,7 @@ function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-7 w-7">
+                <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0">
                   <MoreHorizontal className="h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
@@ -535,6 +536,12 @@ function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
               setDraft((previous) => ({ ...previous, title: e.target.value }))
             }
             onBlur={handleTitleBlur}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                editorRef.current?.commands.focus("end");
+              }
+            }}
             placeholder="Untitled"
             className="w-full bg-transparent text-3xl font-semibold tracking-tight outline-none placeholder:text-muted-foreground/40"
           />
@@ -580,6 +587,7 @@ function NoteDetailEditor({ id, note, tags, notebooks, navigate }) {
             setDraft((previous) => ({ ...previous, content: value }))
           }
           onCmdS={saveNow}
+          editorRef={editorRef}
         />
       </div>
 

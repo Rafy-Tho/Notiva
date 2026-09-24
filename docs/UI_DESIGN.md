@@ -116,7 +116,7 @@ Comment/quote `240 5% 50%`, keyword `280 70% 70%`, string/attr `142 60% 60%`, nu
 - **App shell:** full-viewport `flex h-dvh`; header `h-12` (48px); sidebar `w-60` (240px) desktop / `w-72` mobile sheet; note list column `w-72`.
 - **Header:** `px-2 sm:px-3`, internal `gap-1`.
 - **Sidebar:** logo strip `h-12 px-3`; action buttons `px-3 pt-3` with `gap-1.5`; nav `px-2 py-3 text-sm`; user footer `p-2`.
-- **Editor:** content column `max-w-3xl mx-auto`, horizontal padding `px-4 sm:px-6 md:px-10 lg:px-12`; top padding `pt-6` for meta row / `pt-2` for title and editor.
+- **Editor:** content column `max-w-3xl mx-auto`; horizontal padding `px-4 sm:px-6 md:px-10 lg:px-12` applied once by the NoteDetailPage wrapper (meta row, title, and editor body inherit it — no double padding); top padding `pt-6` for meta row / `pt-2` for title and editor.
 - **Settings / Search pages:** `max-w-3xl` (settings) / `max-w-4xl` (search), `px-5 py-8 md:px-10 md:py-12` (settings) and `px-5 py-6 md:px-10 md:py-10` (search), `space-y-10` (settings sections).
 - **Common gaps:** `gap-1` (tight icon rows), `gap-1.5` (button/label clusters, badges), `gap-2`, `gap-3` (form fields), `space-y-1.5` (label→input), `space-y-3` (form groups), `space-y-5` (auth card).
 - **Dialogs:** `p-6 gap-4`; footer buttons `space-x-2`.
@@ -226,7 +226,7 @@ Standard shadcn `Input` (`components/ui/input.jsx`).
   - `UserSection`: `border-t border-border p-2`; link `rounded-md px-2 py-1.5` with small avatar (gradient fallback) + name/email + settings gear.
 - **Header:** `h-12 shrink-0 flex items-center gap-1 px-2 sm:px-3 border-b border-border bg-background/80 backdrop-blur`. Contains sidebar toggle (ghost icon), brand, and right cluster: Search (`ghost sm`, label `hidden sm:inline text-xs`), New note, user Avatar (`h-8 w-8`).
 - **Note list column (NotesPage):** `w-full md:w-72 border-r border-border transition-[width] duration-200 ease-out`; header `h-12 px-3 border-b` with title `text-sm font-semibold` + count `text-[10px] muted`; search/filter block `px-3 py-2 space-y-2 border-b`.
-- **Editor toolbar:** `sticky top-0 z-10 flex flex-wrap items-center gap-0.5 border-b border-border bg-background/80 backdrop-blur px-3 py-1.5`; group separators `mx-1 h-4 w-px bg-border`; active tool `bg-muted text-foreground`.
+- **Editor toolbar:** `sticky top-0 z-10 flex items-center gap-0.5 overflow-x-auto overflow-y-hidden border-b border-border bg-background/80 backdrop-blur px-3 py-1.5` (single scrollable row on narrow screens; buttons `shrink-0`); group separators `mx-1 h-4 w-px bg-border` (separators also `shrink-0`); active tool `bg-muted text-foreground`. Tools: block select, bold/italic/underline/strikethrough, code, H1/H2/H3, task list, code block, quote, table insert, **link** (Radix `Popover` with URL input; auto-prefixes `https://`; Apply/Remove), and `TableIcon` → "Table options" `DropdownMenu` when the cursor is inside a table (add row above/below, add column left/right, delete row/column/table).
 - **Command palette (⌘K):** `DialogContent p-0 max-w-xl`; input row `h-12` with search icon; groups with `text-xs font-medium muted` headings; items `px-2 py-3 rounded-sm` with icons `h-4 w-4`.
 - **Context menus / dropdowns:** Radix menus on notebook/tag rows — "Rename / recolor", "Delete notebook/tag" (`text-destructive`).
 
@@ -260,7 +260,7 @@ Standard shadcn `Input` (`components/ui/input.jsx`).
 - **Sidebar:** desktop persistent collapsible (`w-60` ↔ `w-0`); mobile slides in as a Sheet (`w-72 h-full p-0 bg-sidebar`) with `bg-black/80` overlay.
 - **Note list:** mobile = full-width (editor hidden unless a note is selected, `hidden md:flex`); desktop = `md:w-72` resizable/toggleable via `transition-[width]`. On mobile a "Notes" back button appears in the editor strip.
 - **Header:** brand renders on mobile always, on desktop only when sidebar collapsed; button text labels (`Search`, `New`) hidden below `sm`.
-- **Editor padding:** `px-4 sm:px-6 md:px-10 lg:px-12`.
+- **Editor padding:** `px-4 sm:px-6 md:px-10 lg:px-12` — applied once by the page wrapper (title/meta/editor all align); toolbar and editor body slide/scroll rather than wrap on narrow screens.
 - **Dialogs/footers:** headers/footers stack centered on mobile (`text-center sm:text-left`, `flex-col-reverse sm:flex-row`), `sm:rounded-lg`.
 - **Settings:** grids collapse (`grid gap-4 sm:grid-cols-2`, `sm:col-span-3`).
 

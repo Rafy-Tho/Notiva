@@ -369,15 +369,6 @@ export function useAutoSave(data, saveFn, options = {}) {
     };
   }, [flush]);
 
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-      clearRetryTimer();
-      abortRef.current?.abort();
-    };
-  }, [clearRetryTimer]);
-
   return {
     status,
     error,

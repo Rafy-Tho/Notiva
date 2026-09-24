@@ -56,6 +56,20 @@ See `decisions/unresolved-questions.md` for additional unknowns that may represe
 
 ## Recent Changes
 
+**2026-09-24** - Frontend UX/bug-fix pass over the editor and note pages (frontend only, no backend/API changes):
+- Fixed **link support**: `NoteEditor` now registers the TipTap `Link` extension (`autolink`, `linkOnPaste`, `openOnClick: false`, `rel="noopener noreferrer nofollow"`, `target="_blank"`); toolbar gained a Link button/Popover (URL input with auto-`https://` prefix, Apply / Remove) so links can actually be inserted/edited.
+- Added **table manipulation controls**: when the cursor is inside a table the toolbar shows a "Table options" dropdown (insert row above/below, insert column left/right, delete row/column/table).
+- Removed the **double horizontal padding** on the editor content column (padding now applied once by the NoteDetailPage wrapper, aligning title + meta row + editor body; `NoteEditor` content div is `max-w-3xl mx-auto w-full py-5 sm:py-6`).
+- Fixed **toolbar overflow** on mobile: toolbar is now a single scrollable row (`overflow-x-auto overflow-y-hidden`, buttons `shrink-0`).
+- Fixed **recents initialization** in SearchPage and CommandPalette (recents now loaded via lazy `useState` from `localStorage` instead of `setState` in an effect — clears pre-existing lint error too).
+- Fixed **SettingsPage name prefill** (lazy `useState(() => user?.name || "")` instead of a `setName` effect) and moved `await updateMe(name)` inside the try/catch.
+- Fixed blank 40px strip in NotesPage (the mobile "Back" / desktop "Show notes" buttons now render conditionally — no empty strip when a note is open with the list visible).
+- Meta row in NoteDetailPage now scrolls horizontally instead of wrapping; all right-cluster controls are `shrink-0`.
+- **SaveBadge** "saved · Xm ago" now ticks every 10s so the relative time stays live.
+- Accessibility/UX polish: Enter in the title input focuses the editor end; `focus-visible` states on NoteCard/NavItem (keyboard nav); `NoteEditor` exposes `editorRef`; empty-note hint now points to the "New note" button.
+- `useAutosave`: removed a duplicate mount/unmount effect (harmless but redundant).
+- Verified: `npm run lint` (0 errors, 1 pre-existing warning), `npm run build`, `npm run test` (6 tests) all pass.
+
 **2026-09-23** - Documented the production deployment: **Vercel** (frontend) + **Hostinger** (backend):
 - Frontend: Vercel static SPA at `https://noteflow.rafytho.com/` (custom domain, `vercel.json` SPA rewrites, `VITE_BASE_API=https://api-noteflow.rafytho.com/api/v1`)
 - Backend: Hostinger cPanel Node.js at `https://api-noteflow.rafytho.com/` with `NODE_ENV=production`, `FRONTEND_ORIGIN=https://noteflow.rafytho.com` (no trailing slash), and `GOOGLE_CALLBACK_URL` pointing at the deployed backend

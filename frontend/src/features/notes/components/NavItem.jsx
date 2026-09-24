@@ -7,7 +7,7 @@ export function NavItem({ to, icon: Icon, iconColor, label, count, trailing }) {
       to={to}
       className={({ isActive }) =>
         cn(
-          "group flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors",
+          "group flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors focus-visible:bg-sidebar-accent focus-visible:outline-none",
           isActive && "bg-sidebar-accent text-foreground",
         )
       }

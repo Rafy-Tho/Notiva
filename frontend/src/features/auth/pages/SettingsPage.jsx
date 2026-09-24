@@ -56,7 +56,7 @@ function SettingsPage() {
   const setFontPref = useUIStore((s) => s.setFontPref);
   const setTheme = useUIStore((s) => s.setTheme);
   const navigate = useNavigate();
-  const [name, setName] = useState("");
+  const [name, setName] = useState(() => user?.name || "");
 
   const fileRef = useRef(null);
   const [pwCurrent, setPwCurrent] = useState("");
@@ -76,8 +76,8 @@ function SettingsPage() {
 
   const updateProfile = async () => {
     if (!dirty) return;
-    await updateMe(name);
     try {
+      await updateMe(name);
       toast.success("Profile updated");
     } catch (err) {
       toast.error(err.message);

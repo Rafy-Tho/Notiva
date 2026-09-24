@@ -56,7 +56,13 @@ function SearchPage() {
   const [to, setTo] = useState(params.get("to") || "");
   const [pinned, setPinned] = useState(params.get("pinned") === "1");
   const [page, setPage] = useState(parseInt(params.get("page") || "1", 10));
-  const [recents, setRecents] = useState([]);
+  const [recents, setRecents] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
+    } catch {
+      return [];
+    }
+  });
   const debouncedQ = useDebounce(q, 1000);
 
   const apiParams = useMemo(() => {

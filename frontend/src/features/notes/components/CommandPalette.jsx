@@ -83,7 +83,13 @@ export function CommandPalette() {
   const setCmdk = useUIStore((s) => s.setCmdk);
   const navigate = useNavigate();
   const [q, setQ] = useState("");
-  const [recents, setRecents] = useState([]);
+  const [recents, setRecents] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
+    } catch {
+      return [];
+    }
+  });
   const debouncedQ = useDebounce(q, 200);
   const params = debouncedQ ? { search: debouncedQ } : {};
   const { data, isFetching } = useNotes(params);
@@ -93,11 +99,6 @@ export function CommandPalette() {
   const { mutateAsync: createNote, isPending: isCreating } = useCreateNote();
 
   const trimmed = q.trim();
-
-  useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
-    setRecents(stored);
-  }, []);
 
   const filteredNotes = useMemo(
     () => (q ? notes.slice(0, 8) : notes.slice(0, 5)),
