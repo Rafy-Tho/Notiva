@@ -81,12 +81,12 @@ See `decisions/unresolved-questions.md` for additional unknowns that may represe
 - **5.14** `ReactQueryDevtools` gated to `import.meta.env.DEV` (out of prod bundle). **5.15** Single retry owner: query layer `retry: 0`, `fetchWithAuth` own status/network retries. **5.16** `wordCount` computed once in `useNoteEditing`, passed to `NoteStatusBar` as `words`.
 - **6.17** Removed dead `onSaved={() => {}}` prop (`EditNotebookDialog`). `DeleteNotebookDialog` `mode` radio kept pending product/API decision (flagged in the audit, not silently removed). **6.18** Shared `components/common/ErrorState.jsx` unifies NotesPage/NoteDetailPage error UIs.
 - Verified: `npm run lint` (0 errors, 0 warnings), `npm run test` (45 tests, 4 files), `npm run build` all pass.
-- Docs updated: `docs/03-architecture.md`, `docs/16-error-handling.md`, `docs/frontend-architecture-audit.md` (§19 implementation status), `specs/notes/organize.md`, `specs/notes/edit.md`, `progress.md`.
+- Docs updated: `docs/03-architecture.md`, `docs/frontend-error-handling.md`, `docs/frontend-architecture-audit.md` (§19 implementation status), `specs/notes/organize.md`, `specs/notes/edit.md`, `progress.md`.
 
 **2026-09-24** - Added optimistic updates with rollback to notebook/tag CRUD (frontend only, no backend/API changes):
 - `frontend/src/features/notebooks/hooks/useNotebooks.js` and `frontend/src/features/tags/hooks/useTags.js`: replaced all `invalidateQueries(["notebooks"])` / `invalidateQueries(["tags"])` refetch-on-settle with the no-refetch optimistic pattern already used by notes. Each mutation now `onMutate`s into the cached list (create inserts a `temp-*` placeholder and cancels in-flight list queries; update patches the item in place; delete filters it out), snapshots `previousList`, and restores it in `onError`. `onSuccess` writes the authoritative server object into the cache (create replaces the temp object; notebook update re-sorts by name to match the backend `orderBy name asc`; delete filters the soft-deleted row out). Updates only touch the cache when the list is already loaded; otherwise the query refetches on next mount.
 - Verified: `npm run lint` (0 errors, 1 pre-existing warning in CommandPalette), `npm run test` all pass.
-- Docs updated: `docs/16-error-handling.md`, `ai/context.md`, `progress.md`.
+- Docs updated: `docs/frontend-error-handling.md`, `ai/context.md`, `progress.md`.
 
 **2026-09-24** - Note list cards now update instantly on title/content edits (frontend only, no backend/API changes):
 - Root cause: `patchNoteInLists` only merged `META_FIELDS` (notebookId/tagIds/isPinned/isFavorite/isArchived/deletedAt) into cached list entries, so autosave responses never updated the card's title, content preview, word count, or "Xm ago" last-update — stale until a `/notes` refetch.
@@ -94,7 +94,7 @@ See `decisions/unresolved-questions.md` for additional unknowns that may represe
 - `useUpdateNote.onMutate` now computes an optimistic `wordCount` from the draft content so the card's word count updates instantly while typing; `onSuccess` writes the authoritative server note (title/contentPreview/wordCount/updatedAt) into list cards.
 - Tests: replaced the old "content-only patches don't touch lists" case with card-field-update + no-content-storage assertions; added updatedAt hoist + no-reorder tests.
 - Verified: `npm run lint` (0 errors, 1 pre-existing warning), `npm run test` (44 tests), `npm run build` all pass.
-- Docs updated: `docs/16-error-handling.md`, `specs/notes/edit.md`, `progress.md`.
+- Docs updated: `docs/frontend-error-handling.md`, `specs/notes/edit.md`, `progress.md`.
 
 **2026-09-24** - Extended the no-refetch optimistic updates to sidebar counts, pin-to-top reorder, create/delete/restore/purge (frontend only, no backend/API changes):
 - **`frontend/src/features/notes/lib/noteCounts.js`** (new, pure): `noteCountsDelta(prev, next)` computes count deltas from field diffs (`all/favorites/archive/trash` + per-notebook/per-tag), `notePurgeDelta(prev)` handles permanent delete, and `applyCountsToState(state, deltas)` applies them reducer-style (clamps at 0, adds missing rows, removes zeroed rows, never mutates input). A `null` prev note means "didn't exist" (create); pin toggles produce all-zero deltas by design.
@@ -104,7 +104,7 @@ See `decisions/unresolved-questions.md` for additional unknowns that may represe
 - Counts semantics verified against backend `getNoteCounts`: `all` excludes trashed (includes archived/pinned/favorites), `favorites`/`archive` exclude trashed, trash = deleted, notebook/tag counts exclude trashed, pin changes nothing.
 - Added `noteCounts.test.js` (14 cases) and extended `noteListCache.test.js` (+15 cases for pin reorder, trash transitions, insert/remove helpers).
 - Verified: `npm run lint` (0 errors, 1 pre-existing warning), `npm run test` (42 tests), `npm run build` all pass.
-- Docs updated: `docs/16-error-handling.md`, `specs/notes/edit.md`, `specs/notes/organize.md`, `specs/notes/create.md`, `specs/notes/delete.md`, `specs/notes/trash.md`, `progress.md`.
+- Docs updated: `docs/frontend-error-handling.md`, `specs/notes/edit.md`, `specs/notes/organize.md`, `specs/notes/create.md`, `specs/notes/delete.md`, `specs/notes/trash.md`, `progress.md`.
 
 **2026-09-24** - Fixed editor actions (notebook/tag/pin/favorite) not updating the UI immediately (frontend only, no backend/API changes):
 - Root cause: `NoteDetailEditor` kept `selectNotebook`/`selectTags`/`isPinned`/`isFav` in local `useState` seeded once from the note, so clicking the controls changed nothing until a full reload; pin/fav/archive mutations only patched the single-note cache and refetched the whole `/notes` list on settle (`invalidateQueries({ queryKey: ["notes"] })`), which was inefficient and left the sidebar lagging.
@@ -113,7 +113,7 @@ See `decisions/unresolved-questions.md` for additional unknowns that may represe
 - `useTogglePin`/`useToggleFavorite`/`useToggleArchive` and `useUpdateNote` now `onMutate` into note + list caches, write the authoritative server response in `onSuccess` (no refetch), and restore snapshots in `onError`. Removed the `["notes"]` list refetch from `onSettled` for these mutations. Search/date-filtered lists are only merged, never pruned (membership can't be evaluated client-side).
 - Added `noteListCache.test.js` (12 vitest cases).
 - Verified: `npm run lint` (0 errors, 1 pre-existing warning), `npm run test` (18 tests), `npm run build` all pass.
-- Docs updated: `docs/16-error-handling.md`, `specs/notes/edit.md`, `progress.md`.
+- Docs updated: `docs/frontend-error-handling.md`, `specs/notes/edit.md`, `progress.md`.
 
 **2026-09-24** - Completed the table editor (frontend only, no backend/API changes):
 - **Fixed toolbar dropdown/popover triggers**: `Btn` in `EditorToolbar.jsx` only destructured `{ on, active, children, label }`, so it silently dropped the `onClick`/`onPointerDown`/`ref` props Radix injects through `DropdownMenuTrigger asChild` / `PopoverTrigger asChild`. Every menu whose trigger was `Btn` (block-type, text-alignment, table options, and the link/image popovers) never opened. `Btn` now `forwardRef`s and spreads extra props while composing a passed-in `onClick` with its own `on` handler, restoring all of them.
