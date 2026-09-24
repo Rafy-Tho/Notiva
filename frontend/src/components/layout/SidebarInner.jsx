@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Logo } from "@/components/common/Logo";
 import { ActionButtons } from "@/features/notes/components/ActionButtons";
 import { NavSections } from "@/features/notes/components/NavSections";
@@ -23,7 +24,9 @@ export function SidebarInner() {
   return (
     <>
       <div className="flex h-12 items-center justify-between px-3 border-b border-border">
-        <Logo />
+        <Link to="/notes" className="cursor-pointer">
+          <Logo />
+        </Link>
       </div>
 
       <ActionButtons />

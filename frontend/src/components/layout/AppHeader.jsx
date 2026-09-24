@@ -1,5 +1,5 @@
 import { PanelLeft, Search } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { NewNoteButton } from "@/features/notes/components/NewNoteButton";
 import { useUIStore } from "@/store/useUIStore";
 import { Logo } from "@/components/common/Logo";
@@ -35,7 +35,9 @@ export function AppHeader() {
             : "flex items-center pl-1"
         }
       >
-        <Logo />
+        <Link to="/notes" className="cursor-pointer">
+          <Logo />
+        </Link>
       </div>
 
       <div className="ml-auto flex items-center gap-1">

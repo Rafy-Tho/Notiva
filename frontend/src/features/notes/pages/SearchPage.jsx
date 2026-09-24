@@ -8,7 +8,7 @@ import {
   Search as SearchIcon,
   X,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,16 +26,32 @@ import {
 import { cn } from "@/lib/utils";
 
 function SearchPage() {
-  const [params, setParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [q, setQ] = useState(params.get("q") || "");
-  const [notebookId, setNotebookId] = useState(params.get("notebook") || "");
-  const [tagId, setTagId] = useState(params.get("tag") || "");
-  const [from, setFrom] = useState(params.get("from") || "");
-  const [to, setTo] = useState(params.get("to") || "");
-  const [pinned, setPinned] = useState(params.get("pinned") === "1");
-  const [page, setPage] = useState(parseInt(params.get("page") || "1", 10));
+  const q = searchParams.get("q") || "";
+  const notebookId = searchParams.get("notebook") || "";
+  const tagId = searchParams.get("tag") || "";
+  const from = searchParams.get("from") || "";
+  const to = searchParams.get("to") || "";
+  const pinned = searchParams.get("pinned") === "1";
+  const page = parseInt(searchParams.get("page") || "1", 10);
   const [recents, setRecents] = useState(loadRecentSearches);
+
+  const update = (changes) => {
+    const next = new URLSearchParams(searchParams);
+    for (const [key, value] of Object.entries(changes)) {
+      if (value === "" || value === false || value == null) {
+        next.delete(key);
+      } else if (value === true) {
+        next.set(key, "1");
+      } else {
+        next.set(key, String(value));
+      }
+    }
+    if (next.get("page") === "1") next.delete("page");
+    setSearchParams(next, { replace: true });
+  };
+
   const debouncedQ = useDebounce(q, 1000);
 
   const apiParams = useMemo(() => {
@@ -52,19 +68,6 @@ function SearchPage() {
     return p;
   }, [debouncedQ, notebookId, tagId, from, to, pinned, page]);
 
-  // Sync params for shareable URLs
-  useEffect(() => {
-    const next = new URLSearchParams();
-    if (q) next.set("q", q);
-    if (notebookId) next.set("notebook", notebookId);
-    if (tagId) next.set("tag", tagId);
-    if (from) next.set("from", from);
-    if (to) next.set("to", to);
-    if (pinned) next.set("pinned", "1");
-    if (page > 1) next.set("page", String(page));
-    setParams(next, { replace: true });
-  }, [q, notebookId, tagId, from, to, pinned, page, setParams]);
-
   const saveRecent = (term) => {
     if (!term.trim()) return;
     setRecents(saveRecentSearch(term, recents));
@@ -78,12 +81,7 @@ function SearchPage() {
   const { data: tags = [] } = useTags();
 
   const clear = () => {
-    setQ("");
-    setNotebookId("");
-    setTagId("");
-    setFrom("");
-    setTo("");
-    setPinned(false);
+    update({ q: "", notebook: "", tag: "", from: "", to: "", pinned: false });
   };
   const hasFilters = !!(notebookId || tagId || from || to || pinned);
 
@@ -127,7 +125,7 @@ function SearchPage() {
             <Input
               autoFocus
               value={q}
-              onChange={(e) => setQ(e.target.value)}
+              onChange={(e) => update({ q: e.target.value })}
               onBlur={() => saveRecent(q)}
               placeholder="Search every note…"
               className="pl-9"
@@ -137,7 +135,7 @@ function SearchPage() {
           <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-5">
             <select
               value={notebookId}
-              onChange={(e) => setNotebookId(e.target.value)}
+              onChange={(e) => update({ notebook: e.target.value })}
               className="h-9 rounded-md border border-input bg-background px-2 text-sm"
             >
               <option value="">All notebooks</option>
@@ -149,7 +147,7 @@ function SearchPage() {
             </select>
             <select
               value={tagId}
-              onChange={(e) => setTagId(e.target.value)}
+              onChange={(e) => update({ tag: e.target.value })}
               className="h-9 rounded-md border border-input bg-background px-2 text-sm"
             >
               <option value="">All tags</option>
@@ -162,20 +160,20 @@ function SearchPage() {
             <Input
               type="date"
               value={from}
-              onChange={(e) => setFrom(e.target.value)}
+              onChange={(e) => update({ from: e.target.value })}
               className="h-9"
             />
             <Input
               type="date"
               value={to}
-              onChange={(e) => setTo(e.target.value)}
+              onChange={(e) => update({ to: e.target.value })}
               className="h-9"
             />
             <label className="flex items-center gap-2 px-2 h-9 rounded-md border border-input bg-background text-sm cursor-pointer">
               <input
                 type="checkbox"
                 checked={pinned}
-                onChange={(e) => setPinned(e.target.checked)}
+                onChange={(e) => update({ pinned: e.target.checked })}
               />
               Pinned only
             </label>
@@ -201,7 +199,7 @@ function SearchPage() {
                   key={r}
                   variant="secondary"
                   className="cursor-pointer"
-                  onClick={() => setQ(r)}
+                  onClick={() => update({ q: r })}
                 >
                   {r}
                 </Badge>
@@ -281,7 +279,7 @@ function SearchPage() {
                 size="sm"
                 variant="outline"
                 disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                onClick={() => update({ page: Math.max(1, page - 1) })}
               >
                 <ChevronLeft className="h-4 w-4" />
                 Previous
@@ -293,7 +291,7 @@ function SearchPage() {
                 size="sm"
                 variant="outline"
                 disabled={page >= totalPages}
-                onClick={() => setPage((p) => p + 1)}
+                onClick={() => update({ page: page + 1 })}
               >
                 Next
                 <ChevronRight className="h-4 w-4" />
